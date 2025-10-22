@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -6,44 +6,53 @@ import Input from '../components/ui/Input';
 import { Plus, Search, Filter } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../lib/utils';
 import { PaymentRequestStatus, PaymentMethod } from '../types/index';
+import api from '../lib/api';
+
+interface PaymentRequest {
+  _id: string;
+  amount: number;
+  currency: string;
+  description: string;
+  customerInfo: { name: string; email: string };
+  paymentMethods: PaymentMethod[];
+  status: PaymentRequestStatus;
+  createdAt: string;
+}
 
 const PaymentRequests: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - will be replaced with real API calls
-  const paymentRequests = [
-    {
-      _id: '1',
-      amount: 1250.00,
-      currency: 'USD',
-      description: 'Invoice #INV-001',
-      customerInfo: { name: 'John Doe', email: 'john@example.com' },
-      paymentMethods: [PaymentMethod.BANK_WIRE, PaymentMethod.CARD],
-      status: PaymentRequestStatus.SENT,
-      createdAt: '2025-10-22T10:00:00Z',
-    },
-    {
-      _id: '2',
-      amount: 3400.50,
-      currency: 'USD',
-      description: 'Invoice #INV-002',
-      customerInfo: { name: 'Jane Smith', email: 'jane@example.com' },
-      paymentMethods: [PaymentMethod.CARD],
-      status: PaymentRequestStatus.VIEWED,
-      createdAt: '2025-10-21T14:30:00Z',
-    },
-    {
-      _id: '3',
-      amount: 5600.00,
-      currency: 'USD',
-      description: 'Invoice #INV-003',
-      customerInfo: { name: 'Acme Corp', email: 'billing@acme.com' },
-      paymentMethods: [PaymentMethod.BANK_WIRE],
-      status: PaymentRequestStatus.PAID,
-      createdAt: '2025-10-20T09:15:00Z',
-    },
-  ];
+  useEffect(() => {
+    const fetchPaymentRequests = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get('/payment-requests');
+        setPaymentRequests(response.data.data.paymentRequests || []);
+      } catch (error) {
+        console.error('Failed to fetch payment requests:', error);
+        setPaymentRequests([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPaymentRequests();
+  }, []);
+
+  // Filter payment requests based on search and status
+  const filteredRequests = paymentRequests.filter((request) => {
+    const matchesSearch = searchTerm === '' || 
+      request.customerInfo?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.customerInfo?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const getStatusColor = (status: PaymentRequestStatus) => {
     switch (status) {
@@ -63,6 +72,17 @@ const PaymentRequests: React.FC = () => {
   const getMethodBadge = (method: PaymentMethod) => {
     return method === PaymentMethod.BANK_WIRE ? 'Bank Wire' : 'Card';
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading payment requests...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -120,44 +140,64 @@ const PaymentRequests: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>All Payment Requests</CardTitle>
-          <CardDescription>{paymentRequests.length} total requests</CardDescription>
+          <CardDescription>
+            {filteredRequests.length} {filteredRequests.length === paymentRequests.length ? 'total' : 'filtered'} request{filteredRequests.length !== 1 ? 's' : ''}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {paymentRequests.map((request) => (
-              <Link
-                key={request._id}
-                to={`/payment-requests/${request._id}`}
-                className="block"
-              >
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold">{request.customerInfo?.name || 'Unknown'}</h3>
-                      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(request.status)}`}>
-                        {request.status}
-                      </span>
+          {filteredRequests.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">
+                {paymentRequests.length === 0 
+                  ? "No payment requests yet" 
+                  : "No payment requests match your filters"}
+              </p>
+              {paymentRequests.length === 0 && (
+                <Button asChild>
+                  <Link to="/payment-requests/new">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create your first request
+                  </Link>
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredRequests.map((request) => (
+                <Link
+                  key={request._id}
+                  to={`/payment-requests/${request._id}`}
+                  className="block"
+                >
+                  <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold">{request.customerInfo?.name || 'Unknown'}</h3>
+                        <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(request.status)}`}>
+                          {request.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        {request.description || 'No description'}
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{request.customerInfo?.email}</span>
+                        <span>·</span>
+                        <span>
+                          {request.paymentMethods.map((m) => getMethodBadge(m)).join(', ')}
+                        </span>
+                        <span>·</span>
+                        <span>{formatDateTime(request.createdAt)}</span>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {request.description || 'No description'}
-                    </p>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{request.customerInfo?.email}</span>
-                      <span>·</span>
-                      <span>
-                        {request.paymentMethods.map((m) => getMethodBadge(m)).join(', ')}
-                      </span>
-                      <span>·</span>
-                      <span>{formatDateTime(request.createdAt)}</span>
+                    <div className="text-right">
+                      <p className="text-xl font-bold">{formatCurrency(request.amount, request.currency)}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xl font-bold">{formatCurrency(request.amount, request.currency)}</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

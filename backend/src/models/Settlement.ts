@@ -65,7 +65,7 @@ const settlementSchema = new Schema<ISettlement>(
 );
 
 // Indexes
-settlementSchema.index({ settlementId: 1 });
+// settlementId index is automatic due to unique: true
 settlementSchema.index({ status: 1 });
 settlementSchema.index({ createdAt: -1 });
 settlementSchema.index({ merchantId: 1, status: 1 }); // Compound index for queries

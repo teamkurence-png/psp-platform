@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -12,30 +12,74 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
+import api from '../lib/api';
+
+interface DashboardStats {
+  volume: number;
+  approvals: number;
+  declines: number;
+  pendingReviews: number;
+  availableBalance: number;
+  pendingBalance: number;
+}
+
+interface Alert {
+  id: string | number;
+  type: 'warning' | 'info' | 'error';
+  message: string;
+}
+
+interface RecentTransaction {
+  id: string;
+  customer: string;
+  amount: number;
+  status: string;
+  date: string;
+}
 
 const Dashboard: React.FC = () => {
   const [dateRange, setDateRange] = useState<'today' | '7d' | '30d'>('7d');
+  const [stats, setStats] = useState<DashboardStats>({
+    volume: 0,
+    approvals: 0,
+    declines: 0,
+    pendingReviews: 0,
+    availableBalance: 0,
+    pendingBalance: 0,
+  });
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - will be replaced with real API calls
-  const stats = {
-    volume: 125430.50,
-    approvals: 89,
-    declines: 12,
-    pendingReviews: 5,
-    availableBalance: 45230.75,
-    pendingBalance: 12450.00,
-  };
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [statsResponse, alertsResponse, transactionsResponse] = await Promise.all([
+          api.get(`/dashboard/stats?range=${dateRange}`),
+          api.get('/dashboard/alerts'),
+          api.get('/dashboard/recent-transactions'),
+        ]);
+        
+        setStats({
+          volume: statsResponse.data.data.volume || 0,
+          approvals: statsResponse.data.data.approvals || 0,
+          declines: statsResponse.data.data.declines || 0,
+          pendingReviews: statsResponse.data.data.pendingReviews || 0,
+          availableBalance: statsResponse.data.data.availableBalance || 0,
+          pendingBalance: statsResponse.data.data.pendingBalance || 0,
+        });
+        setAlerts(alertsResponse.data.data || []);
+        setRecentTransactions(transactionsResponse.data.data || []);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const alerts = [
-    { id: 1, type: 'warning', message: '5 transactions awaiting confirmation' },
-    { id: 2, type: 'info', message: 'Documents expiring in 30 days' },
-  ];
-
-  const recentTransactions = [
-    { id: 'TXN001', customer: 'John Doe', amount: 1250.00, status: 'approved', date: '2025-10-22' },
-    { id: 'TXN002', customer: 'Jane Smith', amount: 3400.50, status: 'pending', date: '2025-10-22' },
-    { id: 'TXN003', customer: 'Acme Corp', amount: 5600.00, status: 'approved', date: '2025-10-21' },
-  ];
+    fetchDashboardData();
+  }, [dateRange]);
 
   const StatCard = ({ 
     title, 
@@ -72,6 +116,17 @@ const Dashboard: React.FC = () => {
       </CardContent>
     </Card>
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -236,26 +291,35 @@ const Dashboard: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {recentTransactions.map((txn) => (
-              <div key={txn.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <p className="font-medium">{txn.customer}</p>
-                  <p className="text-sm text-muted-foreground">{txn.id} · {txn.date}</p>
+          {recentTransactions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No recent transactions yet</p>
+              <Button asChild className="mt-4" size="sm">
+                <Link to="/payment-requests/new">Create your first payment request</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recentTransactions.map((txn) => (
+                <div key={txn.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{txn.customer}</p>
+                    <p className="text-sm text-muted-foreground">{txn.id} · {txn.date}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold">{formatCurrency(txn.amount)}</p>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      txn.status === 'approved' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {txn.status}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold">{formatCurrency(txn.amount)}</p>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    txn.status === 'approved' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {txn.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

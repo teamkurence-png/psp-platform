@@ -12,6 +12,13 @@ import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
 import merchantRoutes from './routes/merchants.js';
 import paymentRequestRoutes from './routes/paymentRequests.js';
+import dashboardRoutes from './routes/dashboard.js';
+import balanceRoutes from './routes/balances.js';
+import settlementRoutes from './routes/settlements.js';
+import withdrawalRoutes from './routes/withdrawals.js';
+import customerRoutes from './routes/customers.js';
+import settingsRoutes from './routes/settings.js';
+import transactionRoutes from './routes/transactions.js';
 
 // Load environment variables
 dotenv.config();
@@ -50,6 +57,13 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/merchants', merchantRoutes);
 app.use('/api/payment-requests', paymentRequestRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/balances', balanceRoutes);
+app.use('/api/settlements', settlementRoutes);
+app.use('/api/withdrawals', withdrawalRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

@@ -201,7 +201,7 @@ const transactionSchema = new Schema<ITransaction>(
 );
 
 // Indexes
-transactionSchema.index({ transactionId: 1 });
+// transactionId index is automatic due to unique: true
 transactionSchema.index({ platformStatus: 1 });
 transactionSchema.index({ createdAt: -1 });
 transactionSchema.index({ 'customerInfo.email': 1 });

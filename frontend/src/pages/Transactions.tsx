@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -6,54 +6,58 @@ import Input from '../components/ui/Input';
 import { Search, Filter, Download } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../lib/utils';
 import { TransactionStatus, PaymentMethod, MerchantConfirmation } from '../types/index';
+import api from '../lib/api';
+
+interface Transaction {
+  _id: string;
+  transactionId: string;
+  customerInfo: { name: string; email: string };
+  method: PaymentMethod;
+  amount: number;
+  currency: string;
+  merchantConfirmation: MerchantConfirmation;
+  platformStatus: TransactionStatus;
+  riskScore: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 const Transactions: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [methodFilter, setMethodFilter] = useState<string>('all');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - will be replaced with real API calls
-  const transactions = [
-    {
-      _id: '1',
-      transactionId: 'TXN20251022001',
-      customerInfo: { name: 'John Doe', email: 'john@example.com' },
-      method: PaymentMethod.CARD,
-      amount: 1250.00,
-      currency: 'USD',
-      merchantConfirmation: MerchantConfirmation.SUCCESS,
-      platformStatus: TransactionStatus.APPROVED,
-      riskScore: 15,
-      createdAt: '2025-10-22T10:00:00Z',
-      updatedAt: '2025-10-22T10:30:00Z',
-    },
-    {
-      _id: '2',
-      transactionId: 'TXN20251022002',
-      customerInfo: { name: 'Jane Smith', email: 'jane@example.com' },
-      method: PaymentMethod.BANK_WIRE,
-      amount: 3400.50,
-      currency: 'USD',
-      merchantConfirmation: MerchantConfirmation.PENDING,
-      platformStatus: TransactionStatus.PENDING_REVIEW,
-      riskScore: 25,
-      createdAt: '2025-10-22T11:00:00Z',
-      updatedAt: '2025-10-22T11:00:00Z',
-    },
-    {
-      _id: '3',
-      transactionId: 'TXN20251021003',
-      customerInfo: { name: 'Acme Corp', email: 'billing@acme.com' },
-      method: PaymentMethod.CARD,
-      amount: 5600.00,
-      currency: 'USD',
-      merchantConfirmation: MerchantConfirmation.SUCCESS,
-      platformStatus: TransactionStatus.SETTLED,
-      riskScore: 10,
-      createdAt: '2025-10-21T09:15:00Z',
-      updatedAt: '2025-10-21T15:00:00Z',
-    },
-  ];
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get('/transactions');
+        setTransactions(response.data.data || []);
+      } catch (error) {
+        console.error('Failed to fetch transactions:', error);
+        setTransactions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  // Filter transactions based on search, status, and method
+  const filteredTransactions = transactions.filter((txn) => {
+    const matchesSearch = searchTerm === '' || 
+      txn.transactionId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      txn.customerInfo?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      txn.customerInfo?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || txn.platformStatus === statusFilter;
+    const matchesMethod = methodFilter === 'all' || txn.method === methodFilter;
+    
+    return matchesSearch && matchesStatus && matchesMethod;
+  });
 
   const getStatusColor = (status: TransactionStatus) => {
     switch (status) {
@@ -87,6 +91,17 @@ const Transactions: React.FC = () => {
     return 'text-red-600';
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading transactions...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -95,7 +110,7 @@ const Transactions: React.FC = () => {
           <h1 className="text-3xl font-bold">Transactions</h1>
           <p className="text-muted-foreground">View and manage all payment transactions</p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" disabled={transactions.length === 0}>
           <Download className="mr-2 h-4 w-4" />
           Export
         </Button>
@@ -149,79 +164,96 @@ const Transactions: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>All Transactions</CardTitle>
-          <CardDescription>{transactions.length} total transactions</CardDescription>
+          <CardDescription>
+            {filteredTransactions.length} {filteredTransactions.length === transactions.length ? 'total' : 'filtered'} transaction{filteredTransactions.length !== 1 ? 's' : ''}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium">Transaction ID</th>
-                  <th className="text-left py-3 px-4 font-medium">Customer</th>
-                  <th className="text-left py-3 px-4 font-medium">Method</th>
-                  <th className="text-left py-3 px-4 font-medium">Amount</th>
-                  <th className="text-left py-3 px-4 font-medium">Confirmation</th>
-                  <th className="text-left py-3 px-4 font-medium">Status</th>
-                  <th className="text-left py-3 px-4 font-medium">Risk Score</th>
-                  <th className="text-left py-3 px-4 font-medium">Created</th>
-                  <th className="text-left py-3 px-4 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((txn) => (
-                  <tr key={txn._id} className="border-b hover:bg-accent/50">
-                    <td className="py-3 px-4">
-                      <Link 
-                        to={`/transactions/${txn._id}`}
-                        className="font-mono text-sm text-primary hover:underline"
-                      >
-                        {txn.transactionId}
-                      </Link>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div>
-                        <p className="font-medium">{txn.customerInfo?.name}</p>
-                        <p className="text-sm text-muted-foreground">{txn.customerInfo?.email}</p>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-sm">
-                        {txn.method === PaymentMethod.CARD ? 'Card' : 'Bank Wire'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="font-semibold">{formatCurrency(txn.amount, txn.currency)}</span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`text-sm font-medium ${getConfirmationColor(txn.merchantConfirmation)}`}>
-                        {txn.merchantConfirmation.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(txn.platformStatus)}`}>
-                        {txn.platformStatus.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`font-semibold ${getRiskScoreColor(txn.riskScore)}`}>
-                        {txn.riskScore}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-sm text-muted-foreground">
-                        {formatDateTime(txn.createdAt)}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Button size="sm" variant="ghost" asChild>
-                        <Link to={`/transactions/${txn._id}`}>View</Link>
-                      </Button>
-                    </td>
+          {filteredTransactions.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">
+                {transactions.length === 0 
+                  ? "No transactions yet" 
+                  : "No transactions match your filters"}
+              </p>
+              {transactions.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Transactions will appear here once customers complete payments
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium">Transaction ID</th>
+                    <th className="text-left py-3 px-4 font-medium">Customer</th>
+                    <th className="text-left py-3 px-4 font-medium">Method</th>
+                    <th className="text-left py-3 px-4 font-medium">Amount</th>
+                    <th className="text-left py-3 px-4 font-medium">Confirmation</th>
+                    <th className="text-left py-3 px-4 font-medium">Status</th>
+                    <th className="text-left py-3 px-4 font-medium">Risk Score</th>
+                    <th className="text-left py-3 px-4 font-medium">Created</th>
+                    <th className="text-left py-3 px-4 font-medium">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredTransactions.map((txn) => (
+                    <tr key={txn._id} className="border-b hover:bg-accent/50">
+                      <td className="py-3 px-4">
+                        <Link 
+                          to={`/transactions/${txn._id}`}
+                          className="font-mono text-sm text-primary hover:underline"
+                        >
+                          {txn.transactionId}
+                        </Link>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium">{txn.customerInfo?.name}</p>
+                          <p className="text-sm text-muted-foreground">{txn.customerInfo?.email}</p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="text-sm">
+                          {txn.method === PaymentMethod.CARD ? 'Card' : 'Bank Wire'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-semibold">{formatCurrency(txn.amount, txn.currency)}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`text-sm font-medium ${getConfirmationColor(txn.merchantConfirmation)}`}>
+                          {txn.merchantConfirmation.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(txn.platformStatus)}`}>
+                          {txn.platformStatus.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`font-semibold ${getRiskScoreColor(txn.riskScore)}`}>
+                          {txn.riskScore}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="text-sm text-muted-foreground">
+                          {formatDateTime(txn.createdAt)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Button size="sm" variant="ghost" asChild>
+                          <Link to={`/transactions/${txn._id}`}>View</Link>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
