@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import StatCard from '../components/ui/StatCard';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import EmptyState from '../components/ui/EmptyState';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -12,120 +15,35 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
-import api from '../lib/api';
-
-interface DashboardStats {
-  volume: number;
-  approvals: number;
-  declines: number;
-  pendingReviews: number;
-  availableBalance: number;
-  pendingBalance: number;
-}
-
-interface Alert {
-  id: string | number;
-  type: 'warning' | 'info' | 'error';
-  message: string;
-}
-
-interface RecentTransaction {
-  id: string;
-  customer: string;
-  amount: number;
-  status: string;
-  date: string;
-}
+import { useFetch } from '../hooks';
+import { dashboardService, type DashboardStats, type Alert, type RecentTransaction } from '../services';
+import { DATE_RANGE_OPTIONS, type DateRange } from '../constants';
 
 const Dashboard: React.FC = () => {
-  const [dateRange, setDateRange] = useState<'today' | '7d' | '30d'>('7d');
-  const [stats, setStats] = useState<DashboardStats>({
+  const [dateRange, setDateRange] = useState<DateRange>('7d');
+
+  const { data, loading } = useFetch<{
+    stats: DashboardStats;
+    alerts: Alert[];
+    recentTransactions: RecentTransaction[];
+  }>(
+    () => dashboardService.getDashboardData(dateRange),
+    [dateRange]
+  );
+
+  const stats = data?.stats || {
     volume: 0,
     approvals: 0,
     declines: 0,
     pendingReviews: 0,
     availableBalance: 0,
     pendingBalance: 0,
-  });
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [statsResponse, alertsResponse, transactionsResponse] = await Promise.all([
-          api.get(`/dashboard/stats?range=${dateRange}`),
-          api.get('/dashboard/alerts'),
-          api.get('/dashboard/recent-transactions'),
-        ]);
-        
-        setStats({
-          volume: statsResponse.data.data.volume || 0,
-          approvals: statsResponse.data.data.approvals || 0,
-          declines: statsResponse.data.data.declines || 0,
-          pendingReviews: statsResponse.data.data.pendingReviews || 0,
-          availableBalance: statsResponse.data.data.availableBalance || 0,
-          pendingBalance: statsResponse.data.data.pendingBalance || 0,
-        });
-        setAlerts(alertsResponse.data.data || []);
-        setRecentTransactions(transactionsResponse.data.data || []);
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, [dateRange]);
-
-  const StatCard = ({ 
-    title, 
-    value, 
-    icon: Icon, 
-    trend, 
-    trendValue 
-  }: { 
-    title: string; 
-    value: string | number; 
-    icon: any; 
-    trend?: 'up' | 'down'; 
-    trendValue?: string;
-  }) => (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <h3 className="text-2xl font-bold mt-2">{value}</h3>
-            {trend && trendValue && (
-              <div className={`flex items-center mt-2 text-sm ${
-                trend === 'up' ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {trend === 'up' ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
-                {trendValue}
-              </div>
-            )}
-          </div>
-          <div className="p-3 bg-primary/10 rounded-full">
-            <Icon className="h-6 w-6 text-primary" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  };
+  const alerts = data?.alerts || [];
+  const recentTransactions = data?.recentTransactions || [];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading dashboard..." />;
   }
 
   return (
@@ -137,27 +55,16 @@ const Dashboard: React.FC = () => {
           <p className="text-muted-foreground">Welcome back! Here's your business overview.</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button 
-            variant={dateRange === 'today' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setDateRange('today')}
-          >
-            Today
-          </Button>
-          <Button 
-            variant={dateRange === '7d' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setDateRange('7d')}
-          >
-            7 Days
-          </Button>
-          <Button 
-            variant={dateRange === '30d' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setDateRange('30d')}
-          >
-            30 Days
-          </Button>
+          {DATE_RANGE_OPTIONS.map((option) => (
+            <Button
+              key={option.value}
+              variant={dateRange === option.value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setDateRange(option.value)}
+            >
+              {option.label}
+            </Button>
+          ))}
         </div>
       </div>
 
@@ -170,6 +77,8 @@ const Dashboard: React.FC = () => {
               className={`flex items-center p-4 rounded-lg border ${
                 alert.type === 'warning'
                   ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
+                  : alert.type === 'error'
+                  ? 'bg-red-50 border-red-200 text-red-800'
                   : 'bg-blue-50 border-blue-200 text-blue-800'
               }`}
             >
@@ -292,12 +201,11 @@ const Dashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           {recentTransactions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No recent transactions yet</p>
+            <EmptyState message="No recent transactions yet">
               <Button asChild className="mt-4" size="sm">
                 <Link to="/payment-requests/new">Create your first payment request</Link>
               </Button>
-            </div>
+            </EmptyState>
           ) : (
             <div className="space-y-4">
               {recentTransactions.map((txn) => (
@@ -327,4 +235,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-

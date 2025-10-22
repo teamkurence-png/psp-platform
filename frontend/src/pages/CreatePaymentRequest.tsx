@@ -1,19 +1,39 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Label from '../components/ui/Label';
+import ErrorAlert from '../components/ui/ErrorAlert';
 import { ArrowLeft } from 'lucide-react';
 import { PaymentMethod, BankRail } from '../types/index';
-import api from '../lib/api';
+import { useForm } from '../hooks';
+import { paymentRequestService } from '../services';
+
+interface PaymentRequestFormData {
+  amount: string;
+  currency: string;
+  description: string;
+  invoiceNumber: string;
+  dueDate: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerCountry: string;
+  paymentMethods: PaymentMethod[];
+  bankRails: BankRail[];
+  require3DS: boolean;
+}
 
 const CreatePaymentRequest: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const [formData, setFormData] = useState({
+  
+  const {
+    values: formData,
+    setFieldValue,
+    loading,
+    setLoading,
+  } = useForm<PaymentRequestFormData>({
     amount: '',
     currency: 'USD',
     description: '',
@@ -23,10 +43,12 @@ const CreatePaymentRequest: React.FC = () => {
     customerEmail: '',
     customerPhone: '',
     customerCountry: '',
-    paymentMethods: [] as PaymentMethod[],
-    bankRails: [] as BankRail[],
+    paymentMethods: [],
+    bankRails: [],
     require3DS: false,
   });
+
+  const [error, setError] = React.useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +77,7 @@ const CreatePaymentRequest: React.FC = () => {
           : undefined,
       };
 
-      await api.post('/payment-requests', payload);
+      await paymentRequestService.create(payload);
       navigate('/payment-requests');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create payment request');
@@ -65,21 +87,17 @@ const CreatePaymentRequest: React.FC = () => {
   };
 
   const togglePaymentMethod = (method: PaymentMethod) => {
-    setFormData((prev) => ({
-      ...prev,
-      paymentMethods: prev.paymentMethods.includes(method)
-        ? prev.paymentMethods.filter((m) => m !== method)
-        : [...prev.paymentMethods, method],
-    }));
+    const newMethods = formData.paymentMethods.includes(method)
+      ? formData.paymentMethods.filter((m) => m !== method)
+      : [...formData.paymentMethods, method];
+    setFieldValue('paymentMethods', newMethods);
   };
 
   const toggleBankRail = (rail: BankRail) => {
-    setFormData((prev) => ({
-      ...prev,
-      bankRails: prev.bankRails.includes(rail)
-        ? prev.bankRails.filter((r) => r !== rail)
-        : [...prev.bankRails, rail],
-    }));
+    const newRails = formData.bankRails.includes(rail)
+      ? formData.bankRails.filter((r) => r !== rail)
+      : [...formData.bankRails, rail];
+    setFieldValue('bankRails', newRails);
   };
 
   return (
@@ -95,11 +113,7 @@ const CreatePaymentRequest: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
-          <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
-            {error}
-          </div>
-        )}
+        {error && <ErrorAlert message={error} onDismiss={() => setError('')} />}
 
         {/* Payment Details */}
         <Card>
@@ -116,7 +130,7 @@ const CreatePaymentRequest: React.FC = () => {
                   type="number"
                   step="0.01"
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  onChange={(e) => setFieldValue('amount', e.target.value)}
                   required
                 />
               </div>
@@ -125,7 +139,7 @@ const CreatePaymentRequest: React.FC = () => {
                 <select
                   id="currency"
                   value={formData.currency}
-                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                  onChange={(e) => setFieldValue('currency', e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
                   <option value="USD">USD</option>
@@ -140,7 +154,7 @@ const CreatePaymentRequest: React.FC = () => {
               <Input
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) => setFieldValue('description', e.target.value)}
               />
             </div>
 
@@ -150,7 +164,7 @@ const CreatePaymentRequest: React.FC = () => {
                 <Input
                   id="invoiceNumber"
                   value={formData.invoiceNumber}
-                  onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
+                  onChange={(e) => setFieldValue('invoiceNumber', e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -159,7 +173,7 @@ const CreatePaymentRequest: React.FC = () => {
                   id="dueDate"
                   type="date"
                   value={formData.dueDate}
-                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                  onChange={(e) => setFieldValue('dueDate', e.target.value)}
                 />
               </div>
             </div>
@@ -178,7 +192,7 @@ const CreatePaymentRequest: React.FC = () => {
               <Input
                 id="customerName"
                 value={formData.customerName}
-                onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                onChange={(e) => setFieldValue('customerName', e.target.value)}
               />
             </div>
 
@@ -189,7 +203,7 @@ const CreatePaymentRequest: React.FC = () => {
                   id="customerEmail"
                   type="email"
                   value={formData.customerEmail}
-                  onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
+                  onChange={(e) => setFieldValue('customerEmail', e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -197,7 +211,7 @@ const CreatePaymentRequest: React.FC = () => {
                 <Input
                   id="customerPhone"
                   value={formData.customerPhone}
-                  onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                  onChange={(e) => setFieldValue('customerPhone', e.target.value)}
                 />
               </div>
             </div>
@@ -207,7 +221,7 @@ const CreatePaymentRequest: React.FC = () => {
               <Input
                 id="customerCountry"
                 value={formData.customerCountry}
-                onChange={(e) => setFormData({ ...formData, customerCountry: e.target.value })}
+                onChange={(e) => setFieldValue('customerCountry', e.target.value)}
               />
             </div>
           </CardContent>
@@ -266,7 +280,7 @@ const CreatePaymentRequest: React.FC = () => {
                     <input
                       type="checkbox"
                       checked={formData.require3DS}
-                      onChange={(e) => setFormData({ ...formData, require3DS: e.target.checked })}
+                      onChange={(e) => setFieldValue('require3DS', e.target.checked)}
                       className="h-4 w-4 rounded border-gray-300"
                     />
                     <span className="text-sm">Require 3D Secure</span>
@@ -292,4 +306,3 @@ const CreatePaymentRequest: React.FC = () => {
 };
 
 export default CreatePaymentRequest;
-

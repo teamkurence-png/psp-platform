@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import EmptyState from '../components/ui/EmptyState';
 import type { Balance } from '../types/index';
 import api from '../lib/api';
+import { useFetch } from '../hooks';
 import { formatCurrency, formatDateTime } from '../lib/utils';
 import { DollarSign, TrendingUp, Clock, ArrowDownCircle } from 'lucide-react';
 
@@ -18,40 +21,31 @@ interface BalanceHistory {
   settledAt?: string;
 }
 
+interface BalanceData {
+  balance: Balance;
+  history: BalanceHistory[];
+}
+
 const Balances: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [balance, setBalance] = useState<Balance | null>(null);
-  const [history, setHistory] = useState<BalanceHistory[]>([]);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  const { data, loading } = useFetch<BalanceData>(
+    async () => {
       const [balanceResponse, historyResponse] = await Promise.all([
         api.get('/balances'),
         api.get('/balances/history?limit=20'),
       ]);
-      setBalance(balanceResponse.data.data);
-      setHistory(historyResponse.data.data.transactions || []);
-    } catch (error) {
-      console.error('Failed to fetch balance data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        balance: balanceResponse.data.data,
+        history: historyResponse.data.data.transactions || [],
+      };
+    },
+    []
+  );
+
+  const balance = data?.balance || null;
+  const history = data?.history || [];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading balance...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading balance..." />;
   }
 
   return (
@@ -169,9 +163,7 @@ const Balances: React.FC = () => {
         </CardHeader>
         <CardContent>
           {history.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No transaction history yet</p>
-            </div>
+            <EmptyState message="No transaction history yet" />
           ) : (
             <div className="space-y-4">
               {history.map((txn) => (
@@ -205,4 +197,3 @@ const Balances: React.FC = () => {
 };
 
 export default Balances;
-

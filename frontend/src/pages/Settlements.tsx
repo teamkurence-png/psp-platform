@@ -1,30 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import EmptyState from '../components/ui/EmptyState';
+import StatusBadge from '../components/ui/StatusBadge';
+import FilterBar from '../components/ui/FilterBar';
 import { formatCurrency, formatDateTime } from '../lib/utils';
-import api from '../lib/api';
-import { ArrowDownCircle, Search, Filter, CheckCircle, Clock, XCircle } from 'lucide-react';
-
-interface Settlement {
-  _id: string;
-  settlementId: string;
-  amount: number;
-  currency: string;
-  method: 'bank_transfer' | 'crypto';
-  destination: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  failureReason?: string;
-  settledAt?: string;
-  createdAt: string;
-}
+import { useList, useSearch, useFilter } from '../hooks';
+import { settlementService, type Settlement } from '../services';
+import { SETTLEMENT_STATUS_OPTIONS } from '../constants';
+import { ArrowDownCircle } from 'lucide-react';
 
 const Settlements: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [settlements, setSettlements] = useState<Settlement[]>([]);
+  const { items: settlements, loading, setItems, setLoading } = useList<Settlement>();
 
   useEffect(() => {
     fetchSettlements();
@@ -33,8 +22,8 @@ const Settlements: React.FC = () => {
   const fetchSettlements = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/settlements');
-      setSettlements(response.data.data.settlements || []);
+      const response = await settlementService.getAll();
+      setItems(response.data.data.settlements || []);
     } catch (error) {
       console.error('Failed to fetch settlements:', error);
     } finally {
@@ -42,58 +31,25 @@ const Settlements: React.FC = () => {
     }
   };
 
-  const filteredSettlements = settlements.filter((settlement) => {
-    const matchesSearch = searchTerm === '' || 
-      settlement.settlementId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      settlement.destination.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || settlement.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return (
-          <div className="flex items-center gap-1 text-green-600">
-            <CheckCircle className="h-4 w-4" />
-            <span className="text-xs font-semibold">Completed</span>
-          </div>
-        );
-      case 'processing':
-        return (
-          <div className="flex items-center gap-1 text-blue-600">
-            <Clock className="h-4 w-4" />
-            <span className="text-xs font-semibold">Processing</span>
-          </div>
-        );
-      case 'failed':
-        return (
-          <div className="flex items-center gap-1 text-red-600">
-            <XCircle className="h-4 w-4" />
-            <span className="text-xs font-semibold">Failed</span>
-          </div>
-        );
-      default:
-        return (
-          <div className="flex items-center gap-1 text-yellow-600">
-            <Clock className="h-4 w-4" />
-            <span className="text-xs font-semibold">Pending</span>
-          </div>
-        );
+  const { searchTerm, setSearchTerm, filteredItems: searchedSettlements } = useSearch(
+    settlements,
+    (settlement, term) => {
+      const lowerTerm = term.toLowerCase();
+      return (
+        settlement.settlementId.toLowerCase().includes(lowerTerm) ||
+        settlement.destination.toLowerCase().includes(lowerTerm)
+      );
     }
-  };
+  );
+
+  const { filterValue: statusFilter, setFilterValue: setStatusFilter, filteredItems: filteredSettlements } = useFilter(
+    searchedSettlements,
+    (settlement, status) => settlement.status === status,
+    'all'
+  );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading settlements...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading settlements..." />;
   }
 
   return (
@@ -115,35 +71,14 @@ const Settlements: React.FC = () => {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by settlement ID or destination..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="processing">Processing</option>
-                <option value="completed">Completed</option>
-                <option value="failed">Failed</option>
-              </select>
-              <Button variant="outline">
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          <FilterBar
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search by settlement ID or destination..."
+            filterValue={statusFilter}
+            onFilterChange={setStatusFilter}
+            filterOptions={SETTLEMENT_STATUS_OPTIONS}
+          />
         </CardContent>
       </Card>
 
@@ -157,12 +92,13 @@ const Settlements: React.FC = () => {
         </CardHeader>
         <CardContent>
           {filteredSettlements.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                {settlements.length === 0 
+            <EmptyState
+              message={
+                settlements.length === 0 
                   ? "No settlements yet" 
-                  : "No settlements match your filters"}
-              </p>
+                  : "No settlements match your filters"
+              }
+            >
               {settlements.length === 0 && (
                 <Button asChild>
                   <Link to="/settlements/new">
@@ -171,7 +107,7 @@ const Settlements: React.FC = () => {
                   </Link>
                 </Button>
               )}
-            </div>
+            </EmptyState>
           ) : (
             <div className="space-y-4">
               {filteredSettlements.map((settlement) => (
@@ -184,7 +120,7 @@ const Settlements: React.FC = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="font-mono font-semibold">{settlement.settlementId}</h3>
-                        {getStatusBadge(settlement.status)}
+                        <StatusBadge status={settlement.status} />
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="capitalize">{settlement.method.replace('_', ' ')}</span>
@@ -219,4 +155,3 @@ const Settlements: React.FC = () => {
 };
 
 export default Settlements;
-
