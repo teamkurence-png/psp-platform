@@ -8,6 +8,7 @@ import Button from '../components/ui/Button';
 import StatusBadge from '../components/ui/StatusBadge';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorAlert from '../components/ui/ErrorAlert';
+import Pagination from '../components/ui/Pagination';
 import { Eye, Search, Filter, FileText, CheckCircle, XCircle, Clock, X } from 'lucide-react';
 import { formatCurrency, formatDate } from '../lib/utils';
 interface UpdateStatusModalProps {
@@ -114,32 +115,42 @@ const ManualConfirmations: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // Fetch payment requests
-  const { data: paymentRequests, isLoading, error } = useQuery({
-    queryKey: ['admin-payment-requests', statusFilter],
+  const { data: paymentData, isLoading, error } = useQuery({
+    queryKey: ['admin-payment-requests', statusFilter, currentPage],
     queryFn: async () => {
       try {
-        const response = await paymentRequestService.getAll();
-        const requests = response.data.data.paymentRequests || [];
+        const response = await paymentRequestService.getAll({
+          page: currentPage,
+          limit: itemsPerPage,
+        });
         
-        // Apply status filter
-        if (statusFilter === 'all') {
-          return requests;
-        } else if (statusFilter === 'pending') {
-          // Pending means sent or viewed (awaiting action)
-          return requests.filter((req: any) => 
+        const requests = response.data.data.paymentRequests || [];
+        const pagination = response.data.data.pagination;
+        
+        // Apply status filter (client-side for now)
+        let filtered = requests;
+        if (statusFilter === 'pending') {
+          filtered = requests.filter((req: any) => 
             req.status === 'sent' || req.status === 'viewed'
           );
-        } else {
-          return requests.filter((req: any) => req.status === statusFilter);
+        } else if (statusFilter !== 'all') {
+          filtered = requests.filter((req: any) => req.status === statusFilter);
         }
+        
+        return { requests: filtered, pagination };
       } catch (error) {
         console.error('Failed to fetch payment requests:', error);
-        return [];
+        return { requests: [], pagination: null };
       }
     },
   });
+
+  const paymentRequests = paymentData?.requests || [];
+  const pagination = paymentData?.pagination;
 
   // Update status mutation
   const updateStatusMutation = useMutation({
@@ -149,6 +160,8 @@ const ManualConfirmations: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-payment-requests'] });
       setSelectedRequest(null);
+      // Reset to first page after status update
+      setCurrentPage(1);
     },
     onError: (error: any) => {
       alert(error.response?.data?.error || 'Failed to update status');
@@ -196,7 +209,10 @@ const ManualConfirmations: React.FC = () => {
           <div className="flex gap-2">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1); // Reset to first page when filter changes
+              }}
               className="px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background"
             >
               <option value="pending">Pending (Sent/Viewed)</option>
@@ -356,6 +372,21 @@ const ManualConfirmations: React.FC = () => {
           </table>
         </div>
       </Card>
+
+      {/* Pagination */}
+      {pagination && (
+        <Card>
+          <CardContent className="pt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={pagination.pages}
+              totalItems={pagination.total}
+              itemsPerPage={pagination.limit}
+              onPageChange={setCurrentPage}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Update Status Modal */}
       {selectedRequest && (

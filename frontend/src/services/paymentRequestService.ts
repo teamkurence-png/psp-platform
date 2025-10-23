@@ -43,8 +43,18 @@ export interface CreatePaymentRequestDto {
 }
 
 export const paymentRequestService = {
-  getAll: () => {
-    return api.get<{ data: { paymentRequests: PaymentRequest[] } }>('/payment-requests');
+  getAll: (params?: { page?: number; limit?: number; status?: string }) => {
+    return api.get<{ 
+      data: { 
+        paymentRequests: PaymentRequest[];
+        pagination?: {
+          page: number;
+          limit: number;
+          total: number;
+          pages: number;
+        };
+      } 
+    }>('/payment-requests', { params });
   },
 
   getById: (id: string) => {
