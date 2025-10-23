@@ -38,6 +38,7 @@ export interface IPaymentRequest extends Document {
   status: PaymentRequestStatus;
   referenceCode?: string;
   checkoutUrl?: string;
+  bankAccountId?: mongoose.Types.ObjectId;
   bankDetails?: IBankDetails;
   cardSettings?: ICardSettings;
   viewedAt?: Date;
@@ -103,6 +104,10 @@ const paymentRequestSchema = new Schema<IPaymentRequest>(
     },
     referenceCode: String,
     checkoutUrl: String,
+    bankAccountId: {
+      type: Schema.Types.ObjectId,
+      ref: 'BankAccount',
+    },
     bankDetails: bankDetailsSchema,
     cardSettings: cardSettingsSchema,
     viewedAt: Date,

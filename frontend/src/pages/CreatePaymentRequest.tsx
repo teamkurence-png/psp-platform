@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -6,9 +6,9 @@ import Input from '../components/ui/Input';
 import Label from '../components/ui/Label';
 import ErrorAlert from '../components/ui/ErrorAlert';
 import { ArrowLeft } from 'lucide-react';
-import { PaymentMethod, BankRail } from '../types/index';
+import { PaymentMethod, BankRail, type BankAccount } from '../types/index';
 import { useForm } from '../hooks';
-import { paymentRequestService } from '../services';
+import { paymentRequestService, bankAccountService } from '../services';
 
 interface PaymentRequestFormData {
   amount: string;
@@ -21,12 +21,14 @@ interface PaymentRequestFormData {
   customerPhone: string;
   customerCountry: string;
   paymentMethods: PaymentMethod[];
+  bankAccountId: string;
   bankRails: BankRail[];
   require3DS: boolean;
 }
 
 const CreatePaymentRequest: React.FC = () => {
   const navigate = useNavigate();
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   
   const {
     values: formData,
@@ -44,11 +46,25 @@ const CreatePaymentRequest: React.FC = () => {
     customerPhone: '',
     customerCountry: '',
     paymentMethods: [],
+    bankAccountId: '',
     bankRails: [],
     require3DS: false,
   });
 
   const [error, setError] = React.useState('');
+
+  // Fetch bank accounts on component mount
+  useEffect(() => {
+    const fetchBankAccounts = async () => {
+      try {
+        const response = await bankAccountService.getAll();
+        setBankAccounts(response.data || []);
+      } catch (err) {
+        console.error('Failed to fetch bank accounts:', err);
+      }
+    };
+    fetchBankAccounts();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +85,9 @@ const CreatePaymentRequest: React.FC = () => {
           billingCountry: formData.customerCountry,
         },
         paymentMethods: formData.paymentMethods,
+        bankAccountId: formData.paymentMethods.includes(PaymentMethod.BANK_WIRE) && formData.bankAccountId
+          ? formData.bankAccountId
+          : undefined,
         bankDetails: formData.paymentMethods.includes(PaymentMethod.BANK_WIRE)
           ? { rails: formData.bankRails }
           : undefined,
@@ -246,20 +265,45 @@ const CreatePaymentRequest: React.FC = () => {
               </label>
 
               {formData.paymentMethods.includes(PaymentMethod.BANK_WIRE) && (
-                <div className="ml-7 space-y-2 border-l-2 pl-4">
-                  <Label>Select Rails</Label>
-                  <div className="space-y-2">
-                    {Object.values(BankRail).map((rail) => (
-                      <label key={rail} className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.bankRails.includes(rail)}
-                          onChange={() => toggleBankRail(rail)}
-                          className="h-4 w-4 rounded border-gray-300"
-                        />
-                        <span className="text-sm uppercase">{rail}</span>
-                      </label>
-                    ))}
+                <div className="ml-7 space-y-3 border-l-2 pl-4">
+                  <div>
+                    <Label htmlFor="bankAccount">Select Bank Account *</Label>
+                    <select
+                      id="bankAccount"
+                      value={formData.bankAccountId}
+                      onChange={(e) => setFieldValue('bankAccountId', e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
+                      required={formData.paymentMethods.includes(PaymentMethod.BANK_WIRE)}
+                    >
+                      <option value="">-- Select a bank account --</option>
+                      {bankAccounts.map((bank) => (
+                        <option key={bank._id} value={bank._id}>
+                          {bank.bankName} - {bank.accountNumber}
+                        </option>
+                      ))}
+                    </select>
+                    {bankAccounts.length === 0 && (
+                      <p className="text-xs text-red-600 mt-1">
+                        No bank accounts available. Please contact admin to add bank accounts.
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label>Select Rails</Label>
+                    <div className="space-y-2">
+                      {Object.values(BankRail).map((rail) => (
+                        <label key={rail} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.bankRails.includes(rail)}
+                            onChange={() => toggleBankRail(rail)}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                          <span className="text-sm uppercase">{rail}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}

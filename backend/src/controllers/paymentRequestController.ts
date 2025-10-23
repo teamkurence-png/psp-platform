@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { z } from 'zod';
 import { PaymentRequest } from '../models/PaymentRequest.js';
 import { Merchant } from '../models/Merchant.js';
+import { BankAccount } from '../models/BankAccount.js';
 import { AuthRequest, UserRole, PaymentMethod, BankRail } from '../types/index.js';
 import { generateReferenceCode, generateCheckoutUrl } from '../utils/generators.js';
 
@@ -20,6 +21,7 @@ const createPaymentRequestSchema = z.object({
     billingCountry: z.string().optional(),
   }).optional(),
   paymentMethods: z.array(z.enum([PaymentMethod.BANK_WIRE, PaymentMethod.CARD])),
+  bankAccountId: z.string().optional(),
   bankDetails: z.object({
     rails: z.array(z.enum([BankRail.SEPA, BankRail.SWIFT, BankRail.LOCAL])),
     beneficiaryName: z.string().optional(),
@@ -54,14 +56,55 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
 
     // Generate reference code for bank wire
     let referenceCode;
+    let bankDetails;
     if (validatedData.paymentMethods.includes(PaymentMethod.BANK_WIRE)) {
       referenceCode = generateReferenceCode();
+
+      // If bankAccountId is provided, fetch the bank account details
+      if (validatedData.bankAccountId) {
+        const bankAccount = await BankAccount.findById(validatedData.bankAccountId);
+        
+        if (!bankAccount) {
+          res.status(400).json({ success: false, error: 'Selected bank account not found' });
+          return;
+        }
+
+        if (!bankAccount.isActive) {
+          res.status(400).json({ success: false, error: 'Selected bank account is not active' });
+          return;
+        }
+
+        // Populate bankDetails from the selected bank account
+        bankDetails = {
+          rails: validatedData.bankDetails?.rails || [],
+          beneficiaryName: bankAccount.beneficiaryName,
+          iban: bankAccount.iban,
+          accountNumber: bankAccount.accountNumber,
+          routingNumber: bankAccount.routingNumber,
+          swiftCode: bankAccount.swiftCode,
+          bankName: bankAccount.bankName,
+          bankAddress: bankAccount.bankAddress,
+        };
+      } else {
+        // Use manually provided bank details (backward compatibility)
+        bankDetails = validatedData.bankDetails;
+      }
     }
 
     // Create payment request
     const paymentRequest = await PaymentRequest.create({
       merchantId: merchant._id,
-      ...validatedData,
+      amount: validatedData.amount,
+      currency: validatedData.currency,
+      description: validatedData.description,
+      invoiceNumber: validatedData.invoiceNumber,
+      dueDate: validatedData.dueDate,
+      customerReference: validatedData.customerReference,
+      customerInfo: validatedData.customerInfo,
+      paymentMethods: validatedData.paymentMethods,
+      bankAccountId: validatedData.bankAccountId,
+      bankDetails,
+      cardSettings: validatedData.cardSettings,
       referenceCode,
       checkoutUrl: '', // Will be set after creation
     });

@@ -21,22 +21,9 @@ export const getSettings = async (req: AuthRequest, res: Response): Promise<void
       query.category = category;
     }
 
-    const settings = await Settings.find(query);
+    const settings = await Settings.find(query).sort({ category: 1, key: 1 });
 
-    // Group settings by category
-    const grouped = settings.reduce((acc: any, setting) => {
-      if (!acc[setting.category]) {
-        acc[setting.category] = {};
-      }
-      acc[setting.category][setting.key] = {
-        value: setting.value,
-        description: setting.description,
-        encrypted: setting.encrypted,
-      };
-      return acc;
-    }, {});
-
-    res.json({ success: true, data: grouped });
+    res.json({ success: true, data: settings });
   } catch (error) {
     console.error('Get settings error:', error);
     res.status(500).json({ success: false, error: 'Failed to get settings' });
@@ -62,11 +49,15 @@ export const updateSetting = async (req: AuthRequest, res: Response): Promise<vo
         value: validatedData.value,
         category: req.body.category || 'general',
         description: req.body.description,
-        encrypted: req.body.encrypted || false,
+        isEncrypted: req.body.isEncrypted || false,
+        merchantId: req.user?.merchantId,
       });
     } else {
       // Update existing setting
       setting.value = validatedData.value;
+      if (req.body.category) setting.category = req.body.category;
+      if (req.body.description) setting.description = req.body.description;
+      if (typeof req.body.isEncrypted === 'boolean') setting.isEncrypted = req.body.isEncrypted;
       await setting.save();
     }
 

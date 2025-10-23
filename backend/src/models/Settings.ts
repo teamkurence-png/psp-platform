@@ -3,9 +3,10 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface ISettings extends Document {
   key: string;
   value: any;
-  encrypted: boolean;
+  isEncrypted: boolean;
   category: 'gateway' | 'bank' | 'crypto' | 'notification' | 'general';
   description?: string;
+  merchantId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,7 +22,7 @@ const settingsSchema = new Schema<ISettings>(
       type: Schema.Types.Mixed,
       required: true,
     },
-    encrypted: {
+    isEncrypted: {
       type: Boolean,
       default: false,
     },
@@ -31,6 +32,10 @@ const settingsSchema = new Schema<ISettings>(
       default: 'general',
     },
     description: String,
+    merchantId: {
+      type: String,
+      ref: 'Merchant',
+    },
   },
   {
     timestamps: true,

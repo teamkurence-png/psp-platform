@@ -423,3 +423,97 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
   }
 };
 
+// Admin: Get all users
+export const getUsers = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const users = await User.find({}, '-password -refreshToken -twoFactorSecret')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ success: false, error: 'Failed to get users' });
+  }
+};
+
+// Admin: Update user role
+export const updateUserRole = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body;
+
+    if (!Object.values(UserRole).includes(role)) {
+      res.status(400).json({ success: false, error: 'Invalid role' });
+      return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    console.error('Update user role error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update user role' });
+  }
+};
+
+// Admin: Deactivate user
+export const deactivateUser = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    user.isActive = false;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'User deactivated successfully',
+    });
+  } catch (error) {
+    console.error('Deactivate user error:', error);
+    res.status(500).json({ success: false, error: 'Failed to deactivate user' });
+  }
+};
+
+// Admin: Activate user
+export const activateUser = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    user.isActive = true;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'User activated successfully',
+    });
+  } catch (error) {
+    console.error('Activate user error:', error);
+    res.status(500).json({ success: false, error: 'Failed to activate user' });
+  }
+};
+

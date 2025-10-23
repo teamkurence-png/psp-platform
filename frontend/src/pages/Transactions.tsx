@@ -34,7 +34,7 @@ const Transactions: React.FC = () => {
       try {
         setLoading(true);
         const response = await api.get('/transactions');
-        setTransactions(response.data.data || []);
+        setTransactions(response.data.data?.transactions || []);
       } catch (error) {
         console.error('Failed to fetch transactions:', error);
         setTransactions([]);

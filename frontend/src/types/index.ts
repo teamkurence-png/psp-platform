@@ -243,3 +243,35 @@ export interface Alert {
   createdAt: string;
 }
 
+export interface BankAccount {
+  _id: string;
+  bankName: string;
+  accountNumber: string;
+  routingNumber?: string;
+  swiftCode?: string;
+  iban?: string;
+  bankAddress?: string;
+  beneficiaryName?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Withdrawal {
+  _id: string;
+  merchantId: string;
+  asset: CryptoAsset;
+  network: string;
+  address: string;
+  amount: number;
+  fee: number;
+  netAmount: number;
+  status: WithdrawalStatus;
+  txHash?: string;
+  confirmations?: number;
+  explorerUrl?: string;
+  failureReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+

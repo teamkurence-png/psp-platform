@@ -48,7 +48,10 @@ export const listTransactions = async (req: AuthRequest, res: Response): Promise
 
     res.json({
       success: true,
-      data: transactions,
+      data: {
+        transactions,
+        total,
+      },
       pagination: {
         page: Number(page),
         limit: Number(limit),

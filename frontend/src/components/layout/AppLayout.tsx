@@ -13,8 +13,10 @@ import {
   X,
   Bitcoin,
   UserCheck,
+  Shield,
 } from 'lucide-react';
 import Button from '../ui/Button';
+import NotificationBell from '../ui/NotificationBell';
 
 const AppLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -27,7 +29,8 @@ const AppLayout: React.FC = () => {
     navigate('/login');
   };
 
-  const navigation = [
+  // Build navigation based on user role
+  const baseNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Payment Requests', href: '/payment-requests', icon: FileText },
     { name: 'Transactions', href: '/transactions', icon: CreditCard },
@@ -35,8 +38,20 @@ const AppLayout: React.FC = () => {
     { name: 'Balances', href: '/balances', icon: Wallet },
     { name: 'Crypto Withdrawals', href: '/withdrawals', icon: Bitcoin },
     { name: 'Customers', href: '/customers', icon: Users },
-    { name: 'Settings', href: '/settings', icon: Settings },
   ];
+
+  // Add Ops Review Queue for ops and admin users only
+  const navigation = user?.role === 'ops' || user?.role === 'admin'
+    ? [
+        ...baseNavigation.slice(0, 4),
+        { name: 'Ops Review Queue', href: '/review-queue', icon: Shield },
+        ...baseNavigation.slice(4),
+        { name: 'Settings', href: '/settings', icon: Settings },
+      ]
+    : [
+        ...baseNavigation,
+        { name: 'Settings', href: '/settings', icon: Settings },
+      ];
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -127,15 +142,18 @@ const AppLayout: React.FC = () => {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top bar */}
-        <div className="sticky top-0 z-10 flex h-16 bg-white border-b lg:hidden">
+        <div className="sticky top-0 z-10 flex h-16 bg-white border-b">
           <button
-            className="px-4 text-gray-500"
+            className="px-4 text-gray-500 lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-6 w-6" />
           </button>
           <div className="flex flex-1 items-center justify-between px-4">
-            <span className="text-xl font-bold text-primary">PSP Platform</span>
+            <span className="text-xl font-bold text-primary lg:hidden">PSP Platform</span>
+            <div className="ml-auto">
+              <NotificationBell />
+            </div>
           </div>
         </div>
 

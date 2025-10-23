@@ -20,6 +20,11 @@ import CreateWithdrawal from './pages/CreateWithdrawal';
 import Customers from './pages/Customers';
 import CustomerDetail from './pages/CustomerDetail';
 import PublicPayment from './pages/PublicPayment';
+import ManualConfirmations from './pages/ManualConfirmations';
+import OpsReviewQueue from './pages/OpsReviewQueue';
+import Settings from './pages/Settings';
+import AdminUsers from './pages/AdminUsers';
+import BankAccounts from './pages/BankAccounts';
 
 const queryClient = new QueryClient();
 
@@ -72,7 +77,8 @@ function App() {
               <Route path="payment-requests/:id" element={<PaymentRequestDetail />} />
               <Route path="transactions" element={<Transactions />} />
               <Route path="transactions/:id" element={<TransactionDetail />} />
-              <Route path="confirmations" element={<div className="text-2xl font-bold">Manual Confirmations - Coming Soon</div>} />
+              <Route path="confirmations" element={<ManualConfirmations />} />
+              <Route path="review-queue" element={<OpsReviewQueue />} />
               <Route path="balances" element={<Balances />} />
               <Route path="settlements" element={<Settlements />} />
               <Route path="settlements/new" element={<CreateSettlement />} />
@@ -80,7 +86,9 @@ function App() {
               <Route path="withdrawals/new" element={<CreateWithdrawal />} />
               <Route path="customers" element={<Customers />} />
               <Route path="customers/:id" element={<CustomerDetail />} />
-              <Route path="settings" element={<div className="text-2xl font-bold">Settings - Coming Soon</div>} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="settings/users" element={<AdminUsers />} />
+              <Route path="settings/bank-accounts" element={<BankAccounts />} />
               <Route path="settings/profile" element={<MerchantProfile />} />
               <Route path="settings/documents" element={<MerchantDocuments />} />
             </Route>

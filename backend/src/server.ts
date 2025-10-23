@@ -19,6 +19,7 @@ import withdrawalRoutes from './routes/withdrawals.js';
 import customerRoutes from './routes/customers.js';
 import settingsRoutes from './routes/settings.js';
 import transactionRoutes from './routes/transactions.js';
+import bankAccountRoutes from './routes/bankAccounts.js';
 
 // Load environment variables
 dotenv.config();
@@ -32,7 +33,13 @@ const io = new Server(httpServer, {
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true,
+    methods: ['GET', 'POST'],
   },
+  transports: ['websocket', 'polling'],
+  allowEIO3: true,
+  path: '/socket.io/',
+  connectTimeout: 45000,
+  pingTimeout: 30000,
 });
 
 // Middleware
@@ -64,18 +71,27 @@ app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/bank-accounts', bankAccountRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
   socket.on('join', (userId: string) => {
+    if (!userId) {
+      console.warn('Join attempt with no userId');
+      return;
+    }
     socket.join(`user:${userId}`);
     console.log(`User ${userId} joined their room`);
   });
 
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+  socket.on('disconnect', (reason) => {
+    console.log('Client disconnected:', socket.id, 'reason:', reason);
+  });
+
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
   });
 });
 

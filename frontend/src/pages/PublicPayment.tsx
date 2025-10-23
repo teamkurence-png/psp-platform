@@ -79,7 +79,7 @@ const PublicPayment: React.FC = () => {
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">Payment Request Not Found</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Payment Request Not Found</h2>
             <p className="text-muted-foreground">
               This payment request may have expired or been cancelled.
             </p>
@@ -95,7 +95,7 @@ const PublicPayment: React.FC = () => {
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
             <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Payment Completed</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Completed</h2>
             <p className="text-muted-foreground mb-4">
               This payment request has already been paid.
             </p>
@@ -115,7 +115,7 @@ const PublicPayment: React.FC = () => {
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Payment Request {paymentRequest.status}</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Request {paymentRequest.status}</h2>
             <p className="text-muted-foreground">
               This payment request is no longer active.
             </p>
@@ -166,7 +166,7 @@ const PublicPayment: React.FC = () => {
                 {paymentRequest.bankDetails.rails && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Available Rails</p>
-                    <p className="font-semibold">
+                    <p className="font-semibold text-gray-900">
                       {paymentRequest.bankDetails.rails.map(rail => getRailLabel(rail)).join(', ')}
                     </p>
                   </div>
@@ -174,14 +174,14 @@ const PublicPayment: React.FC = () => {
                 {paymentRequest.bankDetails.beneficiaryName && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Beneficiary Name</p>
-                    <p className="font-semibold">{paymentRequest.bankDetails.beneficiaryName}</p>
+                    <p className="font-semibold text-gray-900">{paymentRequest.bankDetails.beneficiaryName}</p>
                   </div>
                 )}
                 {paymentRequest.bankDetails.iban && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">IBAN</p>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono text-sm">{paymentRequest.bankDetails.iban}</p>
+                      <p className="font-mono text-sm text-gray-900">{paymentRequest.bankDetails.iban}</p>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -196,7 +196,7 @@ const PublicPayment: React.FC = () => {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Account Number</p>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono text-sm">{paymentRequest.bankDetails.accountNumber}</p>
+                      <p className="font-mono text-sm text-gray-900">{paymentRequest.bankDetails.accountNumber}</p>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -210,13 +210,13 @@ const PublicPayment: React.FC = () => {
                 {paymentRequest.bankDetails.swiftCode && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">SWIFT/BIC</p>
-                    <p className="font-mono text-sm">{paymentRequest.bankDetails.swiftCode}</p>
+                    <p className="font-mono text-sm text-gray-900">{paymentRequest.bankDetails.swiftCode}</p>
                   </div>
                 )}
                 {paymentRequest.bankDetails.bankName && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
-                    <p className="font-semibold">{paymentRequest.bankDetails.bankName}</p>
+                    <p className="font-semibold text-gray-900">{paymentRequest.bankDetails.bankName}</p>
                   </div>
                 )}
               </div>
@@ -293,13 +293,13 @@ const PublicPayment: React.FC = () => {
                 {paymentRequest.customerInfo.name && (
                   <div>
                     <p className="text-muted-foreground">Name</p>
-                    <p className="font-medium">{paymentRequest.customerInfo.name}</p>
+                    <p className="font-medium text-gray-900">{paymentRequest.customerInfo.name}</p>
                   </div>
                 )}
                 {paymentRequest.customerInfo.email && (
                   <div>
                     <p className="text-muted-foreground">Email</p>
-                    <p className="font-medium">{paymentRequest.customerInfo.email}</p>
+                    <p className="font-medium text-gray-900">{paymentRequest.customerInfo.email}</p>
                   </div>
                 )}
               </div>
