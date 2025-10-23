@@ -11,3 +11,4 @@ export function getAssetLabel(asset: CryptoAsset): string {
   return CRYPTO_ASSET_LABELS[asset] || asset;
 }
 
+

@@ -89,3 +89,4 @@ function detectStatusType(status: string): StatusType {
 
 export default StatusBadge;
 
+

@@ -37,3 +37,4 @@ export const CUSTOMER_STATUS_OPTIONS = [
   { value: 'blocked', label: 'Blocked' },
 ];
 
+
