@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { paymentRequestService } from '../services';
 import { PaymentRequestStatus } from '../types';
-import { Card } from '../components/ui/Card';
+import { Card, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import StatusBadge from '../components/ui/StatusBadge';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -214,31 +214,35 @@ const ManualConfirmations: React.FC = () => {
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Pending Payment Requests</p>
-              <p className="text-2xl font-bold text-gray-900">{paymentRequests?.length || 0}</p>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Pending Payment Requests</p>
+                <p className="text-3xl font-bold text-gray-900">{paymentRequests?.length || 0}</p>
+              </div>
+              <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <FileText className="h-6 w-6 text-yellow-600" />
+              </div>
             </div>
-            <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
-              <FileText className="h-6 w-6 text-yellow-600" />
-            </div>
-          </div>
+          </CardContent>
         </Card>
         <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Value</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {formatCurrency(
-                  paymentRequests?.reduce((sum: number, req: any) => sum + req.amount, 0) || 0,
-                  'USD'
-                )}
-              </p>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-600 mb-1">Total Value</p>
+                <p className="text-2xl font-bold text-gray-900 truncate">
+                  {formatCurrency(
+                    paymentRequests?.reduce((sum: number, req: any) => sum + req.amount, 0) || 0,
+                    'USD'
+                  )}
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 ml-4">
+                <Filter className="h-6 w-6 text-green-600" />
+              </div>
             </div>
-            <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
-              <Filter className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
+          </CardContent>
         </Card>
       </div>
 
