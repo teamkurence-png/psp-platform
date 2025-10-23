@@ -9,7 +9,6 @@ import { formatCurrency, formatDateTime } from '../lib/utils';
 import { 
   ArrowLeft, 
   Copy, 
-  ExternalLink, 
   CreditCard, 
   Building2, 
   CheckCircle, 
@@ -22,7 +21,6 @@ const PaymentRequestDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
-  const [copying, setCopying] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -33,8 +31,8 @@ const PaymentRequestDetail: React.FC = () => {
   const fetchPaymentRequest = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/api/payment-requests/${id}`);
-      setPaymentRequest(response.data);
+      const response = await api.get(`/payment-requests/${id}`);
+      setPaymentRequest(response.data.data);
     } catch (error) {
       console.error('Failed to fetch payment request:', error);
       alert('Failed to load payment request');
@@ -45,14 +43,11 @@ const PaymentRequestDetail: React.FC = () => {
 
   const handleCopy = async (text: string, label: string) => {
     try {
-      setCopying(true);
       await navigator.clipboard.writeText(text);
       alert(`${label} copied to clipboard!`);
     } catch (error) {
       console.error('Failed to copy:', error);
       alert('Failed to copy to clipboard');
-    } finally {
-      setTimeout(() => setCopying(false), 1000);
     }
   };
 
@@ -62,7 +57,7 @@ const PaymentRequestDetail: React.FC = () => {
     }
 
     try {
-      await api.post(`/api/payment-requests/${id}/cancel`);
+      await api.post(`/payment-requests/${id}/cancel`);
       alert('Payment request cancelled');
       await fetchPaymentRequest();
     } catch (error: any) {
@@ -145,9 +140,6 @@ const PaymentRequestDetail: React.FC = () => {
       </div>
     );
   }
-
-  const paymentLink = paymentRequest.checkoutUrl || 
-    `${window.location.origin}/pay/${paymentRequest._id}`;
 
   return (
     <div className="space-y-6">
@@ -403,52 +395,6 @@ const PaymentRequestDetail: React.FC = () => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Payment Link */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Link</CardTitle>
-              <CardDescription>Share this link with your customer</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-3 bg-muted rounded-md break-all text-sm">
-                {paymentLink}
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button
-                  onClick={() => handleCopy(paymentLink, 'Payment link')}
-                  disabled={copying}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy Link
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => window.open(paymentLink, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Open Link
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* QR Code */}
-          <Card>
-            <CardHeader>
-              <CardTitle>QR Code</CardTitle>
-              <CardDescription>Customer can scan to pay</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-center p-4 bg-white border-2 border-gray-200 rounded-lg">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentLink)}`}
-                  alt="Payment QR Code"
-                  className="w-48 h-48"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Actions */}
           {paymentRequest.status === PaymentRequestStatus.SENT && (
             <Card>

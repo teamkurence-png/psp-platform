@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { Transaction } from '../models/Transaction.js';
 import { Balance } from '../models/Balance.js';
-import { Merchant } from '../models/Merchant.js';
 import { AuthRequest, UserRole, TransactionStatus, MerchantConfirmation } from '../types/index.js';
 
 export const listTransactions = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -23,14 +22,10 @@ export const listTransactions = async (req: AuthRequest, res: Response): Promise
 
     // For merchants, only show their own transactions
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant) {
-        res.status(404).json({ success: false, error: 'Merchant not found' });
-        return;
-      }
-      query.merchantId = merchant._id;
+      query.userId = req.user.id;
     } else if (req.query.merchantId) {
-      query.merchantId = req.query.merchantId;
+      // For ops/admin, allow filtering by merchantId (userId)
+      query.userId = req.query.merchantId;
     }
 
     // Apply filters
@@ -39,7 +34,7 @@ export const listTransactions = async (req: AuthRequest, res: Response): Promise
     if (merchantConfirmation) query.merchantConfirmation = merchantConfirmation;
 
     const transactions = await Transaction.find(query)
-      .populate('merchantId', 'legalName supportEmail')
+      .populate('userId', 'legalName supportEmail email')
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit))
       .sort({ createdAt: -1 });
@@ -74,7 +69,7 @@ export const getTransaction = async (req: AuthRequest, res: Response): Promise<v
 
     const { id } = req.params;
 
-    const transaction = await Transaction.findById(id).populate('merchantId', 'legalName supportEmail');
+    const transaction = await Transaction.findById(id).populate('userId', 'legalName supportEmail email');
 
     if (!transaction) {
       res.status(404).json({ success: false, error: 'Transaction not found' });
@@ -83,8 +78,7 @@ export const getTransaction = async (req: AuthRequest, res: Response): Promise<v
 
     // Check authorization
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant || transaction.merchantId._id.toString() !== merchant._id.toString()) {
+      if (transaction.userId._id.toString() !== req.user.id) {
         res.status(403).json({ success: false, error: 'Forbidden' });
         return;
       }
@@ -114,8 +108,7 @@ export const confirmTransaction = async (req: AuthRequest, res: Response): Promi
     }
 
     // Check ownership
-    const merchant = await Merchant.findOne({ userId: req.user.id });
-    if (!merchant || transaction.merchantId.toString() !== merchant._id.toString()) {
+    if (transaction.userId.toString() !== req.user.id) {
       res.status(403).json({ success: false, error: 'Forbidden' });
       return;
     }
@@ -188,7 +181,7 @@ export const reviewTransaction = async (req: AuthRequest, res: Response): Promis
 
     // Update balance if approved
     if (status === TransactionStatus.APPROVED) {
-      const balance = await Balance.findOne({ merchantId: transaction.merchantId });
+      const balance = await Balance.findOne({ userId: transaction.userId });
       if (balance) {
         balance.pending += transaction.net;
         await balance.save();

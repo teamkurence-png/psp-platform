@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { Transaction } from '../models/Transaction.js';
 import { Balance } from '../models/Balance.js';
-import { Merchant } from '../models/Merchant.js';
 import { AuthRequest, UserRole, TransactionStatus } from '../types/index.js';
 
 export const getDashboardStats = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -11,14 +10,9 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    let merchantId;
+    let userId;
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant) {
-        res.status(404).json({ success: false, error: 'Merchant not found' });
-        return;
-      }
-      merchantId = merchant._id;
+      userId = req.user.id;
     }
 
     const { startDate: startDateStr, endDate: endDateStr } = req.query;
@@ -50,8 +44,8 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
     const query: any = {
       createdAt: { $gte: startDate, $lte: endDate },
     };
-    if (merchantId) {
-      query.merchantId = merchantId;
+    if (userId) {
+      query.userId = userId;
     }
 
     // Get volume
@@ -81,18 +75,18 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
 
     // Get pending reviews
     const pendingReviews = await Transaction.countDocuments({
-      ...(merchantId ? { merchantId } : {}),
+      ...(userId ? { userId } : {}),
       platformStatus: TransactionStatus.PENDING_REVIEW,
     });
 
     // Get balance
     let balance = null;
-    if (merchantId) {
-      balance = await Balance.findOne({ merchantId });
+    if (userId) {
+      balance = await Balance.findOne({ userId });
       if (!balance) {
         // Create default balance if doesn't exist
         balance = await Balance.create({
-          merchantId,
+          userId,
           available: 0,
           pending: 0,
           reserve: 0,
@@ -128,21 +122,16 @@ export const getDashboardAlerts = async (req: AuthRequest, res: Response): Promi
       return;
     }
 
-    let merchantId;
+    let userId;
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant) {
-        res.status(404).json({ success: false, error: 'Merchant not found' });
-        return;
-      }
-      merchantId = merchant._id;
+      userId = req.user.id;
     }
 
     const alerts = [];
 
     // Check for high-risk transactions
     const highRiskCount = await Transaction.countDocuments({
-      ...(merchantId ? { merchantId } : {}),
+      ...(userId ? { userId } : {}),
       riskScore: { $gte: 70 },
       platformStatus: TransactionStatus.PENDING_REVIEW,
     });
@@ -156,9 +145,9 @@ export const getDashboardAlerts = async (req: AuthRequest, res: Response): Promi
     }
 
     // Check for pending merchant confirmations
-    if (merchantId) {
+    if (userId) {
       const pendingConfirmations = await Transaction.countDocuments({
-        merchantId,
+        userId,
         merchantConfirmation: 'pending',
       });
 
@@ -171,7 +160,7 @@ export const getDashboardAlerts = async (req: AuthRequest, res: Response): Promi
       }
 
       // Check balance
-      const balance = await Balance.findOne({ merchantId });
+      const balance = await Balance.findOne({ userId });
       if (balance && balance.available > 1000) {
         alerts.push({
           id: 'balance-available',
@@ -195,19 +184,14 @@ export const getRecentTransactions = async (req: AuthRequest, res: Response): Pr
       return;
     }
 
-    let merchantId;
+    let userId;
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant) {
-        res.status(404).json({ success: false, error: 'Merchant not found' });
-        return;
-      }
-      merchantId = merchant._id;
+      userId = req.user.id;
     }
 
     const query: any = {};
-    if (merchantId) {
-      query.merchantId = merchantId;
+    if (userId) {
+      query.userId = userId;
     }
 
     const transactions = await Transaction.find(query)

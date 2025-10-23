@@ -55,6 +55,14 @@ export const paymentRequestService = {
     return api.post<{ data: PaymentRequest }>('/payment-requests', data);
   },
 
+  update: (id: string, data: Partial<PaymentRequest>) => {
+    return api.put<{ data: PaymentRequest }>(`/payment-requests/${id}`, data);
+  },
+
+  updateStatus: (id: string, status: PaymentRequestStatus) => {
+    return api.put<{ data: PaymentRequest }>(`/payment-requests/${id}`, { status });
+  },
+
   cancel: (id: string) => {
     return api.post(`/payment-requests/${id}/cancel`);
   },

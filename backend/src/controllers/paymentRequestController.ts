@@ -1,10 +1,9 @@
 import { Response } from 'express';
 import { z } from 'zod';
 import { PaymentRequest } from '../models/PaymentRequest.js';
-import { Merchant } from '../models/Merchant.js';
 import { BankAccount } from '../models/BankAccount.js';
 import { AuthRequest, UserRole, PaymentMethod, BankRail } from '../types/index.js';
-import { generateReferenceCode, generateCheckoutUrl } from '../utils/generators.js';
+import { generateReferenceCode } from '../utils/generators.js';
 
 // Validation schema
 const createPaymentRequestSchema = z.object({
@@ -12,7 +11,13 @@ const createPaymentRequestSchema = z.object({
   currency: z.string().default('USD'),
   description: z.string().optional(),
   invoiceNumber: z.string().optional(),
-  dueDate: z.string().datetime().optional(),
+  dueDate: z.string().optional().transform((val) => {
+    if (!val) return undefined;
+    // If it's already a datetime string, return as is
+    if (val.includes('T')) return val;
+    // If it's a date string (YYYY-MM-DD), convert to datetime
+    return new Date(val).toISOString();
+  }),
   customerReference: z.string().optional(),
   customerInfo: z.object({
     name: z.string().optional(),
@@ -35,7 +40,11 @@ const createPaymentRequestSchema = z.object({
   cardSettings: z.object({
     allowedBrands: z.array(z.string()).optional(),
     require3DS: z.boolean().default(false),
-    expiryDate: z.string().datetime().optional(),
+    expiryDate: z.string().optional().transform((val) => {
+      if (!val) return undefined;
+      if (val.includes('T')) return val;
+      return new Date(val).toISOString();
+    }),
   }).optional(),
 });
 
@@ -43,12 +52,6 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
   try {
     if (!req.user || req.user.role !== UserRole.MERCHANT) {
       res.status(403).json({ success: false, error: 'Forbidden' });
-      return;
-    }
-
-    const merchant = await Merchant.findOne({ userId: req.user.id });
-    if (!merchant) {
-      res.status(404).json({ success: false, error: 'Merchant not found' });
       return;
     }
 
@@ -93,7 +96,7 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
 
     // Create payment request
     const paymentRequest = await PaymentRequest.create({
-      merchantId: merchant._id,
+      userId: req.user.id,
       amount: validatedData.amount,
       currency: validatedData.currency,
       description: validatedData.description,
@@ -106,14 +109,7 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       bankDetails,
       cardSettings: validatedData.cardSettings,
       referenceCode,
-      checkoutUrl: '', // Will be set after creation
     });
-
-    // Generate checkout URL
-    if (validatedData.paymentMethods.includes(PaymentMethod.CARD)) {
-      paymentRequest.checkoutUrl = generateCheckoutUrl(paymentRequest._id.toString());
-      await paymentRequest.save();
-    }
 
     res.status(201).json({ success: true, data: paymentRequest });
   } catch (error) {
@@ -148,15 +144,10 @@ export const listPaymentRequests = async (req: AuthRequest, res: Response): Prom
 
     // For merchants, only show their own payment requests
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant) {
-        res.status(404).json({ success: false, error: 'Merchant not found' });
-        return;
-      }
-      query.merchantId = merchant._id;
+      query.userId = req.user.id;
     } else if (req.query.merchantId) {
-      // For ops/admin, allow filtering by merchantId
-      query.merchantId = req.query.merchantId;
+      // For ops/admin, allow filtering by merchantId (userId)
+      query.userId = req.query.merchantId;
     }
 
     // Apply filters
@@ -174,7 +165,7 @@ export const listPaymentRequests = async (req: AuthRequest, res: Response): Prom
     }
 
     const paymentRequests = await PaymentRequest.find(query)
-      .populate('merchantId', 'legalName supportEmail')
+      .populate('userId', 'legalName supportEmail email')
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit))
       .sort({ createdAt: -1 });
@@ -203,7 +194,7 @@ export const getPaymentRequest = async (req: AuthRequest, res: Response): Promis
   try {
     const { id } = req.params;
 
-    const paymentRequest = await PaymentRequest.findById(id).populate('merchantId', 'legalName supportEmail');
+    const paymentRequest = await PaymentRequest.findById(id).populate('userId', 'legalName supportEmail email');
     
     if (!paymentRequest) {
       res.status(404).json({ success: false, error: 'Payment request not found' });
@@ -213,8 +204,7 @@ export const getPaymentRequest = async (req: AuthRequest, res: Response): Promis
     // Check authorization
     if (req.user) {
       if (req.user.role === UserRole.MERCHANT) {
-        const merchant = await Merchant.findOne({ userId: req.user.id });
-        if (!merchant || paymentRequest.merchantId._id.toString() !== merchant._id.toString()) {
+        if (paymentRequest.userId._id.toString() !== req.user.id) {
           res.status(403).json({ success: false, error: 'Forbidden' });
           return;
         }
@@ -236,8 +226,8 @@ export const getPaymentRequest = async (req: AuthRequest, res: Response): Promis
 
 export const updatePaymentRequest = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    if (!req.user || req.user.role !== UserRole.MERCHANT) {
-      res.status(403).json({ success: false, error: 'Forbidden' });
+    if (!req.user) {
+      res.status(401).json({ success: false, error: 'Unauthorized' });
       return;
     }
 
@@ -250,20 +240,40 @@ export const updatePaymentRequest = async (req: AuthRequest, res: Response): Pro
       return;
     }
 
-    // Check ownership
-    const merchant = await Merchant.findOne({ userId: req.user.id });
-    if (!merchant || paymentRequest.merchantId.toString() !== merchant._id.toString()) {
+    // Check authorization
+    const isMerchant = req.user.role === UserRole.MERCHANT;
+    const isAdmin = [UserRole.ADMIN, UserRole.OPS, UserRole.FINANCE].includes(req.user.role);
+
+    if (isMerchant) {
+      // Merchants can only update their own payment requests
+      if (paymentRequest.userId.toString() !== req.user.id) {
+        res.status(403).json({ success: false, error: 'Forbidden' });
+        return;
+      }
+      // Merchants can update limited fields
+      const allowedFields = ['description', 'dueDate'];
+      allowedFields.forEach(field => {
+        if (updates[field] !== undefined) {
+          (paymentRequest as any)[field] = updates[field];
+        }
+      });
+    } else if (isAdmin) {
+      // Admins can update status for any payment request
+      const allowedFields = ['status', 'description', 'dueDate'];
+      allowedFields.forEach(field => {
+        if (updates[field] !== undefined) {
+          (paymentRequest as any)[field] = updates[field];
+        }
+      });
+
+      // Set paidAt timestamp when marking as paid
+      if (updates.status === 'paid' && paymentRequest.status !== 'paid') {
+        paymentRequest.paidAt = new Date();
+      }
+    } else {
       res.status(403).json({ success: false, error: 'Forbidden' });
       return;
     }
-
-    // Update allowed fields
-    const allowedFields = ['description', 'dueDate', 'status'];
-    allowedFields.forEach(field => {
-      if (updates[field] !== undefined) {
-        (paymentRequest as any)[field] = updates[field];
-      }
-    });
 
     await paymentRequest.save();
 
@@ -290,8 +300,7 @@ export const cancelPaymentRequest = async (req: AuthRequest, res: Response): Pro
     }
 
     // Check ownership
-    const merchant = await Merchant.findOne({ userId: req.user.id });
-    if (!merchant || paymentRequest.merchantId.toString() !== merchant._id.toString()) {
+    if (paymentRequest.userId.toString() !== req.user.id) {
       res.status(403).json({ success: false, error: 'Forbidden' });
       return;
     }

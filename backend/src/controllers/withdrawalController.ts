@@ -2,9 +2,7 @@ import { Response } from 'express';
 import { z } from 'zod';
 import { Withdrawal } from '../models/Withdrawal.js';
 import { Balance } from '../models/Balance.js';
-import { Merchant } from '../models/Merchant.js';
 import { AuthRequest, UserRole, CryptoAsset, WithdrawalStatus } from '../types/index.js';
-import { getMerchant, getMerchantId } from '../utils/merchant.js';
 
 // Validation schema
 const createWithdrawalSchema = z.object({
@@ -66,14 +64,6 @@ export const createWithdrawal = async (req: AuthRequest, res: Response): Promise
       return;
     }
 
-    const merchant = await getMerchant(req);
-    if (!merchant) {
-      res.status(404).json({ success: false, error: 'Merchant not found' });
-      return;
-    }
-    
-    const merchantId = merchant._id.toString();
-
     const validatedData = createWithdrawalSchema.parse(req.body);
 
     // Validate based on method
@@ -113,7 +103,7 @@ export const createWithdrawal = async (req: AuthRequest, res: Response): Promise
     // Bank transfers have no fee in this implementation
 
     // Check balance
-    const balance = await Balance.findOne({ merchantId: merchant._id });
+    const balance = await Balance.findOne({ userId: req.user.id });
     const totalRequired = validatedData.amount + fee;
 
     if (!balance || balance.available < totalRequired) {
@@ -126,7 +116,7 @@ export const createWithdrawal = async (req: AuthRequest, res: Response): Promise
 
     // Create withdrawal
     const withdrawal = await Withdrawal.create({
-      merchantId: merchant._id,
+      userId: req.user.id,
       method: validatedData.method,
       amount: validatedData.amount,
       currency: validatedData.currency || 'USD',
@@ -186,15 +176,10 @@ export const listWithdrawals = async (req: AuthRequest, res: Response): Promise<
 
     // For merchants, only show their own withdrawals
     if (req.user.role === UserRole.MERCHANT) {
-      const merchantId = await getMerchantId(req);
-      if (!merchantId) {
-        res.status(404).json({ success: false, error: 'Merchant not found' });
-        return;
-      }
-      query.merchantId = merchantId;
+      query.userId = req.user.id;
     } else if (req.query.merchantId) {
-      // For ops/admin, allow filtering by merchantId
-      query.merchantId = req.query.merchantId;
+      // For ops/admin, allow filtering by merchantId (userId)
+      query.userId = req.query.merchantId;
     }
 
     // Apply filters
@@ -203,7 +188,7 @@ export const listWithdrawals = async (req: AuthRequest, res: Response): Promise<
     if (method) query.method = method;
 
     const withdrawals = await Withdrawal.find(query)
-      .populate('merchantId', 'legalName supportEmail')
+      .populate('userId', 'legalName supportEmail email')
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit))
       .sort({ createdAt: -1 });
@@ -237,7 +222,7 @@ export const getWithdrawal = async (req: AuthRequest, res: Response): Promise<vo
 
     const { id } = req.params;
 
-    const withdrawal = await Withdrawal.findById(id).populate('merchantId', 'legalName supportEmail');
+    const withdrawal = await Withdrawal.findById(id).populate('userId', 'legalName supportEmail email');
 
     if (!withdrawal) {
       res.status(404).json({ success: false, error: 'Withdrawal not found' });
@@ -246,13 +231,7 @@ export const getWithdrawal = async (req: AuthRequest, res: Response): Promise<vo
 
     // Check authorization
     if (req.user.role === UserRole.MERCHANT) {
-      const merchantId = await getMerchantId(req);
-      if (!merchantId) {
-        res.status(403).json({ success: false, error: 'Forbidden - Merchant not found' });
-        return;
-      }
-      
-      if (withdrawal.merchantId._id.toString() !== merchantId) {
+      if (withdrawal.userId._id.toString() !== req.user.id) {
         res.status(403).json({ success: false, error: 'Forbidden' });
         return;
       }
@@ -312,7 +291,7 @@ export const updateWithdrawalStatus = async (req: AuthRequest, res: Response): P
       withdrawal.failureReason = failureReason;
       
       // Return funds to balance
-      const balance = await Balance.findOne({ merchantId: withdrawal.merchantId });
+      const balance = await Balance.findOne({ userId: withdrawal.userId });
       if (balance) {
         balance.available += (withdrawal.amount + withdrawal.fee);
         await balance.save();

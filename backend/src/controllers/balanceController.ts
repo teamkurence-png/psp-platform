@@ -1,9 +1,7 @@
 import { Response } from 'express';
 import { Balance } from '../models/Balance.js';
-import { Merchant } from '../models/Merchant.js';
 import { Transaction } from '../models/Transaction.js';
 import { AuthRequest, UserRole, TransactionStatus } from '../types/index.js';
-import { getMerchantId } from '../utils/merchant.js';
 
 export const getBalance = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -12,29 +10,25 @@ export const getBalance = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    let merchantId;
+    let userId;
     if (req.user.role === UserRole.MERCHANT) {
-      merchantId = await getMerchantId(req);
-      if (!merchantId) {
-        res.status(404).json({ success: false, error: 'Merchant not found' });
-        return;
-      }
+      userId = req.user.id;
     } else {
       // For ops/admin viewing merchant balance
-      merchantId = req.query.merchantId;
+      userId = req.query.merchantId; // Note: param name kept for backward compatibility
     }
 
-    if (!merchantId) {
-      res.status(400).json({ success: false, error: 'Merchant ID required' });
+    if (!userId) {
+      res.status(400).json({ success: false, error: 'User ID required' });
       return;
     }
 
-    let balance = await Balance.findOne({ merchantId });
+    let balance = await Balance.findOne({ userId });
 
     // Create balance if doesn't exist
     if (!balance) {
       balance = await Balance.create({
-        merchantId,
+        userId,
         available: 0,
         pending: 0,
         reserve: 0,
@@ -57,25 +51,21 @@ export const getBalanceHistory = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    let merchantId;
+    let userId;
     if (req.user.role === UserRole.MERCHANT) {
-      merchantId = await getMerchantId(req);
-      if (!merchantId) {
-        res.status(404).json({ success: false, error: 'Merchant not found' });
-        return;
-      }
+      userId = req.user.id;
     } else {
-      merchantId = req.query.merchantId;
+      userId = req.query.merchantId; // Note: param name kept for backward compatibility
     }
 
-    if (!merchantId) {
-      res.status(400).json({ success: false, error: 'Merchant ID required' });
+    if (!userId) {
+      res.status(400).json({ success: false, error: 'User ID required' });
       return;
     }
 
     const { startDate, endDate, page = 1, limit = 50 } = req.query;
 
-    const query: any = { merchantId };
+    const query: any = { userId };
     
     if (startDate || endDate) {
       query.createdAt = {};
@@ -124,10 +114,10 @@ export const updateBalance = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const { merchantId } = req.params;
+    const { merchantId } = req.params; // Note: param name kept for backward compatibility
     const { available, pending, reserve } = req.body;
 
-    const balance = await Balance.findOne({ merchantId });
+    const balance = await Balance.findOne({ userId: merchantId });
     if (!balance) {
       res.status(404).json({ success: false, error: 'Balance not found' });
       return;

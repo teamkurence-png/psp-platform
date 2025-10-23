@@ -50,7 +50,7 @@ export const updateSetting = async (req: AuthRequest, res: Response): Promise<vo
         category: req.body.category || 'general',
         description: req.body.description,
         isEncrypted: req.body.isEncrypted || false,
-        merchantId: req.user?.merchantId,
+        userId: req.user?.id,
       });
     } else {
       // Update existing setting

@@ -9,14 +9,6 @@ export const generateReferenceCode = (): string => {
 };
 
 /**
- * Generate a unique checkout URL for card payments
- */
-export const generateCheckoutUrl = (paymentRequestId: string): string => {
-  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-  return `${baseUrl}/pay/${paymentRequestId}`;
-};
-
-/**
  * Generate transaction ID
  */
 export const generateTransactionId = (): string => {

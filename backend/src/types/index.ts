@@ -76,7 +76,6 @@ export interface AuthRequest extends Request {
     id: string;
     email: string;
     role: UserRole;
-    merchantId?: string;
   };
 }
 
@@ -84,7 +83,6 @@ export interface TokenPayload {
   id: string;
   email: string;
   role: UserRole;
-  merchantId?: string;
 }
 
 export interface PaginationQuery {

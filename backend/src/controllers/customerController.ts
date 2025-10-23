@@ -2,7 +2,6 @@ import { Response } from 'express';
 import { z } from 'zod';
 import { Customer } from '../models/Customer.js';
 import { Transaction } from '../models/Transaction.js';
-import { Merchant } from '../models/Merchant.js';
 import { AuthRequest, UserRole } from '../types/index.js';
 
 // Validation schemas
@@ -25,17 +24,11 @@ export const createCustomer = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    const merchant = await Merchant.findOne({ userId: req.user.id });
-    if (!merchant) {
-      res.status(404).json({ success: false, error: 'Merchant not found' });
-      return;
-    }
-
     const validatedData = createCustomerSchema.parse(req.body);
 
     // Check if customer already exists
     const existingCustomer = await Customer.findOne({
-      merchantId: merchant._id,
+      userId: req.user.id,
       email: validatedData.email,
     });
 
@@ -48,7 +41,7 @@ export const createCustomer = async (req: AuthRequest, res: Response): Promise<v
     }
 
     const customer = await Customer.create({
-      merchantId: merchant._id,
+      userId: req.user.id,
       ...validatedData,
     });
 
@@ -75,15 +68,10 @@ export const listCustomers = async (req: AuthRequest, res: Response): Promise<vo
 
     // For merchants, only show their own customers
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant) {
-        res.status(404).json({ success: false, error: 'Merchant not found' });
-        return;
-      }
-      query.merchantId = merchant._id;
+      query.userId = req.user.id;
     } else if (req.query.merchantId) {
-      // For ops/admin, allow filtering by merchantId
-      query.merchantId = req.query.merchantId;
+      // For ops/admin, allow filtering by merchantId (userId)
+      query.userId = req.query.merchantId;
     }
 
     // Apply filters
@@ -141,8 +129,7 @@ export const getCustomer = async (req: AuthRequest, res: Response): Promise<void
 
     // Check authorization
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant || customer.merchantId.toString() !== merchant._id.toString()) {
+      if (customer.userId.toString() !== req.user.id) {
         res.status(403).json({ success: false, error: 'Forbidden' });
         return;
       }
@@ -151,7 +138,7 @@ export const getCustomer = async (req: AuthRequest, res: Response): Promise<void
     // Get customer transactions
     const transactions = await Transaction.find({
       'customerInfo.email': customer.email,
-      merchantId: customer.merchantId,
+      userId: customer.userId,
     })
       .sort({ createdAt: -1 })
       .limit(10)
@@ -187,8 +174,7 @@ export const updateCustomer = async (req: AuthRequest, res: Response): Promise<v
     }
 
     // Check ownership
-    const merchant = await Merchant.findOne({ userId: req.user.id });
-    if (!merchant || customer.merchantId.toString() !== merchant._id.toString()) {
+    if (customer.userId.toString() !== req.user.id) {
       res.status(403).json({ success: false, error: 'Forbidden' });
       return;
     }
@@ -225,8 +211,7 @@ export const addCustomerNote = async (req: AuthRequest, res: Response): Promise<
 
     // Check authorization
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant || customer.merchantId.toString() !== merchant._id.toString()) {
+      if (customer.userId.toString() !== req.user.id) {
         res.status(403).json({ success: false, error: 'Forbidden' });
         return;
       }
@@ -267,8 +252,7 @@ export const deleteCustomer = async (req: AuthRequest, res: Response): Promise<v
     }
 
     // Check ownership
-    const merchant = await Merchant.findOne({ userId: req.user.id });
-    if (!merchant || customer.merchantId.toString() !== merchant._id.toString()) {
+    if (customer.userId.toString() !== req.user.id) {
       res.status(403).json({ success: false, error: 'Forbidden' });
       return;
     }

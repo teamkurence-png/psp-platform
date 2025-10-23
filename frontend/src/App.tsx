@@ -16,9 +16,7 @@ import Balances from './pages/Balances';
 import Withdrawals from './pages/Withdrawals';
 import CreateWithdrawal from './pages/CreateWithdrawal';
 import Merchants from './pages/Merchants';
-import PublicPayment from './pages/PublicPayment';
 import ManualConfirmations from './pages/ManualConfirmations';
-import OpsReviewQueue from './pages/OpsReviewQueue';
 import Settings from './pages/Settings';
 import AdminUsers from './pages/AdminUsers';
 import BankAccounts from './pages/BankAccounts';
@@ -56,7 +54,6 @@ function App() {
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/pay/:id" element={<PublicPayment />} />
             
             {/* Protected routes */}
             <Route
@@ -75,7 +72,6 @@ function App() {
               <Route path="transactions" element={<Transactions />} />
               <Route path="transactions/:id" element={<TransactionDetail />} />
               <Route path="confirmations" element={<ManualConfirmations />} />
-              <Route path="review-queue" element={<OpsReviewQueue />} />
               <Route path="balances" element={<Balances />} />
               <Route path="withdrawals" element={<Withdrawals />} />
               <Route path="withdrawals/new" element={<CreateWithdrawal />} />

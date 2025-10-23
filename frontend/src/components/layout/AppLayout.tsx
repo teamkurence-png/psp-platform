@@ -13,7 +13,6 @@ import {
   X,
   Bitcoin,
   UserCheck,
-  Shield,
 } from 'lucide-react';
 import { UserRole } from '../../types';
 import Button from '../ui/Button';
@@ -41,19 +40,23 @@ const AppLayout: React.FC = () => {
   const navigation = useMemo(() => {
     const allNavItems: NavigationItem[] = [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { name: 'Payment Requests', href: '/payment-requests', icon: FileText },
-      { name: 'Transactions', href: '/transactions', icon: CreditCard },
+      { 
+        name: 'Payment Requests', 
+        href: '/payment-requests', 
+        icon: FileText,
+        roles: [UserRole.MERCHANT]
+      },
+      { 
+        name: 'Transactions', 
+        href: '/transactions', 
+        icon: CreditCard,
+        roles: [UserRole.MERCHANT]
+      },
       { 
         name: 'Manual Confirmations', 
         href: '/confirmations', 
         icon: UserCheck,
         roles: [UserRole.OPS, UserRole.FINANCE, UserRole.ADMIN]
-      },
-      { 
-        name: 'Ops Review Queue', 
-        href: '/review-queue', 
-        icon: Shield,
-        roles: [UserRole.OPS, UserRole.ADMIN]
       },
       { name: 'Balances', href: '/balances', icon: Wallet },
       { name: 'Crypto Withdrawals', href: '/withdrawals', icon: Bitcoin },
