@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bankAccountService } from '../services';
 import type { BankAccount } from '../types';
+import { UserRole } from '../types';
 import { Card } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -10,6 +11,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorAlert from '../components/ui/ErrorAlert';
 import { Building2, Plus, Edit2, Trash2, X } from 'lucide-react';
 import { formatDate } from '../lib/utils';
+import { useAuth } from '../lib/auth';
 
 interface BankAccountModalProps {
   bankAccount?: BankAccount | null;
@@ -39,18 +41,30 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h3 className="text-xl font-semibold text-gray-900">
             {bankAccount ? 'Edit Bank Account' : 'Add New Bank Account'}
           </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X className="h-5 w-5" />
+          <button 
+            onClick={onClose} 
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            type="button"
+          >
+            <X className="h-6 w-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Modal Body */}
+        <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <Label htmlFor="bankName">Bank Name *</Label>
@@ -125,21 +139,24 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          {/* Modal Footer */}
+          <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
             <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? 'Saving...' : (bankAccount ? 'Update' : 'Create')}
+              {loading ? 'Saving...' : (bankAccount ? 'Update Bank Account' : 'Create Bank Account')}
             </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} className="px-6">
               Cancel
             </Button>
           </div>
         </form>
-      </Card>
+      </div>
     </div>
   );
 };
 
 const BankAccounts: React.FC = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === UserRole.ADMIN;
   const queryClient = useQueryClient();
   const [selectedBank, setSelectedBank] = useState<BankAccount | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -215,10 +232,12 @@ const BankAccounts: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Bank Accounts</h1>
           <p className="text-gray-600">Manage bank accounts for payment requests</p>
         </div>
-        <Button onClick={handleAddNew}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Bank Account
-        </Button>
+        {isAdmin && (
+          <Button onClick={handleAddNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Bank Account
+          </Button>
+        )}
       </div>
 
       {/* Statistics */}
@@ -295,10 +314,12 @@ const BankAccounts: React.FC = () => {
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
                     <p className="text-gray-500">No bank accounts configured yet</p>
-                    <Button onClick={handleAddNew} className="mt-4">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add your first bank account
-                    </Button>
+                    {isAdmin && (
+                      <Button onClick={handleAddNew} className="mt-4">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add your first bank account
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ) : (
@@ -334,25 +355,29 @@ const BankAccounts: React.FC = () => {
                       {formatDate(bank.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(bank)}
-                        >
-                          <Edit2 className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(bank)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Delete
-                        </Button>
-                      </div>
+                      {isAdmin ? (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEdit(bank)}
+                          >
+                            <Edit2 className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDelete(bank)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">View Only</span>
+                      )}
                     </td>
                   </tr>
                 ))

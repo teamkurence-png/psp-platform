@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import StatCard from '../components/ui/StatCard';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import EmptyState from '../components/ui/EmptyState';
+import DateRangePicker from '../components/ui/DateRangePicker';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -14,23 +15,24 @@ import {
   Bitcoin,
   AlertCircle,
   ArrowUpRight,
-  Wallet,
-  CreditCard
+  Wallet
 } from 'lucide-react';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, formatDateForAPI, getDefaultDateRange, type DateRange } from '../lib/utils';
 import { useFetch } from '../hooks';
 import { dashboardService, type DashboardStats, type Alert, type RecentTransaction } from '../services';
-import { DATE_RANGE_OPTIONS, type DateRange } from '../constants';
 
 const Dashboard: React.FC = () => {
-  const [dateRange, setDateRange] = useState<DateRange>('7d');
+  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
 
   const { data, loading } = useFetch<{
     stats: DashboardStats;
     alerts: Alert[];
     recentTransactions: RecentTransaction[];
   }>(
-    () => dashboardService.getDashboardData(dateRange),
+    () => dashboardService.getDashboardData(
+      formatDateForAPI(dateRange.startDate),
+      formatDateForAPI(dateRange.endDate)
+    ),
     [dateRange]
   );
 
@@ -57,19 +59,10 @@ const Dashboard: React.FC = () => {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Welcome back! Here's your business overview.</p>
         </div>
-        <div className="flex items-center gap-2 bg-white rounded-lg border shadow-sm p-1">
-          {DATE_RANGE_OPTIONS.map((option) => (
-            <Button
-              key={option.value}
-              variant={dateRange === option.value ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setDateRange(option.value)}
-              className={dateRange === option.value ? '' : 'hover:bg-gray-100'}
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
+        <DateRangePicker 
+          value={dateRange} 
+          onChange={setDateRange}
+        />
       </div>
 
       {/* Alerts */}
@@ -107,24 +100,18 @@ const Dashboard: React.FC = () => {
           title="Total Volume"
           value={formatCurrency(stats.volume)}
           icon={DollarSign}
-          trend="up"
-          trendValue="+12.5%"
           iconColor="blue"
         />
         <StatCard
           title="Approvals"
           value={stats.approvals}
           icon={TrendingUp}
-          trend="up"
-          trendValue="+8.2%"
           iconColor="green"
         />
         <StatCard
           title="Declines"
           value={stats.declines}
           icon={TrendingDown}
-          trend="down"
-          trendValue="-3.1%"
           iconColor="red"
         />
         <StatCard
@@ -198,7 +185,7 @@ const Dashboard: React.FC = () => {
           <CardDescription>Common tasks and shortcuts</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link 
               to="/payment-requests/new"
               className="flex items-center justify-center gap-2 p-4 border-2 border-blue-200 bg-blue-50 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all group"
@@ -207,15 +194,6 @@ const Dashboard: React.FC = () => {
                 <FileText className="h-5 w-5 text-blue-600" />
               </div>
               <span className="font-medium text-blue-900">Create Payment Request</span>
-            </Link>
-            <Link 
-              to="/settings/bank"
-              className="flex items-center justify-center gap-2 p-4 border-2 border-gray-200 bg-gray-50 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-all group"
-            >
-              <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-200 transition-colors">
-                <CreditCard className="h-5 w-5 text-gray-600" />
-              </div>
-              <span className="font-medium text-gray-900">Add Bank Details</span>
             </Link>
             <Link 
               to="/withdrawals"

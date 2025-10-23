@@ -5,7 +5,7 @@ import { Card } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorAlert from '../components/ui/ErrorAlert';
-import { CheckCircle, XCircle, AlertTriangle, Search, Eye } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Search, Eye, X } from 'lucide-react';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,115 +26,135 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ transaction, onClose, onRevie
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Transaction</h3>
-        
-        {/* Transaction Info */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-600">Reference:</span>
-            <span className="font-mono text-sm text-gray-900">{transaction.referenceCode}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-600">Amount:</span>
-            <span className="font-semibold text-gray-900">{formatCurrency(transaction.amount, transaction.currency)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-600">Customer:</span>
-            <span className="text-sm text-gray-900">{transaction.customer.email}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-600">Risk Score:</span>
-            <span className={`font-semibold ${
-              transaction.riskAnalysis?.score > 70 ? 'text-red-600' : 
-              transaction.riskAnalysis?.score > 40 ? 'text-yellow-600' : 
-              'text-green-600'
-            }`}>
-              {transaction.riskAnalysis?.score || 'N/A'}
-            </span>
-          </div>
-          {transaction.riskAnalysis?.signals?.length > 0 && (
-            <div className="mt-2">
-              <span className="text-sm text-gray-600">Risk Signals:</span>
-              <ul className="mt-1 space-y-1">
-                {transaction.riskAnalysis.signals.map((signal: string, idx: number) => (
-                  <li key={idx} className="text-xs text-red-600 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    {signal}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h3 className="text-xl font-semibold text-gray-900">Review Transaction</h3>
+          <button 
+            onClick={onClose} 
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            type="button"
+          >
+            <X className="h-6 w-6" />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Decision</label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    value="approve"
-                    checked={decision === 'approve'}
-                    onChange={(e) => setDecision(e.target.value as 'approve')}
-                    className="w-4 h-4 text-primary focus:ring-2 focus:ring-ring border-input"
-                  />
-                  <span className="text-sm text-gray-900">Approve Transaction</span>
+        {/* Modal Body */}
+        <div className="p-6">
+          {/* Transaction Info */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Reference:</span>
+              <span className="font-mono text-sm text-gray-900">{transaction.referenceCode}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Amount:</span>
+              <span className="font-semibold text-gray-900">{formatCurrency(transaction.amount, transaction.currency)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Customer:</span>
+              <span className="text-sm text-gray-900">{transaction.customer.email}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Risk Score:</span>
+              <span className={`font-semibold ${
+                transaction.riskAnalysis?.score > 70 ? 'text-red-600' : 
+                transaction.riskAnalysis?.score > 40 ? 'text-yellow-600' : 
+                'text-green-600'
+              }`}>
+                {transaction.riskAnalysis?.score || 'N/A'}
+              </span>
+            </div>
+            {transaction.riskAnalysis?.signals?.length > 0 && (
+              <div className="mt-2">
+                <span className="text-sm text-gray-600">Risk Signals:</span>
+                <ul className="mt-1 space-y-1">
+                  {transaction.riskAnalysis.signals.map((signal: string, idx: number) => (
+                    <li key={idx} className="text-xs text-red-600 flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      {signal}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Decision</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      value="approve"
+                      checked={decision === 'approve'}
+                      onChange={(e) => setDecision(e.target.value as 'approve')}
+                      className="w-4 h-4 text-primary focus:ring-2 focus:ring-ring border-input"
+                    />
+                    <span className="text-sm text-gray-900">Approve Transaction</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      value="reject"
+                      checked={decision === 'reject'}
+                      onChange={(e) => setDecision(e.target.value as 'reject')}
+                      className="w-4 h-4 text-primary focus:ring-2 focus:ring-ring border-input"
+                    />
+                    <span className="text-sm text-gray-900">Reject Transaction</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Review Notes {decision === 'reject' && <span className="text-red-600">*</span>}
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    value="reject"
-                    checked={decision === 'reject'}
-                    onChange={(e) => setDecision(e.target.value as 'reject')}
-                    className="w-4 h-4 text-primary focus:ring-2 focus:ring-ring border-input"
-                  />
-                  <span className="text-sm text-gray-900">Reject Transaction</span>
-                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add your review notes here..."
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background"
+                  rows={4}
+                  required={decision === 'reject'}
+                />
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex gap-3 pt-6 border-t border-gray-200">
+                <Button 
+                  type="submit" 
+                  className={`flex-1 ${decision === 'reject' ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                >
+                  {decision === 'approve' ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Approve Transaction
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Reject Transaction
+                    </>
+                  )}
+                </Button>
+                <Button type="button" variant="outline" onClick={onClose} className="px-6">
+                  Cancel
+                </Button>
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Review Notes {decision === 'reject' && <span className="text-red-600">*</span>}
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add your review notes here..."
-                className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background"
-                rows={4}
-                required={decision === 'reject'}
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <Button 
-                type="submit" 
-                className={`flex-1 ${decision === 'reject' ? 'bg-red-600 hover:bg-red-700' : ''}`}
-              >
-                {decision === 'approve' ? (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Reject
-                  </>
-                )}
-              </Button>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </form>
-      </Card>
+          </form>
+        </div>
+      </div>
     </div>
   );
 };

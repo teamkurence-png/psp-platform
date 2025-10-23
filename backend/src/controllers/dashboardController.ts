@@ -21,29 +21,34 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
       merchantId = merchant._id;
     }
 
-    const { range = '7d' } = req.query;
+    const { startDate: startDateStr, endDate: endDateStr } = req.query;
     
     // Calculate date range
-    const now = new Date();
-    let startDate = new Date();
+    let startDate: Date;
+    let endDate: Date;
     
-    switch (range) {
-      case 'today':
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case '7d':
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case '30d':
-        startDate.setDate(now.getDate() - 30);
-        break;
-      default:
-        startDate.setDate(now.getDate() - 7);
+    if (startDateStr && typeof startDateStr === 'string') {
+      startDate = new Date(startDateStr);
+      startDate.setHours(0, 0, 0, 0);
+    } else {
+      // Default to last 7 days if no start date provided
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 6);
+      startDate.setHours(0, 0, 0, 0);
+    }
+    
+    if (endDateStr && typeof endDateStr === 'string') {
+      endDate = new Date(endDateStr);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // Default to today if no end date provided
+      endDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
     }
 
     // Build query
     const query: any = {
-      createdAt: { $gte: startDate },
+      createdAt: { $gte: startDate, $lte: endDate },
     };
     if (merchantId) {
       query.merchantId = merchantId;

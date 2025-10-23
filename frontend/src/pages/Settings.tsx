@@ -48,7 +48,7 @@ const Settings: React.FC = () => {
           </Link>
 
           {/* Bank Accounts */}
-          <Link to="/bank-accounts">
+          <Link to="/settings/bank-accounts">
             <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
               <div className="flex items-start gap-4">
                 <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -105,7 +105,7 @@ const Settings: React.FC = () => {
         </Link>
 
         {/* Bank Accounts */}
-        <Link to="/bank-accounts">
+        <Link to="/settings/bank-accounts">
           <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
             <div className="flex items-start gap-4">
               <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -122,7 +122,7 @@ const Settings: React.FC = () => {
         {isAdmin && (
           <>
             {/* User Management */}
-            <Link to="/admin/users">
+            <Link to="/settings/users">
               <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
                 <div className="flex items-start gap-4">
                   <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">

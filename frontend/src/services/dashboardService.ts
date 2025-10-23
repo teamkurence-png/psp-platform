@@ -24,8 +24,11 @@ export interface RecentTransaction {
 }
 
 export const dashboardService = {
-  getStats: (range: 'today' | '7d' | '30d') => {
-    return api.get(`/dashboard/stats?range=${range}`);
+  getStats: (startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    return api.get(`/dashboard/stats?${params.toString()}`);
   },
 
   getAlerts: () => {
@@ -36,9 +39,9 @@ export const dashboardService = {
     return api.get('/dashboard/recent-transactions');
   },
 
-  getDashboardData: async (range: 'today' | '7d' | '30d') => {
+  getDashboardData: async (startDate?: string, endDate?: string) => {
     const [statsResponse, alertsResponse, transactionsResponse] = await Promise.all([
-      dashboardService.getStats(range),
+      dashboardService.getStats(startDate, endDate),
       dashboardService.getAlerts(),
       dashboardService.getRecentTransactions(),
     ]);
