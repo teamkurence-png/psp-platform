@@ -1,21 +1,7 @@
 import api from '../lib/api';
-import { CryptoAsset, WithdrawalStatus } from '../types';
+import { CryptoAsset, type Withdrawal } from '../types';
 
-export interface Withdrawal {
-  _id: string;
-  asset: CryptoAsset;
-  network: string;
-  address: string;
-  amount: number;
-  fee: number;
-  netAmount: number;
-  status: WithdrawalStatus;
-  txHash?: string;
-  confirmations?: number;
-  explorerUrl?: string;
-  failureReason?: string;
-  createdAt: string;
-}
+export type { Withdrawal };
 
 export interface CreateWithdrawalDto {
   asset: CryptoAsset;

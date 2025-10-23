@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import {
@@ -15,8 +15,16 @@ import {
   UserCheck,
   Shield,
 } from 'lucide-react';
+import { UserRole } from '../../types';
 import Button from '../ui/Button';
 import NotificationBell from '../ui/NotificationBell';
+
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  roles?: UserRole[];
+}
 
 const AppLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -30,69 +38,111 @@ const AppLayout: React.FC = () => {
   };
 
   // Build navigation based on user role
-  const baseNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Payment Requests', href: '/payment-requests', icon: FileText },
-    { name: 'Transactions', href: '/transactions', icon: CreditCard },
-    { name: 'Manual Confirmations', href: '/confirmations', icon: UserCheck },
-    { name: 'Balances', href: '/balances', icon: Wallet },
-    { name: 'Crypto Withdrawals', href: '/withdrawals', icon: Bitcoin },
-    { name: 'Merchants', href: '/merchants', icon: Building2 },
-  ];
+  const navigation = useMemo(() => {
+    const allNavItems: NavigationItem[] = [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Payment Requests', href: '/payment-requests', icon: FileText },
+      { name: 'Transactions', href: '/transactions', icon: CreditCard },
+      { 
+        name: 'Manual Confirmations', 
+        href: '/confirmations', 
+        icon: UserCheck,
+        roles: [UserRole.OPS, UserRole.FINANCE, UserRole.ADMIN]
+      },
+      { 
+        name: 'Ops Review Queue', 
+        href: '/review-queue', 
+        icon: Shield,
+        roles: [UserRole.OPS, UserRole.ADMIN]
+      },
+      { name: 'Balances', href: '/balances', icon: Wallet },
+      { name: 'Crypto Withdrawals', href: '/withdrawals', icon: Bitcoin },
+      { 
+        name: 'Merchants', 
+        href: '/merchants', 
+        icon: Building2,
+        roles: [UserRole.OPS, UserRole.FINANCE, UserRole.ADMIN]
+      },
+      { name: 'Settings', href: '/settings', icon: Settings },
+    ];
 
-  // Add Ops Review Queue for ops and admin users only
-  const navigation = user?.role === 'ops' || user?.role === 'admin'
-    ? [
-        ...baseNavigation.slice(0, 4),
-        { name: 'Ops Review Queue', href: '/review-queue', icon: Shield },
-        ...baseNavigation.slice(4),
-        { name: 'Settings', href: '/settings', icon: Settings },
-      ]
-    : [
-        ...baseNavigation,
-        { name: 'Settings', href: '/settings', icon: Settings },
-      ];
+    // Filter navigation items based on user role
+    return allNavItems.filter(item => {
+      if (!item.roles) return true;
+      return user?.role && item.roles.includes(user.role as UserRole);
+    });
+  }, [user?.role]);
 
   const isActive = (path: string) => location.pathname === path;
+
+  const renderNavLinks = (isMobile = false) => (
+    <nav className="flex-1 space-y-1 px-2 py-4">
+      {navigation.map((item) => {
+        const Icon = item.icon;
+        const active = isActive(item.href);
+        
+        return (
+          <Link
+            key={item.name}
+            to={item.href}
+            onClick={isMobile ? () => setSidebarOpen(false) : undefined}
+            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+              active
+                ? 'bg-primary text-white'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <Icon className="mr-3 h-5 w-5" />
+            {item.name}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
+  const renderUserInfo = () => (
+    <div className="p-4 border-t">
+      <div className="flex items-center mb-3">
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-900">{user?.email}</p>
+          <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+        </div>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={handleLogout}
+      >
+        <LogOut className="mr-2 h-4 w-4" />
+        Logout
+      </Button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar */}
-      <div
-        className={`fixed inset-0 z-40 lg:hidden ${
-          sidebarOpen ? 'block' : 'hidden'
-        }`}
-      >
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
-          <div className="flex items-center justify-between h-16 px-4 border-b">
-            <span className="text-xl font-bold text-primary">PSP Platform</span>
-            <button onClick={() => setSidebarOpen(false)}>
-              <X className="h-6 w-6" />
-            </button>
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div 
+            className="fixed inset-0 bg-gray-600 bg-opacity-75" 
+            onClick={() => setSidebarOpen(false)} 
+          />
+          <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
+            <div className="flex items-center justify-between h-16 px-4 border-b">
+              <span className="text-xl font-bold text-primary">PSP Platform</span>
+              <button 
+                onClick={() => setSidebarOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            {renderNavLinks(true)}
           </div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                    isActive(item.href)
-                      ? 'bg-primary text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Icon className="mr-3 h-5 w-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
         </div>
-      </div>
+      )}
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
@@ -100,42 +150,8 @@ const AppLayout: React.FC = () => {
           <div className="flex items-center h-16 px-4 border-b">
             <span className="text-xl font-bold text-primary">PSP Platform</span>
           </div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                    isActive(item.href)
-                      ? 'bg-primary text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <Icon className="mr-3 h-5 w-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="p-4 border-t">
-            <div className="flex items-center mb-3">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">{user?.email}</p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={handleLogout}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
+          {renderNavLinks()}
+          {renderUserInfo()}
         </div>
       </div>
 
