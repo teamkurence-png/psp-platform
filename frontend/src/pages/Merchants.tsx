@@ -105,8 +105,6 @@ const Merchants: React.FC = () => {
         return 'warning';
       case OnboardingStatus.REJECTED:
         return 'destructive';
-      case OnboardingStatus.NOT_STARTED:
-        return 'secondary';
       default:
         return 'secondary';
     }
@@ -120,8 +118,6 @@ const Merchants: React.FC = () => {
         return 'In Review';
       case OnboardingStatus.REJECTED:
         return 'Rejected';
-      case OnboardingStatus.NOT_STARTED:
-        return 'Not Started';
       default:
         return status;
     }
@@ -184,13 +180,6 @@ const Merchants: React.FC = () => {
                 onClick={() => setStatusFilter(OnboardingStatus.REJECTED)}
               >
                 Rejected
-              </Button>
-              <Button
-                variant={statusFilter === OnboardingStatus.NOT_STARTED ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStatusFilter(OnboardingStatus.NOT_STARTED)}
-              >
-                Not Started
               </Button>
             </div>
           </div>
