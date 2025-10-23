@@ -17,8 +17,7 @@ import Settlements from './pages/Settlements';
 import CreateSettlement from './pages/CreateSettlement';
 import Withdrawals from './pages/Withdrawals';
 import CreateWithdrawal from './pages/CreateWithdrawal';
-import Customers from './pages/Customers';
-import CustomerDetail from './pages/CustomerDetail';
+import Merchants from './pages/Merchants';
 import PublicPayment from './pages/PublicPayment';
 import ManualConfirmations from './pages/ManualConfirmations';
 import OpsReviewQueue from './pages/OpsReviewQueue';
@@ -84,8 +83,7 @@ function App() {
               <Route path="settlements/new" element={<CreateSettlement />} />
               <Route path="withdrawals" element={<Withdrawals />} />
               <Route path="withdrawals/new" element={<CreateWithdrawal />} />
-              <Route path="customers" element={<Customers />} />
-              <Route path="customers/:id" element={<CustomerDetail />} />
+              <Route path="merchants" element={<Merchants />} />
               <Route path="settings" element={<Settings />} />
               <Route path="settings/users" element={<AdminUsers />} />
               <Route path="settings/bank-accounts" element={<BankAccounts />} />

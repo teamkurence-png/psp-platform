@@ -93,5 +93,25 @@ export const merchantService = {
   async deleteDocument(documentId: string): Promise<void> {
     await api.delete(`/merchants/documents/${documentId}`);
   },
+
+  // List all merchants (admin/ops)
+  async listMerchants(params?: { status?: string; page?: number; limit?: number }) {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    
+    const response = await api.get(`/merchants/list?${queryParams.toString()}`);
+    return response.data.data;
+  },
+
+  // Review merchant onboarding (admin/ops)
+  async reviewMerchant(merchantId: string, status: 'approved' | 'rejected', rejectionReason?: string) {
+    const response = await api.post(`/merchants/${merchantId}/review`, {
+      status,
+      rejectionReason,
+    });
+    return response.data.data;
+  },
 };
 

@@ -5,7 +5,7 @@ import {
   LayoutDashboard,
   FileText,
   CreditCard,
-  Users,
+  Building2,
   Wallet,
   Settings,
   LogOut,
@@ -37,7 +37,7 @@ const AppLayout: React.FC = () => {
     { name: 'Manual Confirmations', href: '/confirmations', icon: UserCheck },
     { name: 'Balances', href: '/balances', icon: Wallet },
     { name: 'Crypto Withdrawals', href: '/withdrawals', icon: Bitcoin },
-    { name: 'Customers', href: '/customers', icon: Users },
+    { name: 'Merchants', href: '/merchants', icon: Building2 },
   ];
 
   // Add Ops Review Queue for ops and admin users only
