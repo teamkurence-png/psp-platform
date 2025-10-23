@@ -37,7 +37,7 @@ export interface ITimelineEvent {
 export interface ITransaction extends Document {
   transactionId: string;
   paymentRequestId?: mongoose.Types.ObjectId;
-  merchantId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   customerInfo?: {
     name?: string;
     email?: string;
@@ -123,9 +123,9 @@ const transactionSchema = new Schema<ITransaction>(
       type: Schema.Types.ObjectId,
       ref: 'PaymentRequest',
     },
-    merchantId: {
+    userId: {
       type: Schema.Types.ObjectId,
-      ref: 'Merchant',
+      ref: 'User',
       required: true,
     },
     customerInfo: {
@@ -205,7 +205,7 @@ const transactionSchema = new Schema<ITransaction>(
 transactionSchema.index({ platformStatus: 1 });
 transactionSchema.index({ createdAt: -1 });
 transactionSchema.index({ 'customerInfo.email': 1 });
-transactionSchema.index({ merchantId: 1, platformStatus: 1 }); // Compound index for queries
+transactionSchema.index({ userId: 1, platformStatus: 1 }); // Compound index for queries
 
 export const Transaction = mongoose.model<ITransaction>('Transaction', transactionSchema);
 

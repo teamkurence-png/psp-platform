@@ -143,6 +143,7 @@ const AdminUsers: React.FC = () => {
   const stats = {
     total: users?.length || 0,
     active: users?.filter((u) => u.isActive).length || 0,
+    pending: users?.filter((u) => !u.isActive && u.role === 'merchant').length || 0,
     admins: users?.filter((u) => u.role === 'admin').length || 0,
   };
 
@@ -157,7 +158,7 @@ const AdminUsers: React.FC = () => {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <div className="flex items-center justify-between">
             <div>
@@ -178,6 +179,18 @@ const AdminUsers: React.FC = () => {
             </div>
             <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
               <UserCheck className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Pending Approval</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+            </div>
+            <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
+              <UserX className="h-6 w-6 text-yellow-600" />
             </div>
           </div>
         </Card>
@@ -244,9 +257,19 @@ const AdminUsers: React.FC = () => {
                 </tr>
               ) : (
                 filteredUsers?.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50">
+                  <tr 
+                    key={user._id} 
+                    className={`hover:bg-gray-50 ${!user.isActive && user.role === 'merchant' ? 'bg-yellow-50' : ''}`}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{user.email}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="font-medium text-gray-900">{user.email}</div>
+                        {!user.isActive && user.role === 'merchant' && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Pending Approval
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-blue-100 text-blue-800">

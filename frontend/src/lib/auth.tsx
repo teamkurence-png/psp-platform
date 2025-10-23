@@ -9,7 +9,7 @@ interface AuthContextType {
   merchantId: string | null;
   loading: boolean;
   login: (email: string, password: string, twoFactorToken?: string) => Promise<{ requires2FA?: boolean }>;
-  register: (email: string, password: string, legalName?: string) => Promise<void>;
+  register: (email: string, password: string, legalName?: string) => Promise<{ pendingApproval?: boolean; message?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -76,13 +76,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       legalName,
     });
 
+    // Check if merchant registration is pending approval
+    if (response.data.message && response.data.message.includes('pending')) {
+      return { 
+        pendingApproval: true, 
+        message: response.data.message 
+      };
+    }
+
+    // For non-merchants or if tokens are provided
     const { user, accessToken, refreshToken } = response.data.data;
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    setUser(user);
-    
-    // Refresh to get merchant data
-    await refreshUser();
+    if (accessToken && refreshToken) {
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      setUser(user);
+      
+      // Refresh to get merchant data
+      await refreshUser();
+    }
+
+    return {};
   };
 
   const logout = async () => {

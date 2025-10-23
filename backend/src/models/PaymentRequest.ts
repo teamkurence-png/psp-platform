@@ -26,7 +26,7 @@ export interface ICardSettings {
 }
 
 export interface IPaymentRequest extends Document {
-  merchantId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   amount: number;
   currency: string;
   description?: string;
@@ -73,9 +73,9 @@ const cardSettingsSchema = new Schema<ICardSettings>({
 
 const paymentRequestSchema = new Schema<IPaymentRequest>(
   {
-    merchantId: {
+    userId: {
       type: Schema.Types.ObjectId,
-      ref: 'Merchant',
+      ref: 'User',
       required: true,
     },
     amount: {
@@ -122,7 +122,7 @@ const paymentRequestSchema = new Schema<IPaymentRequest>(
 paymentRequestSchema.index({ status: 1 });
 paymentRequestSchema.index({ referenceCode: 1 });
 paymentRequestSchema.index({ createdAt: -1 });
-paymentRequestSchema.index({ merchantId: 1, status: 1 }); // Compound index for queries
+paymentRequestSchema.index({ userId: 1, status: 1 }); // Compound index for queries
 
 export const PaymentRequest = mongoose.model<IPaymentRequest>('PaymentRequest', paymentRequestSchema);
 

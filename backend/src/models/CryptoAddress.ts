@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 import { CryptoAsset } from '../types/index.js';
 
 export interface ICryptoAddress extends Document {
-  merchantId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   asset: CryptoAsset;
   network: string;
   address: string;
@@ -17,9 +17,9 @@ export interface ICryptoAddress extends Document {
 
 const cryptoAddressSchema = new Schema<ICryptoAddress>(
   {
-    merchantId: {
+    userId: {
       type: Schema.Types.ObjectId,
-      ref: 'Merchant',
+      ref: 'User',
       required: true,
     },
     asset: {
@@ -55,7 +55,7 @@ const cryptoAddressSchema = new Schema<ICryptoAddress>(
 // Indexes
 cryptoAddressSchema.index({ asset: 1 });
 cryptoAddressSchema.index({ whitelisted: 1 });
-cryptoAddressSchema.index({ merchantId: 1, asset: 1 }); // Compound index for queries
+cryptoAddressSchema.index({ userId: 1, asset: 1 }); // Compound index for queries
 
 export const CryptoAddress = mongoose.model<ICryptoAddress>('CryptoAddress', cryptoAddressSchema);
 

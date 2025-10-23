@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ICustomer extends Document {
-  merchantId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   name: string;
   email: string;
   phone?: string;
@@ -20,9 +20,9 @@ export interface ICustomer extends Document {
 
 const customerSchema = new Schema<ICustomer>(
   {
-    merchantId: {
+    userId: {
       type: Schema.Types.ObjectId,
-      ref: 'Merchant',
+      ref: 'User',
       required: true,
     },
     name: {
@@ -55,8 +55,8 @@ const customerSchema = new Schema<ICustomer>(
   }
 );
 
-// Indexes (compound unique index also covers merchantId and email individually)
-customerSchema.index({ merchantId: 1, email: 1 }, { unique: true });
+// Indexes (compound unique index also covers userId and email individually)
+customerSchema.index({ userId: 1, email: 1 }, { unique: true });
 
 export const Customer = mongoose.model<ICustomer>('Customer', customerSchema);
 

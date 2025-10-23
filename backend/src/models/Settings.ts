@@ -6,7 +6,7 @@ export interface ISettings extends Document {
   isEncrypted: boolean;
   category: 'gateway' | 'bank' | 'crypto' | 'notification' | 'general';
   description?: string;
-  merchantId?: string;
+  userId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,9 +32,9 @@ const settingsSchema = new Schema<ISettings>(
       default: 'general',
     },
     description: String,
-    merchantId: {
+    userId: {
       type: String,
-      ref: 'Merchant',
+      ref: 'User',
     },
   },
   {

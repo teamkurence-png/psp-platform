@@ -260,17 +260,34 @@ export interface BankAccount {
 export interface Withdrawal {
   _id: string;
   merchantId: string;
-  asset: CryptoAsset;
-  network: string;
-  address: string;
+  method: 'crypto' | 'bank_transfer';
   amount: number;
+  currency: string;
   fee: number;
   netAmount: number;
   status: WithdrawalStatus;
+  
+  // Crypto-specific fields
+  asset?: CryptoAsset;
+  network?: string;
+  address?: string;
   txHash?: string;
   confirmations?: number;
   explorerUrl?: string;
+  
+  // Bank transfer-specific fields
+  bankAccount?: string;
+  iban?: string;
+  swiftCode?: string;
+  accountNumber?: string;
+  routingNumber?: string;
+  bankName?: string;
+  beneficiaryName?: string;
+  
+  // Common fields
+  transactionIds?: string[];
   failureReason?: string;
+  completedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

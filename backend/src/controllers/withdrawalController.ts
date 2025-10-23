@@ -4,13 +4,30 @@ import { Withdrawal } from '../models/Withdrawal.js';
 import { Balance } from '../models/Balance.js';
 import { Merchant } from '../models/Merchant.js';
 import { AuthRequest, UserRole, CryptoAsset, WithdrawalStatus } from '../types/index.js';
+import { getMerchant, getMerchantId } from '../utils/merchant.js';
 
 // Validation schema
 const createWithdrawalSchema = z.object({
-  asset: z.enum([CryptoAsset.USDT_TRC20, CryptoAsset.USDT_ERC20, CryptoAsset.BTC, CryptoAsset.ETH]),
-  network: z.string(),
-  address: z.string(),
+  method: z.enum(['crypto', 'bank_transfer']),
   amount: z.number().positive(),
+  currency: z.string().default('USD'),
+  
+  // Crypto fields
+  asset: z.enum([CryptoAsset.USDT_TRC20, CryptoAsset.USDT_ERC20, CryptoAsset.BTC, CryptoAsset.ETH]).optional(),
+  network: z.string().optional(),
+  address: z.string().optional(),
+  
+  // Bank transfer fields
+  bankAccount: z.string().optional(),
+  iban: z.string().optional(),
+  swiftCode: z.string().optional(),
+  accountNumber: z.string().optional(),
+  routingNumber: z.string().optional(),
+  bankName: z.string().optional(),
+  beneficiaryName: z.string().optional(),
+  
+  // Optional transaction linking
+  transactionIds: z.array(z.string()).optional(),
 });
 
 // Crypto address validation patterns
@@ -49,26 +66,54 @@ export const createWithdrawal = async (req: AuthRequest, res: Response): Promise
       return;
     }
 
-    const merchant = await Merchant.findOne({ userId: req.user.id });
+    const merchant = await getMerchant(req);
     if (!merchant) {
       res.status(404).json({ success: false, error: 'Merchant not found' });
       return;
     }
+    
+    const merchantId = merchant._id.toString();
 
     const validatedData = createWithdrawalSchema.parse(req.body);
 
-    // Validate crypto address
-    if (!validateCryptoAddress(validatedData.asset, validatedData.address)) {
-      res.status(400).json({ 
-        success: false, 
-        error: 'Invalid crypto address format' 
-      });
-      return;
+    // Validate based on method
+    if (validatedData.method === 'crypto') {
+      // Crypto validation
+      if (!validatedData.asset || !validatedData.address) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'Asset and address are required for crypto withdrawals' 
+        });
+        return;
+      }
+
+      if (!validateCryptoAddress(validatedData.asset, validatedData.address)) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'Invalid crypto address format' 
+        });
+        return;
+      }
+    } else if (validatedData.method === 'bank_transfer') {
+      // Bank transfer validation - at least one bank identifier required
+      if (!validatedData.iban && !validatedData.accountNumber && !validatedData.bankAccount) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'Bank account details are required (IBAN, account number, or bank account)' 
+        });
+        return;
+      }
     }
+
+    // Calculate fee
+    let fee = 0;
+    if (validatedData.method === 'crypto' && validatedData.asset) {
+      fee = calculateWithdrawalFee(validatedData.asset, validatedData.amount);
+    }
+    // Bank transfers have no fee in this implementation
 
     // Check balance
     const balance = await Balance.findOne({ merchantId: merchant._id });
-    const fee = calculateWithdrawalFee(validatedData.asset, validatedData.amount);
     const totalRequired = validatedData.amount + fee;
 
     if (!balance || balance.available < totalRequired) {
@@ -82,10 +127,32 @@ export const createWithdrawal = async (req: AuthRequest, res: Response): Promise
     // Create withdrawal
     const withdrawal = await Withdrawal.create({
       merchantId: merchant._id,
-      ...validatedData,
+      method: validatedData.method,
+      amount: validatedData.amount,
+      currency: validatedData.currency || 'USD',
       fee,
       netAmount: validatedData.amount,
       status: WithdrawalStatus.INITIATED,
+      
+      // Crypto fields
+      ...(validatedData.method === 'crypto' && {
+        asset: validatedData.asset,
+        network: validatedData.network,
+        address: validatedData.address,
+      }),
+      
+      // Bank transfer fields
+      ...(validatedData.method === 'bank_transfer' && {
+        bankAccount: validatedData.bankAccount,
+        iban: validatedData.iban,
+        swiftCode: validatedData.swiftCode,
+        accountNumber: validatedData.accountNumber,
+        routingNumber: validatedData.routingNumber,
+        bankName: validatedData.bankName,
+        beneficiaryName: validatedData.beneficiaryName,
+      }),
+      
+      transactionIds: validatedData.transactionIds || [],
     });
 
     // Update balance
@@ -114,17 +181,17 @@ export const listWithdrawals = async (req: AuthRequest, res: Response): Promise<
       return;
     }
 
-    const { status, asset, page = 1, limit = 10 } = req.query;
+    const { status, asset, method, page = 1, limit = 10 } = req.query;
     let query: any = {};
 
     // For merchants, only show their own withdrawals
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant) {
+      const merchantId = await getMerchantId(req);
+      if (!merchantId) {
         res.status(404).json({ success: false, error: 'Merchant not found' });
         return;
       }
-      query.merchantId = merchant._id;
+      query.merchantId = merchantId;
     } else if (req.query.merchantId) {
       // For ops/admin, allow filtering by merchantId
       query.merchantId = req.query.merchantId;
@@ -133,6 +200,7 @@ export const listWithdrawals = async (req: AuthRequest, res: Response): Promise<
     // Apply filters
     if (status) query.status = status;
     if (asset) query.asset = asset;
+    if (method) query.method = method;
 
     const withdrawals = await Withdrawal.find(query)
       .populate('merchantId', 'legalName supportEmail')
@@ -178,8 +246,13 @@ export const getWithdrawal = async (req: AuthRequest, res: Response): Promise<vo
 
     // Check authorization
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant || withdrawal.merchantId._id.toString() !== merchant._id.toString()) {
+      const merchantId = await getMerchantId(req);
+      if (!merchantId) {
+        res.status(403).json({ success: false, error: 'Forbidden - Merchant not found' });
+        return;
+      }
+      
+      if (withdrawal.merchantId._id.toString() !== merchantId) {
         res.status(403).json({ success: false, error: 'Forbidden' });
         return;
       }
@@ -219,7 +292,7 @@ export const updateWithdrawalStatus = async (req: AuthRequest, res: Response): P
     if (txHash) withdrawal.txHash = txHash;
     if (confirmations !== undefined) withdrawal.confirmations = confirmations;
     
-    if (status === WithdrawalStatus.ON_CHAIN && txHash) {
+    if (status === WithdrawalStatus.ON_CHAIN && txHash && withdrawal.network) {
       // Generate explorer URL based on network
       const explorerUrls: Record<string, string> = {
         'TRC20': `https://tronscan.org/#/transaction/${txHash}`,
@@ -228,6 +301,11 @@ export const updateWithdrawalStatus = async (req: AuthRequest, res: Response): P
         'ETH': `https://etherscan.io/tx/${txHash}`,
       };
       withdrawal.explorerUrl = explorerUrls[withdrawal.network] || '';
+    }
+
+    if (status === WithdrawalStatus.PAID) {
+      // Mark as completed
+      withdrawal.completedAt = new Date();
     }
 
     if (status === WithdrawalStatus.FAILED || status === WithdrawalStatus.REVERSED) {

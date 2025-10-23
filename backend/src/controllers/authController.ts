@@ -3,11 +3,10 @@ import { z } from 'zod';
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
 import { User } from '../models/User.js';
-import { Merchant } from '../models/Merchant.js';
 import { Balance } from '../models/Balance.js';
 import { hashPassword, comparePassword } from '../utils/password.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
-import { AuthRequest, UserRole } from '../types/index.js';
+import { AuthRequest, UserRole, OnboardingStatus } from '../types/index.js';
 
 // Validation schemas
 const registerSchema = z.object({
@@ -38,30 +37,49 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
-    const user = await User.create({
+    // Create user - merchants are inactive by default and need admin approval
+    const userData: any = {
       email,
       password: hashedPassword,
       role,
-    });
+      isActive: role !== UserRole.MERCHANT, // Non-merchants are active by default
+    };
 
-    // If merchant, create merchant profile and balance
+    // If merchant, add merchant-specific fields
     if (role === UserRole.MERCHANT) {
-      const merchant = await Merchant.create({
-        userId: user._id,
-        legalName: legalName || email,
-      });
+      userData.legalName = legalName || email;
+      userData.onboardingStatus = OnboardingStatus.IN_REVIEW; // Set to in_review immediately
+    }
 
+    const user = await User.create(userData);
+
+    // If merchant, create balance
+    if (role === UserRole.MERCHANT) {
       await Balance.create({
-        merchantId: merchant._id,
+        userId: user._id,
         available: 0,
         pending: 0,
         reserve: 0,
         currency: 'USD',
       });
+
+      // For merchants, return success without tokens - they need admin approval first
+      res.status(201).json({
+        success: true,
+        message: 'Registration successful. Your account is pending admin approval.',
+        data: {
+          user: {
+            id: user._id,
+            email: user.email,
+            role: user.role,
+            isActive: user.isActive,
+          },
+        },
+      });
+      return;
     }
 
-    // Generate tokens
+    // For non-merchants (OPS, FINANCE, ADMIN), generate tokens immediately
     const tokenPayload = {
       id: user._id.toString(),
       email: user.email,
@@ -116,6 +134,15 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
+    // Check if user account is active
+    if (!user.isActive) {
+      res.status(403).json({ 
+        success: false, 
+        error: 'Your account is pending admin approval. Please wait for approval before logging in.' 
+      });
+      return;
+    }
+
     // Check 2FA if enabled
     if (user.twoFactorEnabled) {
       if (!twoFactorToken) {
@@ -140,19 +167,11 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
       }
     }
 
-    // Get merchant ID if user is a merchant
-    let merchantId: string | undefined;
-    if (user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: user._id });
-      merchantId = merchant?._id.toString();
-    }
-
     // Generate tokens
     const tokenPayload = {
       id: user._id.toString(),
       email: user.email,
       role: user.role,
-      merchantId,
     };
 
     const accessToken = generateAccessToken(tokenPayload);
@@ -171,7 +190,6 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
           email: user.email,
           role: user.role,
           twoFactorEnabled: user.twoFactorEnabled,
-          merchantId,
         },
         accessToken,
         refreshToken,
@@ -209,11 +227,13 @@ export const refreshToken = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    // Get merchant ID if user is a merchant
-    let merchantId: string | undefined;
-    if (user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: user._id });
-      merchantId = merchant?._id.toString();
+    // Check if user account is active
+    if (!user.isActive) {
+      res.status(403).json({ 
+        success: false, 
+        error: 'Your account is pending admin approval.' 
+      });
+      return;
     }
 
     // Generate new tokens
@@ -221,7 +241,6 @@ export const refreshToken = async (req: AuthRequest, res: Response): Promise<voi
       id: user._id.toString(),
       email: user.email,
       role: user.role,
-      merchantId,
     };
 
     const newAccessToken = generateAccessToken(tokenPayload);
@@ -393,28 +412,16 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
-    const user = await User.findById(req.user.id).select('-password -refreshToken');
+    const user = await User.findById(req.user.id).select('-password -refreshToken -twoFactorSecret');
     if (!user) {
       res.status(404).json({ success: false, error: 'User not found' });
       return;
     }
 
-    let merchantData = null;
-    if (user.role === UserRole.MERCHANT) {
-      merchantData = await Merchant.findOne({ userId: user._id });
-    }
-
     res.json({
       success: true,
       data: {
-        user: {
-          id: user._id,
-          email: user.email,
-          role: user.role,
-          twoFactorEnabled: user.twoFactorEnabled,
-          lastLogin: user.lastLogin,
-        },
-        merchant: merchantData,
+        user: user,
       },
     });
   } catch (error) {

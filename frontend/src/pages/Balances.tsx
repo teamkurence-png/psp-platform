@@ -7,6 +7,7 @@ import EmptyState from '../components/ui/EmptyState';
 import type { Balance } from '../types/index';
 import api from '../lib/api';
 import { useFetch } from '../hooks';
+import { useAuth } from '../lib/auth';
 import { formatCurrency, formatDateTime } from '../lib/utils';
 import { DollarSign, TrendingUp, Clock, ArrowDownCircle } from 'lucide-react';
 
@@ -27,8 +28,13 @@ interface BalanceData {
 }
 
 const Balances: React.FC = () => {
+  const { merchantId } = useAuth();
+  
   const { data, loading } = useFetch<BalanceData>(
     async () => {
+      if (!merchantId) {
+        return { balance: null, history: [] };
+      }
       const [balanceResponse, historyResponse] = await Promise.all([
         api.get('/balances'),
         api.get('/balances/history?limit=20'),
@@ -38,7 +44,7 @@ const Balances: React.FC = () => {
         history: historyResponse.data.data.transactions || [],
       };
     },
-    []
+    [merchantId]
   );
 
   const balance = data?.balance || null;
@@ -46,6 +52,23 @@ const Balances: React.FC = () => {
 
   if (loading) {
     return <LoadingSpinner message="Loading balance..." />;
+  }
+
+  // Show message if no merchant context (admin/ops users)
+  if (!merchantId) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Balances</h1>
+          <p className="text-muted-foreground">View your balance and transaction history</p>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <EmptyState message="This page is only available for merchant accounts. Admins can view merchant balances from the Merchants page." />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -57,9 +80,9 @@ const Balances: React.FC = () => {
           <p className="text-muted-foreground">View your balance and transaction history</p>
         </div>
         <Button asChild>
-          <Link to="/settlements/new">
+          <Link to="/withdrawals/new">
             <ArrowDownCircle className="mr-2 h-4 w-4" />
-            Request Settlement
+            Withdraw Funds
           </Link>
         </Button>
       </div>
@@ -157,7 +180,7 @@ const Balances: React.FC = () => {
               <CardDescription>Recent transactions affecting your balance</CardDescription>
             </div>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/settlements">View Settlements</Link>
+              <Link to="/withdrawals">View Withdrawals</Link>
             </Button>
           </div>
         </CardHeader>

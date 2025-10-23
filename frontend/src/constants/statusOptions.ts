@@ -1,11 +1,3 @@
-export const SETTLEMENT_STATUS_OPTIONS = [
-  { value: 'all', label: 'All Status' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'processing', label: 'Processing' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'failed', label: 'Failed' },
-];
-
 export const WITHDRAWAL_STATUS_OPTIONS = [
   { value: 'all', label: 'All Status' },
   { value: 'initiated', label: 'Initiated' },

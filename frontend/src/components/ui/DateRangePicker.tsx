@@ -93,15 +93,24 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange, clas
         <Calendar className="h-4 w-4 text-gray-500" />
         <span className="text-sm font-medium text-gray-700">{displayText()}</span>
         {(value.startDate || value.endDate) && (
-          <button
+          <span
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
               e.stopPropagation();
               handleReset();
             }}
-            className="ml-1 p-0.5 hover:bg-gray-200 rounded transition-colors"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                handleReset();
+              }
+            }}
+            className="ml-1 p-0.5 hover:bg-gray-200 rounded transition-colors cursor-pointer"
           >
             <X className="h-3 w-3 text-gray-500" />
-          </button>
+          </span>
         )}
       </button>
 

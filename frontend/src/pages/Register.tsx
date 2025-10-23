@@ -13,6 +13,8 @@ const Register: React.FC = () => {
   const [legalName, setLegalName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
+  const [approvalMessage, setApprovalMessage] = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -33,14 +35,53 @@ const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      await register(email, password, legalName);
-      navigate('/dashboard');
+      const result = await register(email, password, legalName);
+      
+      if (result.pendingApproval) {
+        // Show pending approval message
+        setPendingApproval(true);
+        setApprovalMessage(result.message || 'Your account is pending admin approval.');
+      } else {
+        // Registration complete with tokens, navigate to dashboard
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
+
+  // Show success message if pending approval
+  if (pendingApproval) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Registration Successful!</CardTitle>
+            <CardDescription>
+              Pending Admin Approval
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-md">
+              <p className="font-medium mb-2">Your account has been created successfully.</p>
+              <p className="text-sm">{approvalMessage}</p>
+              <p className="text-sm mt-2">You will be able to log in once an administrator approves your account.</p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              onClick={() => navigate('/login')} 
+              className="w-full"
+            >
+              Go to Login
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

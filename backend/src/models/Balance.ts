@@ -7,7 +7,7 @@ export interface IPendingBalance {
 }
 
 export interface IBalance extends Document {
-  merchantId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   available: number;
   pending: number;
   reserve: number;
@@ -26,9 +26,9 @@ const pendingBalanceSchema = new Schema<IPendingBalance>({
 
 const balanceSchema = new Schema<IBalance>(
   {
-    merchantId: {
+    userId: {
       type: Schema.Types.ObjectId,
-      ref: 'Merchant',
+      ref: 'User',
       required: true,
       unique: true,
     },
@@ -59,7 +59,7 @@ const balanceSchema = new Schema<IBalance>(
   }
 );
 
-// Note: merchantId index already created via unique: true
+// Note: userId index already created via unique: true
 
 export const Balance = mongoose.model<IBalance>('Balance', balanceSchema);
 

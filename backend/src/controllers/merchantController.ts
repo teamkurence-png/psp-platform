@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { z } from 'zod';
-import { Merchant } from '../models/Merchant.js';
+import { User } from '../models/User.js';
 import { DocumentModel } from '../models/Document.js';
 import { AuthRequest, UserRole, OnboardingStatus } from '../types/index.js';
 
@@ -30,21 +30,21 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    let merchant;
+    let user;
     if (req.user.role === UserRole.MERCHANT) {
-      merchant = await Merchant.findOne({ userId: req.user.id });
+      user = await User.findById(req.user.id).select('-password -refreshToken -twoFactorSecret');
     } else {
       // For ops/admin viewing merchant profile
       const { merchantId } = req.params;
-      merchant = await Merchant.findById(merchantId);
+      user = await User.findById(merchantId).select('-password -refreshToken -twoFactorSecret');
     }
 
-    if (!merchant) {
+    if (!user || user.role !== UserRole.MERCHANT) {
       res.status(404).json({ success: false, error: 'Merchant not found' });
       return;
     }
 
-    res.json({ success: true, data: merchant });
+    res.json({ success: true, data: user });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ success: false, error: 'Failed to get profile' });
@@ -60,17 +60,23 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
 
     const validatedData = updateProfileSchema.parse(req.body);
 
-    const merchant = await Merchant.findOne({ userId: req.user.id });
-    if (!merchant) {
-      res.status(404).json({ success: false, error: 'Merchant not found' });
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
       return;
     }
 
     // Update merchant profile
-    Object.assign(merchant, validatedData);
-    await merchant.save();
+    Object.assign(user, validatedData);
+    await user.save();
 
-    res.json({ success: true, data: merchant });
+    // Return user without sensitive fields
+    const userResponse = user.toObject();
+    delete userResponse.password;
+    delete userResponse.refreshToken;
+    delete userResponse.twoFactorSecret;
+
+    res.json({ success: true, data: userResponse });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ success: false, error: error.errors });
@@ -88,14 +94,14 @@ export const submitForReview = async (req: AuthRequest, res: Response): Promise<
       return;
     }
 
-    const merchant = await Merchant.findOne({ userId: req.user.id });
-    if (!merchant) {
-      res.status(404).json({ success: false, error: 'Merchant not found' });
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
       return;
     }
 
     // Check if required fields are filled
-    if (!merchant.legalName || !merchant.address) {
+    if (!user.legalName || !user.address) {
       res.status(400).json({ 
         success: false, 
         error: 'Please complete all required fields before submitting' 
@@ -104,7 +110,7 @@ export const submitForReview = async (req: AuthRequest, res: Response): Promise<
     }
 
     // Check if documents are uploaded
-    const documents = await DocumentModel.find({ merchantId: merchant._id });
+    const documents = await DocumentModel.find({ userId: user._id });
     if (documents.length === 0) {
       res.status(400).json({ 
         success: false, 
@@ -114,13 +120,19 @@ export const submitForReview = async (req: AuthRequest, res: Response): Promise<
     }
 
     // Update status
-    merchant.onboardingStatus = OnboardingStatus.IN_REVIEW;
-    await merchant.save();
+    user.onboardingStatus = OnboardingStatus.IN_REVIEW;
+    await user.save();
+
+    // Return user without sensitive fields
+    const userResponse = user.toObject();
+    delete userResponse.password;
+    delete userResponse.refreshToken;
+    delete userResponse.twoFactorSecret;
 
     res.json({ 
       success: true, 
       message: 'Application submitted for review',
-      data: merchant 
+      data: userResponse 
     });
   } catch (error) {
     console.error('Submit for review error:', error);
@@ -132,12 +144,6 @@ export const uploadDocument = async (req: AuthRequest, res: Response): Promise<v
   try {
     if (!req.user || req.user.role !== UserRole.MERCHANT) {
       res.status(403).json({ success: false, error: 'Forbidden' });
-      return;
-    }
-
-    const merchant = await Merchant.findOne({ userId: req.user.id });
-    if (!merchant) {
-      res.status(404).json({ success: false, error: 'Merchant not found' });
       return;
     }
 
@@ -153,7 +159,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response): Promise<v
     }
 
     const document = await DocumentModel.create({
-      merchantId: merchant._id,
+      userId: req.user.id,
       type,
       fileName: req.file.originalname,
       filePath: req.file.path,
@@ -175,21 +181,20 @@ export const getDocuments = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    let merchantId;
+    let userId;
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      merchantId = merchant?._id;
+      userId = req.user.id;
     } else {
       // For ops/admin viewing merchant documents
-      merchantId = req.params.merchantId;
+      userId = req.params.merchantId; // Note: The param is still called merchantId for backward compatibility
     }
 
-    if (!merchantId) {
-      res.status(404).json({ success: false, error: 'Merchant not found' });
+    if (!userId) {
+      res.status(404).json({ success: false, error: 'User not found' });
       return;
     }
 
-    const documents = await DocumentModel.find({ merchantId });
+    const documents = await DocumentModel.find({ userId });
 
     res.json({ success: true, data: documents });
   } catch (error) {
@@ -213,24 +218,32 @@ export const reviewOnboarding = async (req: AuthRequest, res: Response): Promise
       return;
     }
 
-    const merchant = await Merchant.findById(merchantId);
-    if (!merchant) {
+    const user = await User.findById(merchantId);
+    if (!user || user.role !== UserRole.MERCHANT) {
       res.status(404).json({ success: false, error: 'Merchant not found' });
       return;
     }
 
-    merchant.onboardingStatus = status;
+    user.onboardingStatus = status;
     if (status === OnboardingStatus.REJECTED) {
-      merchant.rejectionReason = rejectionReason;
+      user.rejectionReason = rejectionReason;
+      user.isActive = false;
     } else {
-      merchant.approvedAt = new Date();
+      user.approvedAt = new Date();
+      user.isActive = true;
     }
-    await merchant.save();
+    await user.save();
+
+    // Return user without sensitive fields
+    const userResponse = user.toObject();
+    delete userResponse.password;
+    delete userResponse.refreshToken;
+    delete userResponse.twoFactorSecret;
 
     res.json({ 
       success: true, 
       message: `Merchant ${status.toLowerCase()}`,
-      data: merchant 
+      data: userResponse 
     });
   } catch (error) {
     console.error('Review onboarding error:', error);
@@ -246,18 +259,19 @@ export const listMerchants = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     const { status, page = 1, limit = 10 } = req.query;
-    const query: any = {};
+    const query: any = { role: UserRole.MERCHANT };
 
     if (status) {
       query.onboardingStatus = status;
     }
 
-    const merchants = await Merchant.find(query)
+    const merchants = await User.find(query)
+      .select('-password -refreshToken -twoFactorSecret')
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit))
       .sort({ createdAt: -1 });
 
-    const total = await Merchant.countDocuments(query);
+    const total = await User.countDocuments(query);
 
     res.json({
       success: true,

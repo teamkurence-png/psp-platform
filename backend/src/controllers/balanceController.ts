@@ -3,6 +3,7 @@ import { Balance } from '../models/Balance.js';
 import { Merchant } from '../models/Merchant.js';
 import { Transaction } from '../models/Transaction.js';
 import { AuthRequest, UserRole, TransactionStatus } from '../types/index.js';
+import { getMerchantId } from '../utils/merchant.js';
 
 export const getBalance = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -13,12 +14,11 @@ export const getBalance = async (req: AuthRequest, res: Response): Promise<void>
 
     let merchantId;
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant) {
+      merchantId = await getMerchantId(req);
+      if (!merchantId) {
         res.status(404).json({ success: false, error: 'Merchant not found' });
         return;
       }
-      merchantId = merchant._id;
     } else {
       // For ops/admin viewing merchant balance
       merchantId = req.query.merchantId;
@@ -59,12 +59,11 @@ export const getBalanceHistory = async (req: AuthRequest, res: Response): Promis
 
     let merchantId;
     if (req.user.role === UserRole.MERCHANT) {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant) {
+      merchantId = await getMerchantId(req);
+      if (!merchantId) {
         res.status(404).json({ success: false, error: 'Merchant not found' });
         return;
       }
-      merchantId = merchant._id;
     } else {
       merchantId = req.query.merchantId;
     }

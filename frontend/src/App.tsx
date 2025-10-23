@@ -13,8 +13,6 @@ import MerchantDocuments from './pages/MerchantDocuments';
 import PaymentRequestDetail from './pages/PaymentRequestDetail';
 import TransactionDetail from './pages/TransactionDetail';
 import Balances from './pages/Balances';
-import Settlements from './pages/Settlements';
-import CreateSettlement from './pages/CreateSettlement';
 import Withdrawals from './pages/Withdrawals';
 import CreateWithdrawal from './pages/CreateWithdrawal';
 import Merchants from './pages/Merchants';
@@ -79,8 +77,6 @@ function App() {
               <Route path="confirmations" element={<ManualConfirmations />} />
               <Route path="review-queue" element={<OpsReviewQueue />} />
               <Route path="balances" element={<Balances />} />
-              <Route path="settlements" element={<Settlements />} />
-              <Route path="settlements/new" element={<CreateSettlement />} />
               <Route path="withdrawals" element={<Withdrawals />} />
               <Route path="withdrawals/new" element={<CreateWithdrawal />} />
               <Route path="merchants" element={<Merchants />} />

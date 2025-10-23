@@ -2,7 +2,7 @@ import mongoose, { Document as MongooseDocument, Schema } from 'mongoose';
 import { DocumentType } from '../types/index.js';
 
 export interface IDocument extends MongooseDocument {
-  merchantId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   type: DocumentType;
   fileName: string;
   filePath: string;
@@ -17,9 +17,9 @@ export interface IDocument extends MongooseDocument {
 
 const documentSchema = new Schema<IDocument>(
   {
-    merchantId: {
+    userId: {
       type: Schema.Types.ObjectId,
-      ref: 'Merchant',
+      ref: 'User',
       required: true,
     },
     type: {
@@ -59,7 +59,8 @@ const documentSchema = new Schema<IDocument>(
   }
 );
 
-// Indexes (merchantId already indexed via ref)
+// Indexes
+documentSchema.index({ userId: 1 });
 documentSchema.index({ type: 1 });
 documentSchema.index({ status: 1 });
 
