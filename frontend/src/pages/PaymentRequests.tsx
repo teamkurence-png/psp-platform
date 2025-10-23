@@ -40,7 +40,8 @@ const PaymentRequests: React.FC = () => {
         request.customerInfo?.name?.toLowerCase().includes(lowerTerm) ||
         request.customerInfo?.email?.toLowerCase().includes(lowerTerm) ||
         request.description?.toLowerCase().includes(lowerTerm) ||
-        request.invoiceNumber?.toLowerCase().includes(lowerTerm)
+        request.invoiceNumber?.toLowerCase().includes(lowerTerm) ||
+        false
       );
     }
   );
