@@ -12,13 +12,28 @@ import { useAuth } from '../lib/auth';
 import { formatCurrency } from '../lib/utils';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 
+interface WithdrawalFormData {
+  method: 'crypto' | 'bank_transfer';
+  amount: string;
+  asset: CryptoAsset;
+  network: string;
+  address: string;
+  bankAccount: string;
+  iban: string;
+  swiftCode: string;
+  accountNumber: string;
+  routingNumber: string;
+  bankName: string;
+  beneficiaryName: string;
+}
+
 const CreateWithdrawal: React.FC = () => {
   const navigate = useNavigate();
   const { merchantId } = useAuth();
   const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState<Balance | null>(null);
-  const [formData, setFormData] = useState({
-    method: 'crypto' as 'crypto' | 'bank_transfer',
+  const [formData, setFormData] = useState<WithdrawalFormData>({
+    method: 'crypto',
     amount: '',
     
     // Crypto fields
@@ -259,7 +274,10 @@ const CreateWithdrawal: React.FC = () => {
                   <select
                     id="asset"
                     value={formData.asset}
-                    onChange={(e) => setFormData({ ...formData, asset: e.target.value as CryptoAsset })}
+                    onChange={(e) => {
+                      const value = e.target.value as CryptoAsset;
+                      setFormData({ ...formData, asset: value });
+                    }}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mt-2"
                     required
                   >

@@ -211,7 +211,7 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
 const BankAccounts: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
-  const isAdminOrOps = [UserRole.ADMIN, UserRole.OPS, UserRole.FINANCE].includes(user?.role as UserRole);
+  const isAdminOrOps = user?.role === UserRole.ADMIN || user?.role === UserRole.OPS || user?.role === UserRole.FINANCE;
   const queryClient = useQueryClient();
   const [selectedBank, setSelectedBank] = useState<BankAccount | null>(null);
   const [showModal, setShowModal] = useState(false);

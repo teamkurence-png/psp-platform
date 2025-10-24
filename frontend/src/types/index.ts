@@ -1,50 +1,64 @@
-export enum UserRole {
-  MERCHANT = 'merchant',
-  OPS = 'ops',
-  FINANCE = 'finance',
-  ADMIN = 'admin',
-}
+export const UserRole = {
+  MERCHANT: 'merchant',
+  OPS: 'ops',
+  FINANCE: 'finance',
+  ADMIN: 'admin',
+} as const;
 
-export enum OnboardingStatus {
-  NOT_STARTED = 'not_started',
-  IN_REVIEW = 'in_review',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-}
+export type UserRole = typeof UserRole[keyof typeof UserRole];
 
-export enum PaymentMethod {
-  BANK_WIRE = 'bank_wire',
-  CARD = 'card',
-}
+export const OnboardingStatus = {
+  NOT_STARTED: 'not_started',
+  IN_REVIEW: 'in_review',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+} as const;
 
-export enum PaymentRequestStatus {
-  SENT = 'sent',
-  VIEWED = 'viewed',
-  PAID = 'paid',
-  EXPIRED = 'expired',
-  CANCELLED = 'cancelled',
-}
+export type OnboardingStatus = typeof OnboardingStatus[keyof typeof OnboardingStatus];
 
-export enum WithdrawalStatus {
-  INITIATED = 'initiated',
-  ON_CHAIN = 'on_chain',
-  PAID = 'paid',
-  FAILED = 'failed',
-  REVERSED = 'reversed',
-}
+export const PaymentMethod = {
+  BANK_WIRE: 'bank_wire',
+  CARD: 'card',
+} as const;
 
-export enum CryptoAsset {
-  USDT_TRC20 = 'usdt_trc20',
-  USDT_ERC20 = 'usdt_erc20',
-  BTC = 'btc',
-  ETH = 'eth',
-}
+export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod];
 
-export enum BankRail {
-  SEPA = 'sepa',
-  SWIFT = 'swift',
-  LOCAL = 'local',
-}
+export const PaymentRequestStatus = {
+  SENT: 'sent',
+  VIEWED: 'viewed',
+  PAID: 'paid',
+  EXPIRED: 'expired',
+  CANCELLED: 'cancelled',
+} as const;
+
+export type PaymentRequestStatus = typeof PaymentRequestStatus[keyof typeof PaymentRequestStatus];
+
+export const WithdrawalStatus = {
+  INITIATED: 'initiated',
+  ON_CHAIN: 'on_chain',
+  PAID: 'paid',
+  FAILED: 'failed',
+  REVERSED: 'reversed',
+} as const;
+
+export type WithdrawalStatus = typeof WithdrawalStatus[keyof typeof WithdrawalStatus];
+
+export const CryptoAsset = {
+  USDT_TRC20: 'usdt_trc20',
+  USDT_ERC20: 'usdt_erc20',
+  BTC: 'btc',
+  ETH: 'eth',
+} as const;
+
+export type CryptoAsset = typeof CryptoAsset[keyof typeof CryptoAsset];
+
+export const BankRail = {
+  SEPA: 'sepa',
+  SWIFT: 'swift',
+  LOCAL: 'local',
+} as const;
+
+export type BankRail = typeof BankRail[keyof typeof BankRail];
 
 export interface User {
   id: string;

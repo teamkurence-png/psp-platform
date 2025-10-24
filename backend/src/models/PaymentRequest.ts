@@ -21,7 +21,7 @@ export interface IBankDetails {
 
 export interface ICardSettings {
   allowedBrands?: string[];
-  require3DS: boolean;
+  require3DS: boolean; 
   expiryDate?: Date;
 }
 

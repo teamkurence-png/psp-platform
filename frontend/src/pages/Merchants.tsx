@@ -91,8 +91,8 @@ const Merchants: React.FC = () => {
       const lowerTerm = term.toLowerCase();
       return (
         merchant.legalName.toLowerCase().includes(lowerTerm) ||
-        (merchant.supportEmail && merchant.supportEmail.toLowerCase().includes(lowerTerm)) ||
-        (merchant.website && merchant.website.toLowerCase().includes(lowerTerm))
+        (merchant.supportEmail?.toLowerCase().includes(lowerTerm) ?? false) ||
+        (merchant.website?.toLowerCase().includes(lowerTerm) ?? false)
       );
     }
   );

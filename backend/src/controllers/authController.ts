@@ -68,7 +68,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
         message: 'Registration successful. Your account is pending admin approval.',
         data: {
           user: {
-            id: user._id,
+            id: String(user._id),
             email: user.email,
             role: user.role,
             isActive: user.isActive,
@@ -80,7 +80,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 
     // For non-merchants (OPS, FINANCE, ADMIN), generate tokens immediately
     const tokenPayload = {
-      id: user._id.toString(),
+      id: String(user._id),
       email: user.email,
       role: user.role,
     };
@@ -96,7 +96,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
       success: true,
       data: {
         user: {
-          id: user._id,
+          id: String(user._id),
           email: user.email,
           role: user.role,
         },
@@ -168,7 +168,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 
     // Generate tokens
     const tokenPayload = {
-      id: user._id.toString(),
+      id: String(user._id),
       email: user.email,
       role: user.role,
     };
@@ -183,7 +183,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 
     const loginResponse: any = {
       user: {
-        id: user._id,
+        id: String(user._id),
         email: user.email,
         role: user.role,
         twoFactorEnabled: user.twoFactorEnabled,
@@ -194,7 +194,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 
     // If user is a merchant, include merchantId
     if (user.role === UserRole.MERCHANT) {
-      loginResponse.merchantId = user._id.toString();
+      loginResponse.merchantId = String(user._id);
     }
 
     res.json({
@@ -244,7 +244,7 @@ export const refreshToken = async (req: AuthRequest, res: Response): Promise<voi
 
     // Generate new tokens
     const tokenPayload = {
-      id: user._id.toString(),
+      id: String(user._id),
       email: user.email,
       role: user.role,
     };
@@ -426,7 +426,7 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
 
     const responseData: any = {
       user: {
-        id: user._id,
+        id: String(user._id),
         email: user.email,
         role: user.role,
         twoFactorEnabled: user.twoFactorEnabled,

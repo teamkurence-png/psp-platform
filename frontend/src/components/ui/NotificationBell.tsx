@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Bell, Check, X } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { formatDate } from '../../lib/utils';
-import io, { Socket } from 'socket.io-client';
+import io from 'socket.io-client';
 
 interface Notification {
   _id: string;
@@ -18,7 +18,6 @@ const NotificationBell: React.FC = () => {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -35,13 +34,11 @@ const NotificationBell: React.FC = () => {
         path: '/socket.io/',
       });
 
-      setSocket(socketInstance);
-
       // Handle connection events
       socketInstance.on('connect', () => {
         console.log('Socket connected:', socketInstance.id);
         // Join user's room
-        socketInstance.emit('join', user._id);
+        socketInstance.emit('join', user.id);
       });
 
       socketInstance.on('connect_error', (error) => {

@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import StatusBadge from '../components/ui/StatusBadge';
-import Input from '../components/ui/Input';
 import Label from '../components/ui/Label';
 import { formatDateTime, formatCurrency } from '../lib/utils';
 import { withdrawalService, type Withdrawal, type UpdateWithdrawalStatusDto } from '../services';

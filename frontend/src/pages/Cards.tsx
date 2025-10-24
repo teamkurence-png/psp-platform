@@ -103,7 +103,7 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose, onSave, loading })
 const Cards: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
-  const isAdminOrOps = [UserRole.ADMIN, UserRole.OPS, UserRole.FINANCE].includes(user?.role as UserRole);
+  const isAdminOrOps = user?.role === UserRole.ADMIN || user?.role === UserRole.OPS || user?.role === UserRole.FINANCE;
   const queryClient = useQueryClient();
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [showModal, setShowModal] = useState(false);

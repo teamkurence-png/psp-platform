@@ -70,7 +70,7 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
     await user.save();
 
     // Return user without sensitive fields
-    const userResponse = user.toObject();
+    const userResponse: any = user.toObject();
     delete userResponse.password;
     delete userResponse.refreshToken;
     delete userResponse.twoFactorSecret;
@@ -113,7 +113,7 @@ export const submitForReview = async (req: AuthRequest, res: Response): Promise<
     await user.save();
 
     // Return user without sensitive fields
-    const userResponse = user.toObject();
+    const userResponse: any = user.toObject();
     delete userResponse.password;
     delete userResponse.refreshToken;
     delete userResponse.twoFactorSecret;
@@ -161,7 +161,7 @@ export const reviewOnboarding = async (req: AuthRequest, res: Response): Promise
     await user.save();
 
     // Return user without sensitive fields
-    const userResponse = user.toObject();
+    const userResponse: any = user.toObject();
     delete userResponse.password;
     delete userResponse.refreshToken;
     delete userResponse.twoFactorSecret;

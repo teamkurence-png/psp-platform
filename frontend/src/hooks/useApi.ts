@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import api from '../lib/api';
 import { AxiosError } from 'axios';
 
 interface UseApiState<T> {
