@@ -4,7 +4,6 @@ import { useAuth } from '../../lib/auth';
 import {
   LayoutDashboard,
   FileText,
-  CreditCard,
   Building2,
   Wallet,
   Settings,
@@ -44,12 +43,6 @@ const AppLayout: React.FC = () => {
         name: 'Payment Requests', 
         href: '/payment-requests', 
         icon: FileText,
-        roles: [UserRole.MERCHANT]
-      },
-      { 
-        name: 'Transactions', 
-        href: '/transactions', 
-        icon: CreditCard,
         roles: [UserRole.MERCHANT]
       },
       { 

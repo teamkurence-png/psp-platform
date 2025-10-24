@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import Button from '../components/ui/Button';
 import StatCard from '../components/ui/StatCard';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import EmptyState from '../components/ui/EmptyState';
 import DateRangePicker from '../components/ui/DateRangePicker';
 import { 
   TrendingUp, 
@@ -14,12 +13,11 @@ import {
   FileText, 
   Bitcoin,
   AlertCircle,
-  ArrowUpRight,
   Wallet
 } from 'lucide-react';
 import { formatCurrency, formatDateForAPI, getDefaultDateRange, type DateRange } from '../lib/utils';
 import { useFetch } from '../hooks';
-import { dashboardService, type DashboardStats, type Alert, type RecentTransaction } from '../services';
+import { dashboardService, type DashboardStats, type Alert } from '../services';
 
 const Dashboard: React.FC = () => {
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
@@ -27,7 +25,6 @@ const Dashboard: React.FC = () => {
   const { data, loading } = useFetch<{
     stats: DashboardStats;
     alerts: Alert[];
-    recentTransactions: RecentTransaction[];
   }>(
     () => dashboardService.getDashboardData(
       formatDateForAPI(dateRange.startDate),
@@ -45,7 +42,6 @@ const Dashboard: React.FC = () => {
     pendingBalance: 0,
   };
   const alerts = data?.alerts || [];
-  const recentTransactions = data?.recentTransactions || [];
 
   if (loading) {
     return <LoadingSpinner message="Loading dashboard..." />;
@@ -205,61 +201,6 @@ const Dashboard: React.FC = () => {
               <span className="font-medium text-purple-900">Withdraw via Crypto</span>
             </Link>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Transactions */}
-      <Card className="shadow-md">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-xl">Recent Transactions</CardTitle>
-              <CardDescription>Latest payment activities</CardDescription>
-            </div>
-            <Button variant="outline" size="sm" className="group" asChild>
-              <Link to="/transactions">
-                View All
-                <ArrowUpRight className="ml-1 h-3.5 w-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {recentTransactions.length === 0 ? (
-            <EmptyState message="No recent transactions yet">
-              <Button asChild className="mt-4" size="sm">
-                <Link to="/payment-requests/new">Create your first payment request</Link>
-              </Button>
-            </EmptyState>
-          ) : (
-            <div className="space-y-3">
-              {recentTransactions.map((txn) => (
-                <div key={txn.id} className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-white rounded-lg border border-gray-200">
-                      <DollarSign className="h-4 w-4 text-gray-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">{txn.customer}</p>
-                      <p className="text-xs text-gray-500">{txn.id} · {txn.date}</p>
-                    </div>
-                  </div>
-                  <div className="text-right flex items-center gap-3">
-                    <div>
-                      <p className="font-bold text-gray-900 text-lg">{formatCurrency(txn.amount)}</p>
-                      <span className={`inline-block text-xs px-2.5 py-1 rounded-full font-medium ${
-                        txn.status === 'approved' 
-                          ? 'bg-green-100 text-green-700 border border-green-200' 
-                          : 'bg-amber-100 text-amber-700 border border-amber-200'
-                      }`}>
-                        {txn.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

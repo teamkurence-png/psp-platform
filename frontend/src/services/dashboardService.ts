@@ -15,14 +15,6 @@ export interface Alert {
   message: string;
 }
 
-export interface RecentTransaction {
-  id: string;
-  customer: string;
-  amount: number;
-  status: string;
-  date: string;
-}
-
 export const dashboardService = {
   getStats: (startDate?: string, endDate?: string) => {
     const params = new URLSearchParams();
@@ -35,21 +27,15 @@ export const dashboardService = {
     return api.get('/dashboard/alerts');
   },
 
-  getRecentTransactions: () => {
-    return api.get('/dashboard/recent-transactions');
-  },
-
   getDashboardData: async (startDate?: string, endDate?: string) => {
-    const [statsResponse, alertsResponse, transactionsResponse] = await Promise.all([
+    const [statsResponse, alertsResponse] = await Promise.all([
       dashboardService.getStats(startDate, endDate),
       dashboardService.getAlerts(),
-      dashboardService.getRecentTransactions(),
     ]);
 
     return {
       stats: statsResponse.data.data as DashboardStats,
       alerts: alertsResponse.data.data as Alert[],
-      recentTransactions: transactionsResponse.data.data as RecentTransaction[],
     };
   },
 };

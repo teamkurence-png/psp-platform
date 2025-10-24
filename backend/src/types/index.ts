@@ -28,20 +28,6 @@ export enum PaymentRequestStatus {
   CANCELLED = 'cancelled',
 }
 
-export enum TransactionStatus {
-  PENDING_REVIEW = 'pending_review',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  SETTLED = 'settled',
-}
-
-export enum MerchantConfirmation {
-  SUCCESS = 'success',
-  FAILED = 'failed',
-  NOT_RECEIVED = 'not_received',
-  PENDING = 'pending',
-}
-
 export enum WithdrawalStatus {
   INITIATED = 'initiated',
   ON_CHAIN = 'on_chain',

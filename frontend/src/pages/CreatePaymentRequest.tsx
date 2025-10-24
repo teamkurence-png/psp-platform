@@ -81,11 +81,8 @@ const CreatePaymentRequest: React.FC = () => {
     }
   };
 
-  const togglePaymentMethod = (method: PaymentMethod) => {
-    const newMethods = formData.paymentMethods.includes(method)
-      ? formData.paymentMethods.filter((m) => m !== method)
-      : [...formData.paymentMethods, method];
-    setFieldValue('paymentMethods', newMethods);
+  const selectPaymentMethod = (method: PaymentMethod) => {
+    setFieldValue('paymentMethods', [method]);
   };
 
   return (
@@ -227,17 +224,18 @@ const CreatePaymentRequest: React.FC = () => {
         {/* Payment Methods */}
         <Card>
           <CardHeader>
-            <CardTitle>Payment Methods *</CardTitle>
-            <CardDescription>Select which payment methods to allow for this request</CardDescription>
+            <CardTitle>Payment Method *</CardTitle>
+            <CardDescription>Select the payment method to allow for this request</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <label className="flex items-center space-x-3 cursor-pointer">
                 <input
-                  type="checkbox"
+                  type="radio"
+                  name="paymentMethod"
                   checked={formData.paymentMethods.includes(PaymentMethod.BANK_WIRE)}
-                  onChange={() => togglePaymentMethod(PaymentMethod.BANK_WIRE)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  onChange={() => selectPaymentMethod(PaymentMethod.BANK_WIRE)}
+                  className="h-4 w-4 border-gray-300"
                 />
                 <span className="font-medium">Bank Wire Transfer</span>
               </label>
@@ -252,10 +250,11 @@ const CreatePaymentRequest: React.FC = () => {
 
               <label className="flex items-center space-x-3 cursor-pointer">
                 <input
-                  type="checkbox"
+                  type="radio"
+                  name="paymentMethod"
                   checked={formData.paymentMethods.includes(PaymentMethod.CARD)}
-                  onChange={() => togglePaymentMethod(PaymentMethod.CARD)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  onChange={() => selectPaymentMethod(PaymentMethod.CARD)}
+                  className="h-4 w-4 border-gray-300"
                 />
                 <span className="font-medium">Card Payment</span>
               </label>

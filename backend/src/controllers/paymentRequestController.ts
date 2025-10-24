@@ -3,8 +3,9 @@ import { z } from 'zod';
 import { PaymentRequest } from '../models/PaymentRequest.js';
 import { BankAccount } from '../models/BankAccount.js';
 import { Card } from '../models/Card.js';
-import { AuthRequest, UserRole, PaymentMethod, BankRail } from '../types/index.js';
+import { AuthRequest, UserRole, PaymentMethod, BankRail, PaymentRequestStatus } from '../types/index.js';
 import { generateReferenceCode } from '../utils/generators.js';
+import { updateMerchantBalance, addToPendingBalance } from '../services/balanceService.js';
 
 // Validation schema
 const createPaymentRequestSchema = z.object({
@@ -141,6 +142,10 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       bankDetails,
       referenceCode,
     });
+
+    // Add amount to pending balance when payment request is created
+    // Default status is SENT which is a pending state
+    await addToPendingBalance(req.user.id, validatedData.amount, validatedData.currency);
 
     res.status(201).json({ success: true, data: paymentRequest });
   } catch (error) {
@@ -290,6 +295,8 @@ export const updatePaymentRequest = async (req: AuthRequest, res: Response): Pro
       });
     } else if (isAdmin) {
       // Admins can update status for any payment request
+      const oldStatus = paymentRequest.status;
+      
       const allowedFields = ['status', 'description', 'dueDate'];
       allowedFields.forEach(field => {
         if (updates[field] !== undefined) {
@@ -300,6 +307,16 @@ export const updatePaymentRequest = async (req: AuthRequest, res: Response): Pro
       // Set paidAt timestamp when marking as paid
       if (updates.status === 'paid' && paymentRequest.status !== 'paid') {
         paymentRequest.paidAt = new Date();
+      }
+
+      // Update merchant balance if status changed
+      if (updates.status !== undefined && updates.status !== oldStatus) {
+        await updateMerchantBalance(
+          paymentRequest.userId.toString(),
+          paymentRequest.amount,
+          oldStatus,
+          updates.status as PaymentRequestStatus
+        );
       }
     } else {
       res.status(403).json({ success: false, error: 'Forbidden' });
@@ -336,8 +353,17 @@ export const cancelPaymentRequest = async (req: AuthRequest, res: Response): Pro
       return;
     }
 
-    paymentRequest.status = 'cancelled' as any;
+    const oldStatus = paymentRequest.status;
+    paymentRequest.status = PaymentRequestStatus.CANCELLED;
     await paymentRequest.save();
+
+    // Update balance when cancelling
+    await updateMerchantBalance(
+      paymentRequest.userId.toString(),
+      paymentRequest.amount,
+      oldStatus,
+      PaymentRequestStatus.CANCELLED
+    );
 
     res.json({ success: true, message: 'Payment request cancelled', data: paymentRequest });
   } catch (error) {

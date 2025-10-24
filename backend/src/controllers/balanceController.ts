@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { Balance } from '../models/Balance.js';
-import { Transaction } from '../models/Transaction.js';
-import { AuthRequest, UserRole, TransactionStatus } from '../types/index.js';
+import { PaymentRequest } from '../models/PaymentRequest.js';
+import { AuthRequest, UserRole, PaymentRequestStatus } from '../types/index.js';
 
 export const getBalance = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -73,25 +73,25 @@ export const getBalanceHistory = async (req: AuthRequest, res: Response): Promis
       if (endDate) query.createdAt.$lte = new Date(endDate as string);
     }
 
-    // Get transactions that affect balance
-    const transactions = await Transaction.find({
+    // Get payment requests that affect balance
+    const paymentRequests = await PaymentRequest.find({
       ...query,
-      platformStatus: { $in: [TransactionStatus.APPROVED, TransactionStatus.SETTLED] },
+      status: PaymentRequestStatus.PAID,
     })
       .sort({ createdAt: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit))
-      .select('transactionId amount currency fees net platformStatus createdAt settledAt');
+      .select('_id amount currency status createdAt paidAt customerInfo invoiceNumber');
 
-    const total = await Transaction.countDocuments({
+    const total = await PaymentRequest.countDocuments({
       ...query,
-      platformStatus: { $in: [TransactionStatus.APPROVED, TransactionStatus.SETTLED] },
+      status: PaymentRequestStatus.PAID,
     });
 
     res.json({
       success: true,
       data: {
-        transactions,
+        paymentRequests,
         pagination: {
           page: Number(page),
           limit: Number(limit),

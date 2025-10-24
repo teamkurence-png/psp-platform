@@ -12,14 +12,17 @@ import { formatCurrency, formatDateTime } from '../lib/utils';
 import { DollarSign, TrendingUp, Clock, ArrowDownCircle } from 'lucide-react';
 
 interface BalanceHistory {
-  transactionId: string;
+  _id: string;
   amount: number;
   currency: string;
-  fees: number;
-  net: number;
-  platformStatus: string;
+  status: string;
   createdAt: string;
-  settledAt?: string;
+  paidAt?: string;
+  customerInfo?: {
+    name?: string;
+    email?: string;
+  };
+  invoiceNumber?: string;
 }
 
 interface BalanceData {
@@ -41,7 +44,7 @@ const Balances: React.FC = () => {
       ]);
       return {
         balance: balanceResponse.data.data,
-        history: historyResponse.data.data.transactions || [],
+        history: historyResponse.data.data.paymentRequests || [],
       };
     },
     [merchantId]
@@ -60,7 +63,7 @@ const Balances: React.FC = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Balances</h1>
-          <p className="text-muted-foreground">View your balance and transaction history</p>
+          <p className="text-muted-foreground">View your balance details</p>
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -77,7 +80,7 @@ const Balances: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Balances</h1>
-          <p className="text-muted-foreground">View your balance and transaction history</p>
+          <p className="text-muted-foreground">View your balance details</p>
         </div>
         <Button asChild>
           <Link to="/withdrawals/new">
@@ -171,13 +174,13 @@ const Balances: React.FC = () => {
         </Card>
       )}
 
-      {/* Transaction History */}
+      {/* Payment Request History */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Balance History</CardTitle>
-              <CardDescription>Recent transactions affecting your balance</CardDescription>
+              <CardDescription>Recent paid payment requests affecting your balance</CardDescription>
             </div>
             <Button variant="outline" size="sm" asChild>
               <Link to="/withdrawals">View Withdrawals</Link>
@@ -186,28 +189,30 @@ const Balances: React.FC = () => {
         </CardHeader>
         <CardContent>
           {history.length === 0 ? (
-            <EmptyState message="No transaction history yet" />
+            <EmptyState message="No payment history yet" />
           ) : (
             <div className="space-y-4">
-              {history.map((txn) => (
-                <div key={txn.transactionId} className="flex items-center justify-between p-4 border rounded-lg">
+              {history.map((pr) => (
+                <div key={pr._id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex-1">
-                    <p className="font-mono text-sm">{txn.transactionId}</p>
+                    <p className="font-semibold">
+                      {pr.customerInfo?.name || pr.customerInfo?.email || 'Unknown Customer'}
+                    </p>
+                    {pr.invoiceNumber && (
+                      <p className="text-xs text-muted-foreground">Invoice: {pr.invoiceNumber}</p>
+                    )}
                     <p className="text-xs text-muted-foreground mt-1">
-                      {formatDateTime(txn.createdAt)}
-                      {txn.settledAt && ` • Settled: ${formatDateTime(txn.settledAt)}`}
+                      Created: {formatDateTime(pr.createdAt)}
+                      {pr.paidAt && ` • Paid: ${formatDateTime(pr.paidAt)}`}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-lg text-green-600">
-                      +{formatCurrency(txn.net, txn.currency)}
+                      {formatCurrency(pr.amount, pr.currency)}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      Gross: {formatCurrency(txn.amount, txn.currency)}
-                    </p>
-                    <p className="text-xs text-red-600">
-                      Fees: -{formatCurrency(txn.fees, txn.currency)}
-                    </p>
+                    <span className="inline-block text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 border border-green-200">
+                      {pr.status}
+                    </span>
                   </div>
                 </div>
               ))}

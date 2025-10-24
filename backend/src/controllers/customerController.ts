@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { z } from 'zod';
 import { Customer } from '../models/Customer.js';
-import { Transaction } from '../models/Transaction.js';
+import { PaymentRequest } from '../models/PaymentRequest.js';
 import { AuthRequest, UserRole } from '../types/index.js';
 
 // Validation schemas
@@ -135,20 +135,20 @@ export const getCustomer = async (req: AuthRequest, res: Response): Promise<void
       }
     }
 
-    // Get customer transactions
-    const transactions = await Transaction.find({
+    // Get customer payment requests
+    const paymentRequests = await PaymentRequest.find({
       'customerInfo.email': customer.email,
       userId: customer.userId,
     })
       .sort({ createdAt: -1 })
       .limit(10)
-      .select('transactionId amount currency platformStatus createdAt');
+      .select('_id amount currency status createdAt paidAt');
 
     res.json({ 
       success: true, 
       data: {
         customer,
-        transactions,
+        paymentRequests,
       }
     });
   } catch (error) {

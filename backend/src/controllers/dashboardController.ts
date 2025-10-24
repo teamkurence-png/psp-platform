@@ -1,7 +1,7 @@
 import { Response } from 'express';
-import { Transaction } from '../models/Transaction.js';
+import { PaymentRequest } from '../models/PaymentRequest.js';
 import { Balance } from '../models/Balance.js';
-import { AuthRequest, UserRole, TransactionStatus } from '../types/index.js';
+import { AuthRequest, UserRole, PaymentRequestStatus } from '../types/index.js';
 
 export const getDashboardStats = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -48,9 +48,14 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
       query.userId = userId;
     }
 
-    // Get volume
-    const volumeResult = await Transaction.aggregate([
-      { $match: query },
+    // Get volume - sum of all paid payment requests in date range
+    const volumeResult = await PaymentRequest.aggregate([
+      { 
+        $match: {
+          ...query,
+          status: PaymentRequestStatus.PAID,
+        }
+      },
       {
         $group: {
           _id: null,
@@ -62,21 +67,21 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
 
     const volume = volumeResult.length > 0 ? volumeResult[0].totalVolume : 0;
 
-    // Get approvals and declines
-    const approvals = await Transaction.countDocuments({
+    // Get approvals (paid) and declines (cancelled/expired)
+    const approvals = await PaymentRequest.countDocuments({
       ...query,
-      platformStatus: TransactionStatus.APPROVED,
+      status: PaymentRequestStatus.PAID,
     });
 
-    const declines = await Transaction.countDocuments({
+    const declines = await PaymentRequest.countDocuments({
       ...query,
-      platformStatus: TransactionStatus.REJECTED,
+      status: { $in: [PaymentRequestStatus.CANCELLED, PaymentRequestStatus.EXPIRED] },
     });
 
-    // Get pending reviews
-    const pendingReviews = await Transaction.countDocuments({
+    // Get pending reviews (sent and viewed payment requests)
+    const pendingReviews = await PaymentRequest.countDocuments({
       ...(userId ? { userId } : {}),
-      platformStatus: TransactionStatus.PENDING_REVIEW,
+      status: { $in: [PaymentRequestStatus.SENT, PaymentRequestStatus.VIEWED] },
     });
 
     // Get balance
@@ -129,33 +134,36 @@ export const getDashboardAlerts = async (req: AuthRequest, res: Response): Promi
 
     const alerts = [];
 
-    // Check for high-risk transactions
-    const highRiskCount = await Transaction.countDocuments({
-      ...(userId ? { userId } : {}),
-      riskScore: { $gte: 70 },
-      platformStatus: TransactionStatus.PENDING_REVIEW,
-    });
-
-    if (highRiskCount > 0) {
-      alerts.push({
-        id: 'high-risk',
-        type: 'warning',
-        message: `You have ${highRiskCount} high-risk transaction${highRiskCount > 1 ? 's' : ''} pending review`,
-      });
-    }
-
-    // Check for pending merchant confirmations
+    // Check for pending payment requests
     if (userId) {
-      const pendingConfirmations = await Transaction.countDocuments({
+      const pendingCount = await PaymentRequest.countDocuments({
         userId,
-        merchantConfirmation: 'pending',
+        status: { $in: [PaymentRequestStatus.SENT, PaymentRequestStatus.VIEWED] },
       });
 
-      if (pendingConfirmations > 0) {
+      if (pendingCount > 0) {
         alerts.push({
-          id: 'pending-confirmations',
+          id: 'pending-payments',
           type: 'info',
-          message: `${pendingConfirmations} transaction${pendingConfirmations > 1 ? 's' : ''} awaiting your confirmation`,
+          message: `You have ${pendingCount} payment request${pendingCount > 1 ? 's' : ''} awaiting payment`,
+        });
+      }
+
+      // Check for expiring payment requests (due in next 3 days)
+      const threeDaysFromNow = new Date();
+      threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+      
+      const expiringCount = await PaymentRequest.countDocuments({
+        userId,
+        status: { $in: [PaymentRequestStatus.SENT, PaymentRequestStatus.VIEWED] },
+        dueDate: { $lte: threeDaysFromNow, $gte: new Date() },
+      });
+
+      if (expiringCount > 0) {
+        alerts.push({
+          id: 'expiring-requests',
+          type: 'warning',
+          message: `${expiringCount} payment request${expiringCount > 1 ? 's are' : ' is'} expiring soon`,
         });
       }
 
@@ -174,44 +182,6 @@ export const getDashboardAlerts = async (req: AuthRequest, res: Response): Promi
   } catch (error) {
     console.error('Get dashboard alerts error:', error);
     res.status(500).json({ success: false, error: 'Failed to get dashboard alerts' });
-  }
-};
-
-export const getRecentTransactions = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.user) {
-      res.status(401).json({ success: false, error: 'Unauthorized' });
-      return;
-    }
-
-    let userId;
-    if (req.user.role === UserRole.MERCHANT) {
-      userId = req.user.id;
-    }
-
-    const query: any = {};
-    if (userId) {
-      query.userId = userId;
-    }
-
-    const transactions = await Transaction.find(query)
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('transactionId customerInfo amount currency platformStatus createdAt');
-
-    const formattedTransactions = transactions.map((txn) => ({
-      id: txn.transactionId,
-      customer: txn.customerInfo?.name || txn.customerInfo?.email || 'Unknown',
-      amount: txn.amount,
-      currency: txn.currency,
-      status: txn.platformStatus,
-      date: txn.createdAt.toISOString(),
-    }));
-
-    res.json({ success: true, data: formattedTransactions });
-  } catch (error) {
-    console.error('Get recent transactions error:', error);
-    res.status(500).json({ success: false, error: 'Failed to get recent transactions' });
   }
 };
 

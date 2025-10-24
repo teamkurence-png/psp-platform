@@ -17,7 +17,6 @@ import balanceRoutes from './routes/balances.js';
 import withdrawalRoutes from './routes/withdrawals.js';
 import customerRoutes from './routes/customers.js';
 import settingsRoutes from './routes/settings.js';
-import transactionRoutes from './routes/transactions.js';
 import bankAccountRoutes from './routes/bankAccounts.js';
 import cardRoutes from './routes/cards.js';
 
@@ -69,7 +68,6 @@ app.use('/api/balances', balanceRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/settings', settingsRoutes);
-app.use('/api/transactions', transactionRoutes);
 app.use('/api/bank-accounts', bankAccountRoutes);
 app.use('/api/cards', cardRoutes);
 

@@ -7,10 +7,8 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import PaymentRequests from './pages/PaymentRequests';
 import CreatePaymentRequest from './pages/CreatePaymentRequest';
-import Transactions from './pages/Transactions';
 import MerchantProfile from './pages/MerchantProfile';
 import PaymentRequestDetail from './pages/PaymentRequestDetail';
-import TransactionDetail from './pages/TransactionDetail';
 import Balances from './pages/Balances';
 import Withdrawals from './pages/Withdrawals';
 import CreateWithdrawal from './pages/CreateWithdrawal';
@@ -69,8 +67,6 @@ function App() {
               <Route path="payment-requests" element={<PaymentRequests />} />
               <Route path="payment-requests/new" element={<CreatePaymentRequest />} />
               <Route path="payment-requests/:id" element={<PaymentRequestDetail />} />
-              <Route path="transactions" element={<Transactions />} />
-              <Route path="transactions/:id" element={<TransactionDetail />} />
               <Route path="confirmations" element={<ManualConfirmations />} />
               <Route path="balances" element={<Balances />} />
               <Route path="withdrawals" element={<Withdrawals />} />

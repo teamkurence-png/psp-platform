@@ -95,7 +95,6 @@ const withdrawalSchema = new Schema<IWithdrawal>(
     // Common fields
     transactionIds: [{
       type: Schema.Types.ObjectId,
-      ref: 'Transaction',
     }],
     failureReason: String,
     completedAt: Date,
