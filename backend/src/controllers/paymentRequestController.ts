@@ -26,7 +26,7 @@ const createPaymentRequestSchema = z.object({
     phone: z.string().optional(),
     billingCountry: z.string().optional(),
   }).optional(),
-  paymentMethods: z.array(z.enum([PaymentMethod.BANK_WIRE, PaymentMethod.CARD])),
+  paymentMethods: z.array(z.enum([PaymentMethod.BANK_WIRE, PaymentMethod.CARD])).min(1, 'At least one payment method is required'),
 });
 
 export const createPaymentRequest = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -37,6 +37,47 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
     }
 
     const validatedData = createPaymentRequestSchema.parse(req.body);
+
+    // Pre-validate availability of banks/cards for requested payment methods
+    const unavailableMethods: string[] = [];
+
+    // Check bank availability if bank wire is requested
+    if (validatedData.paymentMethods.includes(PaymentMethod.BANK_WIRE)) {
+      const customerGeo = validatedData.customerInfo?.billingCountry;
+      if (!customerGeo) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'Customer billing country is required for bank wire transfers' 
+        });
+        return;
+      }
+
+      const availableBanks = await BankAccount.find({ 
+        geo: customerGeo, 
+        isActive: true 
+      });
+
+      if (availableBanks.length === 0) {
+        unavailableMethods.push(`Bank Wire (no active bank accounts available for ${customerGeo})`);
+      }
+    }
+
+    // Check card availability if card is requested
+    if (validatedData.paymentMethods.includes(PaymentMethod.CARD)) {
+      const availableCards = await Card.find({ isActive: true });
+      if (availableCards.length === 0) {
+        unavailableMethods.push('Card Payment (no active payment cards available)');
+      }
+    }
+
+    // If any payment methods don't have available processors, return error
+    if (unavailableMethods.length > 0) {
+      res.status(400).json({ 
+        success: false, 
+        error: `No suitable payment processors available. The following methods cannot be used: ${unavailableMethods.join(', ')}. Please contact support or try different payment methods.`
+      });
+      return;
+    }
 
     // Auto-assign bank or card based on payment method
     let referenceCode;
@@ -49,29 +90,13 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       referenceCode = generateReferenceCode();
 
       // Get customer's billing country (GEO)
-      const customerGeo = validatedData.customerInfo?.billingCountry;
-      
-      if (!customerGeo) {
-        res.status(400).json({ 
-          success: false, 
-          error: 'Customer billing country is required for bank wire transfers' 
-        });
-        return;
-      }
+      const customerGeo = validatedData.customerInfo?.billingCountry!;
 
-      // Find active banks matching the customer's GEO
+      // Find active banks matching the customer's GEO (already validated above)
       const availableBanks = await BankAccount.find({ 
         geo: customerGeo, 
         isActive: true 
       });
-
-      if (availableBanks.length === 0) {
-        res.status(400).json({ 
-          success: false, 
-          error: `No active bank accounts available for country: ${customerGeo}` 
-        });
-        return;
-      }
 
       // Randomly select a bank
       const selectedBank = availableBanks[Math.floor(Math.random() * availableBanks.length)];
@@ -92,16 +117,8 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
 
     // Handle Card auto-assignment
     if (validatedData.paymentMethods.includes(PaymentMethod.CARD)) {
-      // Find all active cards
+      // Find all active cards (already validated above)
       const availableCards = await Card.find({ isActive: true });
-
-      if (availableCards.length === 0) {
-        res.status(400).json({ 
-          success: false, 
-          error: 'No active payment cards available' 
-        });
-        return;
-      }
 
       // Randomly select a card
       const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];

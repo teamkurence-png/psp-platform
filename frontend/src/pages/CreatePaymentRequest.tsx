@@ -47,6 +47,10 @@ const CreatePaymentRequest: React.FC = () => {
 
   const [error, setError] = React.useState('');
 
+  // Note: Merchants don't have access to view banks/cards lists
+  // Backend will validate availability when creating the payment request
+  // If there are no suitable processors, backend will return a proper error
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -272,7 +276,10 @@ const CreatePaymentRequest: React.FC = () => {
           <Button type="button" variant="outline" onClick={() => navigate('/payment-requests')}>
             Cancel
           </Button>
-          <Button type="submit" disabled={loading || formData.paymentMethods.length === 0}>
+          <Button 
+            type="submit" 
+            disabled={loading || formData.paymentMethods.length === 0}
+          >
             {loading ? 'Creating...' : 'Create Payment Request'}
           </Button>
         </div>

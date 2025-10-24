@@ -103,9 +103,31 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose, onSave, loading })
 const Cards: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
+  const isAdminOrOps = [UserRole.ADMIN, UserRole.OPS, UserRole.FINANCE].includes(user?.role as UserRole);
   const queryClient = useQueryClient();
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [showModal, setShowModal] = useState(false);
+
+  // Access control - only admin/ops/finance can access this page
+  if (!isAdminOrOps) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">PSP Cards</h1>
+        </div>
+        <CardUI className="p-8">
+          <div className="text-center">
+            <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Access Denied</h3>
+            <p className="text-gray-600">
+              You don't have permission to access PSP card management. 
+              This feature is only available to admin, operations, and finance team members.
+            </p>
+          </div>
+        </CardUI>
+      </div>
+    );
+  }
 
   // Fetch cards
   const { data: response, isLoading, error } = useQuery({

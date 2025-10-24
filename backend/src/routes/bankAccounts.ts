@@ -18,11 +18,11 @@ router.use(authenticate);
 // Create bank account (admin only)
 router.post('/', authorize(UserRole.ADMIN), createBankAccount);
 
-// List all bank accounts (authenticated users)
-router.get('/', listBankAccounts);
+// List all bank accounts (admin, ops, finance only)
+router.get('/', authorize(UserRole.ADMIN, UserRole.OPS, UserRole.FINANCE), listBankAccounts);
 
-// Get single bank account
-router.get('/:id', getBankAccount);
+// Get single bank account (admin, ops, finance only)
+router.get('/:id', authorize(UserRole.ADMIN, UserRole.OPS, UserRole.FINANCE), getBankAccount);
 
 // Update bank account (admin only)
 router.put('/:id', authorize(UserRole.ADMIN), updateBankAccount);

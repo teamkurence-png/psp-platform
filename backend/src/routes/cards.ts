@@ -18,11 +18,11 @@ router.use(authenticate);
 // Create card (admin only)
 router.post('/', authorize(UserRole.ADMIN), createCard);
 
-// List all cards (authenticated users)
-router.get('/', listCards);
+// List all cards (admin, ops, finance only)
+router.get('/', authorize(UserRole.ADMIN, UserRole.OPS, UserRole.FINANCE), listCards);
 
-// Get single card
-router.get('/:id', getCard);
+// Get single card (admin, ops, finance only)
+router.get('/:id', authorize(UserRole.ADMIN, UserRole.OPS, UserRole.FINANCE), getCard);
 
 // Update card (admin only)
 router.put('/:id', authorize(UserRole.ADMIN), updateCard);

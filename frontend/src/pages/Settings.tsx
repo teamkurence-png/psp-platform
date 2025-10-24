@@ -7,13 +7,16 @@ import { Link } from 'react-router-dom';
 const Settings: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const isMerchant = user?.role === 'merchant';
+  const isAdminOrOps = ['admin', 'ops', 'finance'].includes(user?.role || '');
 
-  if (!isAdmin) {
+  // Merchant view - only show profile
+  if (isMerchant) {
     return (
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600">Manage your account and business settings</p>
+          <p className="text-gray-600">Manage your merchant profile and business settings</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -31,41 +34,12 @@ const Settings: React.FC = () => {
               </div>
             </Card>
           </Link>
-
-          {/* Bank Accounts */}
-          <Link to="/settings/bank-accounts">
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
-              <div className="flex items-start gap-4">
-                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Building2 className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Bank Accounts</h3>
-                  <p className="text-sm text-gray-600">Configure settlement bank accounts</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          {/* PSP Cards */}
-          <Link to="/settings/cards">
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
-              <div className="flex items-start gap-4">
-                <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <CreditCard className="h-6 w-6 text-indigo-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">PSP Cards</h3>
-                  <p className="text-sm text-gray-600">View payment service provider cards</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
         </div>
       </div>
     );
   }
 
+  // Admin/Ops/Finance view - show all settings
   return (
     <div className="space-y-6">
       <div>
@@ -74,50 +48,39 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Merchant Profile */}
-        <Link to="/settings/profile">
-          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <div className="flex items-start gap-4">
-              <div className="h-12 w-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <User className="h-6 w-6 text-primary" />
+        {/* Bank Accounts - Admin/Ops/Finance only */}
+        {isAdminOrOps && (
+          <Link to="/settings/bank-accounts">
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <div className="flex items-start gap-4">
+                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Building2 className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Bank Accounts</h3>
+                  <p className="text-sm text-gray-600">Manage settlement bank accounts for payments</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">Merchant Profile</h3>
-                <p className="text-sm text-gray-600">Manage your business information and details</p>
-              </div>
-            </div>
-          </Card>
-        </Link>
+            </Card>
+          </Link>
+        )}
 
-        {/* Bank Accounts */}
-        <Link to="/settings/bank-accounts">
-          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <div className="flex items-start gap-4">
-              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Building2 className="h-6 w-6 text-green-600" />
+        {/* PSP Cards - Admin/Ops/Finance only */}
+        {isAdminOrOps && (
+          <Link to="/settings/cards">
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <div className="flex items-start gap-4">
+                <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">PSP Cards</h3>
+                  <p className="text-sm text-gray-600">Manage payment service provider cards</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">Bank Accounts</h3>
-                <p className="text-sm text-gray-600">Configure settlement bank accounts</p>
-              </div>
-            </div>
-          </Card>
-        </Link>
-
-        {/* PSP Cards */}
-        <Link to="/settings/cards">
-          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <div className="flex items-start gap-4">
-              <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <CreditCard className="h-6 w-6 text-indigo-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">PSP Cards</h3>
-                <p className="text-sm text-gray-600">{isAdmin ? 'Manage' : 'View'} payment service provider cards</p>
-              </div>
-            </div>
-          </Card>
-        </Link>
+            </Card>
+          </Link>
+        )}
 
         {isAdmin && (
           <>
