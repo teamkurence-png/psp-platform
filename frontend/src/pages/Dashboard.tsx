@@ -9,7 +9,6 @@ import {
   TrendingUp, 
   TrendingDown, 
   Clock, 
-  DollarSign, 
   FileText, 
   Bitcoin,
   AlertCircle,
@@ -34,7 +33,6 @@ const Dashboard: React.FC = () => {
   );
 
   const stats = data?.stats || {
-    volume: 0,
     approvals: 0,
     declines: 0,
     pendingReviews: 0,
@@ -91,13 +89,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Volume"
-          value={formatCurrency(stats.volume)}
-          icon={DollarSign}
-          iconColor="blue"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Approvals"
           value={stats.approvals}
