@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { z } from 'zod';
 import { Withdrawal } from '../models/Withdrawal.js';
 import { Balance } from '../models/Balance.js';
@@ -103,7 +104,8 @@ export const createWithdrawal = async (req: AuthRequest, res: Response): Promise
     // Bank transfers have no fee in this implementation
 
     // Check balance
-    const balance = await Balance.findOne({ userId: req.user.id });
+    const userObjectId = new mongoose.Types.ObjectId(req.user.id);
+    const balance = await Balance.findOne({ userId: userObjectId });
     const totalRequired = validatedData.amount + fee;
 
     if (!balance || balance.available < totalRequired) {
@@ -291,7 +293,8 @@ export const updateWithdrawalStatus = async (req: AuthRequest, res: Response): P
       withdrawal.failureReason = failureReason;
       
       // Return funds to balance
-      const balance = await Balance.findOne({ userId: withdrawal.userId });
+      const withdrawalUserObjectId = new mongoose.Types.ObjectId(withdrawal.userId.toString());
+      const balance = await Balance.findOne({ userId: withdrawalUserObjectId });
       if (balance) {
         balance.available += (withdrawal.amount + withdrawal.fee);
         await balance.save();

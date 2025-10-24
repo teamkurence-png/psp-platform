@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { Balance } from '../models/Balance.js';
 import { PaymentRequest } from '../models/PaymentRequest.js';
 import { AuthRequest, UserRole, PaymentRequestStatus } from '../types/index.js';
@@ -23,12 +24,13 @@ export const getBalance = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    let balance = await Balance.findOne({ userId });
+    const userObjectId = new mongoose.Types.ObjectId(userId as string);
+    let balance = await Balance.findOne({ userId: userObjectId });
 
     // Create balance if doesn't exist
     if (!balance) {
       balance = await Balance.create({
-        userId,
+        userId: userObjectId,
         available: 0,
         pending: 0,
         reserve: 0,
@@ -117,7 +119,8 @@ export const updateBalance = async (req: AuthRequest, res: Response): Promise<vo
     const { merchantId } = req.params; // Note: param name kept for backward compatibility
     const { available, pending, reserve } = req.body;
 
-    const balance = await Balance.findOne({ userId: merchantId });
+    const merchantObjectId = new mongoose.Types.ObjectId(merchantId);
+    const balance = await Balance.findOne({ userId: merchantObjectId });
     if (!balance) {
       res.status(404).json({ success: false, error: 'Balance not found' });
       return;

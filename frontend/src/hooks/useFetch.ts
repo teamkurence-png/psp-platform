@@ -28,7 +28,7 @@ export function useFetch<T = any>(
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
       const response = await fetchFunction();
-      const data = response.data?.data || response.data;
+      const data = response.data?.data || response.data || response;
       setState({ data, loading: false, error: null });
     } catch (err) {
       const error = err as AxiosError<{ error?: string }>;

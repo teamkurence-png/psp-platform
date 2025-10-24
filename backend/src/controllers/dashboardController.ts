@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { PaymentRequest } from '../models/PaymentRequest.js';
 import { Balance } from '../models/Balance.js';
 import { AuthRequest, UserRole, PaymentRequestStatus } from '../types/index.js';
@@ -87,11 +88,12 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
     // Get balance
     let balance = null;
     if (userId) {
-      balance = await Balance.findOne({ userId });
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      balance = await Balance.findOne({ userId: userObjectId });
       if (!balance) {
         // Create default balance if doesn't exist
         balance = await Balance.create({
-          userId,
+          userId: userObjectId,
           available: 0,
           pending: 0,
           reserve: 0,
@@ -168,7 +170,8 @@ export const getDashboardAlerts = async (req: AuthRequest, res: Response): Promi
       }
 
       // Check balance
-      const balance = await Balance.findOne({ userId });
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      const balance = await Balance.findOne({ userId: userObjectId });
       if (balance && balance.available > 1000) {
         alerts.push({
           id: 'balance-available',
