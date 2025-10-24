@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import type { PaymentRequest } from '../types/index';
+import type { PaymentRequest, Card as CardType } from '../types/index';
 import { PaymentRequestStatus, PaymentMethod, BankRail } from '../types/index';
 import api from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/utils';
@@ -14,13 +14,15 @@ import {
   CheckCircle, 
   Clock, 
   XCircle,
-  Eye
+  Eye,
+  ExternalLink
 } from 'lucide-react';
 
 const PaymentRequestDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
+  const [assignedCard, setAssignedCard] = useState<CardType | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -32,7 +34,18 @@ const PaymentRequestDetail: React.FC = () => {
     try {
       setLoading(true);
       const response = await api.get(`/payment-requests/${id}`);
-      setPaymentRequest(response.data.data);
+      const data = response.data.data;
+      setPaymentRequest(data);
+      
+      // Fetch assigned card if cardId is present
+      if (data.cardId) {
+        try {
+          const cardResponse = await api.get(`/cards/${data.cardId}`);
+          setAssignedCard(cardResponse.data.data);
+        } catch (error) {
+          console.error('Failed to fetch assigned card:', error);
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch payment request:', error);
       alert('Failed to load payment request');
@@ -356,37 +369,45 @@ const PaymentRequestDetail: React.FC = () => {
             </Card>
           )}
 
-          {/* Card Settings */}
-          {paymentRequest.paymentMethods.includes(PaymentMethod.CARD) && paymentRequest.cardSettings && (
+          {/* Card Payment Details */}
+          {paymentRequest.paymentMethods.includes(PaymentMethod.CARD) && assignedCard && (
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5" />
-                  <CardTitle>Card Payment Settings</CardTitle>
+                  <CardTitle>Card Payment Details</CardTitle>
                 </div>
+                <CardDescription>PSP card assigned for this payment request</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">3D Secure</p>
-                    <p className="font-medium">
-                      {paymentRequest.cardSettings.require3DS ? 'Required' : 'Optional'}
-                    </p>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Card Name</p>
+                  <p className="font-medium">{assignedCard.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Payment Link</p>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={assignedCard.pspLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 font-medium break-all"
+                    >
+                      {assignedCard.pspLink}
+                    </a>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => window.open(assignedCard.pspLink, '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
                   </div>
-                  {paymentRequest.cardSettings.allowedBrands && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Allowed Brands</p>
-                      <p className="font-medium">
-                        {paymentRequest.cardSettings.allowedBrands.join(', ')}
-                      </p>
-                    </div>
-                  )}
-                  {paymentRequest.cardSettings.expiryDate && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Link Expiry</p>
-                      <p className="font-medium">{formatDateTime(paymentRequest.cardSettings.expiryDate)}</p>
-                    </div>
-                  )}
+                </div>
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    Use this payment link to complete the card payment.
+                  </p>
                 </div>
               </CardContent>
             </Card>

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { z } from 'zod';
 import { PaymentRequest } from '../models/PaymentRequest.js';
 import { BankAccount } from '../models/BankAccount.js';
+import { Card } from '../models/Card.js';
 import { AuthRequest, UserRole, PaymentMethod, BankRail } from '../types/index.js';
 import { generateReferenceCode } from '../utils/generators.js';
 
@@ -26,26 +27,6 @@ const createPaymentRequestSchema = z.object({
     billingCountry: z.string().optional(),
   }).optional(),
   paymentMethods: z.array(z.enum([PaymentMethod.BANK_WIRE, PaymentMethod.CARD])),
-  bankAccountId: z.string().optional(),
-  bankDetails: z.object({
-    rails: z.array(z.enum([BankRail.SEPA, BankRail.SWIFT, BankRail.LOCAL])),
-    beneficiaryName: z.string().optional(),
-    iban: z.string().optional(),
-    accountNumber: z.string().optional(),
-    routingNumber: z.string().optional(),
-    swiftCode: z.string().optional(),
-    bankName: z.string().optional(),
-    bankAddress: z.string().optional(),
-  }).optional(),
-  cardSettings: z.object({
-    allowedBrands: z.array(z.string()).optional(),
-    require3DS: z.boolean().default(false),
-    expiryDate: z.string().optional().transform((val) => {
-      if (!val) return undefined;
-      if (val.includes('T')) return val;
-      return new Date(val).toISOString();
-    }),
-  }).optional(),
 });
 
 export const createPaymentRequest = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -57,41 +38,74 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
 
     const validatedData = createPaymentRequestSchema.parse(req.body);
 
-    // Generate reference code for bank wire
+    // Auto-assign bank or card based on payment method
     let referenceCode;
     let bankDetails;
+    let bankAccountId;
+    let cardId;
+
+    // Handle Bank Wire auto-assignment
     if (validatedData.paymentMethods.includes(PaymentMethod.BANK_WIRE)) {
       referenceCode = generateReferenceCode();
 
-      // If bankAccountId is provided, fetch the bank account details
-      if (validatedData.bankAccountId) {
-        const bankAccount = await BankAccount.findById(validatedData.bankAccountId);
-        
-        if (!bankAccount) {
-          res.status(400).json({ success: false, error: 'Selected bank account not found' });
-          return;
-        }
-
-        if (!bankAccount.isActive) {
-          res.status(400).json({ success: false, error: 'Selected bank account is not active' });
-          return;
-        }
-
-        // Populate bankDetails from the selected bank account
-        bankDetails = {
-          rails: validatedData.bankDetails?.rails || [],
-          beneficiaryName: bankAccount.beneficiaryName,
-          iban: bankAccount.iban,
-          accountNumber: bankAccount.accountNumber,
-          routingNumber: bankAccount.routingNumber,
-          swiftCode: bankAccount.swiftCode,
-          bankName: bankAccount.bankName,
-          bankAddress: bankAccount.bankAddress,
-        };
-      } else {
-        // Use manually provided bank details (backward compatibility)
-        bankDetails = validatedData.bankDetails;
+      // Get customer's billing country (GEO)
+      const customerGeo = validatedData.customerInfo?.billingCountry;
+      
+      if (!customerGeo) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'Customer billing country is required for bank wire transfers' 
+        });
+        return;
       }
+
+      // Find active banks matching the customer's GEO
+      const availableBanks = await BankAccount.find({ 
+        geo: customerGeo, 
+        isActive: true 
+      });
+
+      if (availableBanks.length === 0) {
+        res.status(400).json({ 
+          success: false, 
+          error: `No active bank accounts available for country: ${customerGeo}` 
+        });
+        return;
+      }
+
+      // Randomly select a bank
+      const selectedBank = availableBanks[Math.floor(Math.random() * availableBanks.length)];
+      bankAccountId = selectedBank._id;
+
+      // Populate bank details
+      bankDetails = {
+        rails: [BankRail.SWIFT], // Default to SWIFT, can be customized
+        beneficiaryName: selectedBank.beneficiaryName,
+        iban: selectedBank.iban,
+        accountNumber: selectedBank.accountNumber,
+        routingNumber: selectedBank.routingNumber,
+        swiftCode: selectedBank.swiftCode,
+        bankName: selectedBank.bankName,
+        bankAddress: selectedBank.bankAddress,
+      };
+    }
+
+    // Handle Card auto-assignment
+    if (validatedData.paymentMethods.includes(PaymentMethod.CARD)) {
+      // Find all active cards
+      const availableCards = await Card.find({ isActive: true });
+
+      if (availableCards.length === 0) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'No active payment cards available' 
+        });
+        return;
+      }
+
+      // Randomly select a card
+      const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+      cardId = selectedCard._id;
     }
 
     // Create payment request
@@ -105,9 +119,9 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       customerReference: validatedData.customerReference,
       customerInfo: validatedData.customerInfo,
       paymentMethods: validatedData.paymentMethods,
-      bankAccountId: validatedData.bankAccountId,
+      bankAccountId,
+      cardId,
       bankDetails,
-      cardSettings: validatedData.cardSettings,
       referenceCode,
     });
 

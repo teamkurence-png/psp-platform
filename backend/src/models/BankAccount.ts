@@ -8,6 +8,7 @@ export interface IBankAccount extends Document {
   iban?: string;
   bankAddress?: string;
   beneficiaryName?: string;
+  geo?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -28,6 +29,7 @@ const bankAccountSchema = new Schema<IBankAccount>(
     iban: String,
     bankAddress: String,
     beneficiaryName: String,
+    geo: String,
     isActive: {
       type: Boolean,
       default: true,

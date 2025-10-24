@@ -30,16 +30,6 @@ export interface MerchantProfile {
   };
 }
 
-export interface MerchantDocument {
-  _id: string;
-  type: string;
-  fileName: string;
-  filePath: string;
-  status: 'pending' | 'approved' | 'rejected';
-  uploadedAt: string;
-  rejectionReason?: string;
-}
-
 export interface Merchant {
   _id: string;
   userId: string;
@@ -67,31 +57,6 @@ export const merchantService = {
   async submitForReview(): Promise<Merchant> {
     const response = await api.post('/merchants/submit-review');
     return response.data.data;
-  },
-
-  // Get merchant documents
-  async getDocuments(): Promise<MerchantDocument[]> {
-    const response = await api.get('/merchants/documents');
-    return response.data.data;
-  },
-
-  // Upload document
-  async uploadDocument(type: string, file: File): Promise<MerchantDocument> {
-    const formData = new FormData();
-    formData.append('document', file);
-    formData.append('type', type);
-
-    const response = await api.post('/merchants/documents', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data.data;
-  },
-
-  // Delete document
-  async deleteDocument(documentId: string): Promise<void> {
-    await api.delete(`/merchants/documents/${documentId}`);
   },
 
   // List all merchants (admin/ops)

@@ -12,6 +12,7 @@ import ErrorAlert from '../components/ui/ErrorAlert';
 import { Building2, Plus, Edit2, Trash2, X } from 'lucide-react';
 import { formatDate } from '../lib/utils';
 import { useAuth } from '../lib/auth';
+import { COUNTRIES } from '../constants/countries';
 
 interface BankAccountModalProps {
   bankAccount?: BankAccount | null;
@@ -29,6 +30,7 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
     iban: bankAccount?.iban || '',
     bankAddress: bankAccount?.bankAddress || '',
     beneficiaryName: bankAccount?.beneficiaryName || '',
+    geo: bankAccount?.geo || '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -136,6 +138,23 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
                 onChange={(e) => handleChange('bankAddress', e.target.value)}
                 placeholder="Full bank address"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="geo">Country/Region (GEO)</Label>
+              <select
+                id="geo"
+                value={formData.geo}
+                onChange={(e) => handleChange('geo', e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Select country</option>
+                {COUNTRIES.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -299,6 +318,9 @@ const BankAccounts: React.FC = () => {
                   SWIFT/IBAN
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Country
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -312,7 +334,7 @@ const BankAccounts: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {bankAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
+                  <td colSpan={7} className="px-6 py-12 text-center">
                     <p className="text-gray-500">No bank accounts configured yet</p>
                     {isAdmin && (
                       <Button onClick={handleAddNew} className="mt-4">
@@ -338,6 +360,11 @@ const BankAccounts: React.FC = () => {
                       <div className="text-sm space-y-1">
                         {bank.swiftCode && <div>SWIFT: {bank.swiftCode}</div>}
                         {bank.iban && <div className="font-mono text-xs">{bank.iban}</div>}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {bank.geo ? COUNTRIES.find(c => c.code === bank.geo)?.name || bank.geo : 'N/A'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

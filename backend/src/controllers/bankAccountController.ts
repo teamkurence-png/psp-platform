@@ -12,6 +12,7 @@ const createBankAccountSchema = z.object({
   iban: z.string().optional(),
   bankAddress: z.string().optional(),
   beneficiaryName: z.string().optional(),
+  geo: z.string().optional(),
 });
 
 const updateBankAccountSchema = z.object({
@@ -22,6 +23,7 @@ const updateBankAccountSchema = z.object({
   iban: z.string().optional(),
   bankAddress: z.string().optional(),
   beneficiaryName: z.string().optional(),
+  geo: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 

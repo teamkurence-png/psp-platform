@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { z } from 'zod';
 import { User } from '../models/User.js';
-import { DocumentModel } from '../models/Document.js';
 import { AuthRequest, UserRole, OnboardingStatus } from '../types/index.js';
 
 // Validation schema
@@ -109,16 +108,6 @@ export const submitForReview = async (req: AuthRequest, res: Response): Promise<
       return;
     }
 
-    // Check if documents are uploaded
-    const documents = await DocumentModel.find({ userId: user._id });
-    if (documents.length === 0) {
-      res.status(400).json({ 
-        success: false, 
-        error: 'Please upload required documents before submitting' 
-      });
-      return;
-    }
-
     // Update status
     user.onboardingStatus = OnboardingStatus.IN_REVIEW;
     await user.save();
@@ -137,69 +126,6 @@ export const submitForReview = async (req: AuthRequest, res: Response): Promise<
   } catch (error) {
     console.error('Submit for review error:', error);
     res.status(500).json({ success: false, error: 'Failed to submit application' });
-  }
-};
-
-export const uploadDocument = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.user || req.user.role !== UserRole.MERCHANT) {
-      res.status(403).json({ success: false, error: 'Forbidden' });
-      return;
-    }
-
-    if (!req.file) {
-      res.status(400).json({ success: false, error: 'No file uploaded' });
-      return;
-    }
-
-    const { type } = req.body;
-    if (!type) {
-      res.status(400).json({ success: false, error: 'Document type is required' });
-      return;
-    }
-
-    const document = await DocumentModel.create({
-      userId: req.user.id,
-      type,
-      fileName: req.file.originalname,
-      filePath: req.file.path,
-      fileSize: req.file.size,
-      mimeType: req.file.mimetype,
-    });
-
-    res.json({ success: true, data: document });
-  } catch (error) {
-    console.error('Upload document error:', error);
-    res.status(500).json({ success: false, error: 'Failed to upload document' });
-  }
-};
-
-export const getDocuments = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.user) {
-      res.status(401).json({ success: false, error: 'Unauthorized' });
-      return;
-    }
-
-    let userId;
-    if (req.user.role === UserRole.MERCHANT) {
-      userId = req.user.id;
-    } else {
-      // For ops/admin viewing merchant documents
-      userId = req.params.merchantId; // Note: The param is still called merchantId for backward compatibility
-    }
-
-    if (!userId) {
-      res.status(404).json({ success: false, error: 'User not found' });
-      return;
-    }
-
-    const documents = await DocumentModel.find({ userId });
-
-    res.json({ success: true, data: documents });
-  } catch (error) {
-    console.error('Get documents error:', error);
-    res.status(500).json({ success: false, error: 'Failed to get documents' });
   }
 };
 

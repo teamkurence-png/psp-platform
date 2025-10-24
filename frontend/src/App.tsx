@@ -9,7 +9,6 @@ import PaymentRequests from './pages/PaymentRequests';
 import CreatePaymentRequest from './pages/CreatePaymentRequest';
 import Transactions from './pages/Transactions';
 import MerchantProfile from './pages/MerchantProfile';
-import MerchantDocuments from './pages/MerchantDocuments';
 import PaymentRequestDetail from './pages/PaymentRequestDetail';
 import TransactionDetail from './pages/TransactionDetail';
 import Balances from './pages/Balances';
@@ -20,6 +19,7 @@ import ManualConfirmations from './pages/ManualConfirmations';
 import Settings from './pages/Settings';
 import AdminUsers from './pages/AdminUsers';
 import BankAccounts from './pages/BankAccounts';
+import Cards from './pages/Cards';
 
 const queryClient = new QueryClient();
 
@@ -79,8 +79,8 @@ function App() {
               <Route path="settings" element={<Settings />} />
               <Route path="settings/users" element={<AdminUsers />} />
               <Route path="settings/bank-accounts" element={<BankAccounts />} />
+              <Route path="settings/cards" element={<Cards />} />
               <Route path="settings/profile" element={<MerchantProfile />} />
-              <Route path="settings/documents" element={<MerchantDocuments />} />
             </Route>
 
             {/* 404 */}

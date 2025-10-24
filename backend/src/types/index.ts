@@ -57,14 +57,6 @@ export enum CryptoAsset {
   ETH = 'eth',
 }
 
-export enum DocumentType {
-  INCORPORATION = 'incorporation',
-  BANK_LETTER = 'bank_letter',
-  PROOF_OF_ADDRESS = 'proof_of_address',
-  WEBSITE_SCREENSHOT = 'website_screenshot',
-  PROCESSING_HISTORY = 'processing_history',
-}
-
 export enum BankRail {
   SEPA = 'sepa',
   SWIFT = 'swift',

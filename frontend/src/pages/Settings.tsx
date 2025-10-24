@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '../components/ui/Card';
-import { Settings as SettingsIcon, User, FileText, Users, Building2 } from 'lucide-react';
+import { Settings as SettingsIcon, User, Users, Building2, CreditCard } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { Link } from 'react-router-dom';
 
@@ -32,21 +32,6 @@ const Settings: React.FC = () => {
             </Card>
           </Link>
 
-          {/* Documents */}
-          <Link to="/settings/documents">
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
-              <div className="flex items-start gap-4">
-                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <FileText className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Documents</h3>
-                  <p className="text-sm text-gray-600">Upload and manage verification documents</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
           {/* Bank Accounts */}
           <Link to="/settings/bank-accounts">
             <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
@@ -57,6 +42,21 @@ const Settings: React.FC = () => {
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-1">Bank Accounts</h3>
                   <p className="text-sm text-gray-600">Configure settlement bank accounts</p>
+                </div>
+              </div>
+            </Card>
+          </Link>
+
+          {/* PSP Cards */}
+          <Link to="/settings/cards">
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <div className="flex items-start gap-4">
+                <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">PSP Cards</h3>
+                  <p className="text-sm text-gray-600">View payment service provider cards</p>
                 </div>
               </div>
             </Card>
@@ -89,21 +89,6 @@ const Settings: React.FC = () => {
           </Card>
         </Link>
 
-        {/* Documents */}
-        <Link to="/settings/documents">
-          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <div className="flex items-start gap-4">
-              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FileText className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">Documents</h3>
-                <p className="text-sm text-gray-600">Upload and manage verification documents</p>
-              </div>
-            </div>
-          </Card>
-        </Link>
-
         {/* Bank Accounts */}
         <Link to="/settings/bank-accounts">
           <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
@@ -114,6 +99,21 @@ const Settings: React.FC = () => {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">Bank Accounts</h3>
                 <p className="text-sm text-gray-600">Configure settlement bank accounts</p>
+              </div>
+            </div>
+          </Card>
+        </Link>
+
+        {/* PSP Cards */}
+        <Link to="/settings/cards">
+          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CreditCard className="h-6 w-6 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">PSP Cards</h3>
+                <p className="text-sm text-gray-600">{isAdmin ? 'Manage' : 'View'} payment service provider cards</p>
               </div>
             </div>
           </Card>

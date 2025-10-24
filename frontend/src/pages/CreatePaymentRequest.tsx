@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -6,9 +6,10 @@ import Input from '../components/ui/Input';
 import Label from '../components/ui/Label';
 import ErrorAlert from '../components/ui/ErrorAlert';
 import { ArrowLeft } from 'lucide-react';
-import { PaymentMethod, BankRail, type BankAccount } from '../types/index';
+import { PaymentMethod } from '../types/index';
 import { useForm } from '../hooks';
-import { paymentRequestService, bankAccountService } from '../services';
+import { paymentRequestService } from '../services';
+import { COUNTRIES } from '../constants/countries';
 
 interface PaymentRequestFormData {
   amount: string;
@@ -21,14 +22,10 @@ interface PaymentRequestFormData {
   customerPhone: string;
   customerCountry: string;
   paymentMethods: PaymentMethod[];
-  bankAccountId: string;
-  bankRails: BankRail[];
-  require3DS: boolean;
 }
 
 const CreatePaymentRequest: React.FC = () => {
   const navigate = useNavigate();
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   
   const {
     values: formData,
@@ -46,25 +43,9 @@ const CreatePaymentRequest: React.FC = () => {
     customerPhone: '',
     customerCountry: '',
     paymentMethods: [],
-    bankAccountId: '',
-    bankRails: [],
-    require3DS: false,
   });
 
   const [error, setError] = React.useState('');
-
-  // Fetch bank accounts on component mount
-  useEffect(() => {
-    const fetchBankAccounts = async () => {
-      try {
-        const response = await bankAccountService.getAll();
-        setBankAccounts(response.data || []);
-      } catch (err) {
-        console.error('Failed to fetch bank accounts:', err);
-      }
-    };
-    fetchBankAccounts();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,15 +66,6 @@ const CreatePaymentRequest: React.FC = () => {
           billingCountry: formData.customerCountry,
         },
         paymentMethods: formData.paymentMethods,
-        bankAccountId: formData.paymentMethods.includes(PaymentMethod.BANK_WIRE) && formData.bankAccountId
-          ? formData.bankAccountId
-          : undefined,
-        bankDetails: formData.paymentMethods.includes(PaymentMethod.BANK_WIRE)
-          ? { rails: formData.bankRails }
-          : undefined,
-        cardSettings: formData.paymentMethods.includes(PaymentMethod.CARD)
-          ? { require3DS: formData.require3DS }
-          : undefined,
       };
 
       await paymentRequestService.create(payload);
@@ -110,13 +82,6 @@ const CreatePaymentRequest: React.FC = () => {
       ? formData.paymentMethods.filter((m) => m !== method)
       : [...formData.paymentMethods, method];
     setFieldValue('paymentMethods', newMethods);
-  };
-
-  const toggleBankRail = (rail: BankRail) => {
-    const newRails = formData.bankRails.includes(rail)
-      ? formData.bankRails.filter((r) => r !== rail)
-      : [...formData.bankRails, rail];
-    setFieldValue('bankRails', newRails);
   };
 
   return (
@@ -236,12 +201,21 @@ const CreatePaymentRequest: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="customerCountry">Billing Country</Label>
-              <Input
+              <Label htmlFor="customerCountry">Billing Country *</Label>
+              <select
                 id="customerCountry"
                 value={formData.customerCountry}
                 onChange={(e) => setFieldValue('customerCountry', e.target.value)}
-              />
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                required
+              >
+                <option value="">Select country</option>
+                {COUNTRIES.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </CardContent>
         </Card>
@@ -250,7 +224,7 @@ const CreatePaymentRequest: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle>Payment Methods *</CardTitle>
-            <CardDescription>Select which payment methods to allow</CardDescription>
+            <CardDescription>Select which payment methods to allow for this request</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
@@ -265,46 +239,10 @@ const CreatePaymentRequest: React.FC = () => {
               </label>
 
               {formData.paymentMethods.includes(PaymentMethod.BANK_WIRE) && (
-                <div className="ml-7 space-y-3 border-l-2 pl-4">
-                  <div>
-                    <Label htmlFor="bankAccount">Select Bank Account *</Label>
-                    <select
-                      id="bankAccount"
-                      value={formData.bankAccountId}
-                      onChange={(e) => setFieldValue('bankAccountId', e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
-                      required={formData.paymentMethods.includes(PaymentMethod.BANK_WIRE)}
-                    >
-                      <option value="">-- Select a bank account --</option>
-                      {bankAccounts.map((bank) => (
-                        <option key={bank._id} value={bank._id}>
-                          {bank.bankName} - {bank.accountNumber}
-                        </option>
-                      ))}
-                    </select>
-                    {bankAccounts.length === 0 && (
-                      <p className="text-xs text-red-600 mt-1">
-                        No bank accounts available. Please contact admin to add bank accounts.
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <Label>Select Rails</Label>
-                    <div className="space-y-2">
-                      {Object.values(BankRail).map((rail) => (
-                        <label key={rail} className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formData.bankRails.includes(rail)}
-                            onChange={() => toggleBankRail(rail)}
-                            className="h-4 w-4 rounded border-gray-300"
-                          />
-                          <span className="text-sm uppercase">{rail}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+                <div className="ml-7 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    ℹ️ A bank account will be automatically assigned based on the customer's billing country.
+                  </p>
                 </div>
               )}
 
@@ -319,16 +257,10 @@ const CreatePaymentRequest: React.FC = () => {
               </label>
 
               {formData.paymentMethods.includes(PaymentMethod.CARD) && (
-                <div className="ml-7 space-y-2 border-l-2 pl-4">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.require3DS}
-                      onChange={(e) => setFieldValue('require3DS', e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <span className="text-sm">Require 3D Secure</span>
-                  </label>
+                <div className="ml-7 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    ℹ️ A payment card will be automatically assigned from available PSP options.
+                  </p>
                 </div>
               )}
             </div>

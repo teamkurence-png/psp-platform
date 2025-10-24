@@ -54,14 +54,6 @@ export enum CryptoAsset {
   ETH = 'eth',
 }
 
-export enum DocumentType {
-  INCORPORATION = 'incorporation',
-  BANK_LETTER = 'bank_letter',
-  PROOF_OF_ADDRESS = 'proof_of_address',
-  WEBSITE_SCREENSHOT = 'website_screenshot',
-  PROCESSING_HISTORY = 'processing_history',
-}
-
 export enum BankRail {
   SEPA = 'sepa',
   SWIFT = 'swift',
@@ -120,6 +112,8 @@ export interface PaymentRequest {
   status: PaymentRequestStatus;
   referenceCode?: string;
   checkoutUrl?: string;
+  bankAccountId?: string;
+  cardId?: string;
   bankDetails?: {
     rails: BankRail[];
     beneficiaryName?: string;
@@ -252,6 +246,16 @@ export interface BankAccount {
   iban?: string;
   bankAddress?: string;
   beneficiaryName?: string;
+  geo?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Card {
+  _id: string;
+  name: string;
+  pspLink: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
