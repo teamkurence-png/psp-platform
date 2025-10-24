@@ -33,7 +33,6 @@ export const getBalance = async (req: AuthRequest, res: Response): Promise<void>
         userId: userObjectId,
         available: 0,
         pending: 0,
-        reserve: 0,
         currency: 'USD',
         pendingBreakdown: [],
       });
@@ -117,7 +116,7 @@ export const updateBalance = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     const { merchantId } = req.params; // Note: param name kept for backward compatibility
-    const { available, pending, reserve } = req.body;
+    const { available, pending } = req.body;
 
     const merchantObjectId = new mongoose.Types.ObjectId(merchantId);
     const balance = await Balance.findOne({ userId: merchantObjectId });
@@ -128,7 +127,6 @@ export const updateBalance = async (req: AuthRequest, res: Response): Promise<vo
 
     if (available !== undefined) balance.available = available;
     if (pending !== undefined) balance.pending = pending;
-    if (reserve !== undefined) balance.reserve = reserve;
     balance.lastUpdated = new Date();
 
     await balance.save();

@@ -24,7 +24,6 @@ export async function updateMerchantBalance(
       userId: userObjectId,
       available: 0,
       pending: 0,
-      reserve: 0,
       currency: 'USD',
       pendingBreakdown: [],
     });
@@ -71,7 +70,6 @@ export async function addToPendingBalance(
       userId: userObjectId,
       available: 0,
       pending: amount,
-      reserve: 0,
       currency,
       pendingBreakdown: [],
     });
@@ -99,7 +97,6 @@ export async function getOrCreateBalance(
       userId: userObjectId,
       available: 0,
       pending: 0,
-      reserve: 0,
       currency,
       pendingBreakdown: [],
     });

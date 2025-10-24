@@ -59,7 +59,6 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
         userId: user._id,
         available: 0,
         pending: 0,
-        reserve: 0,
         currency: 'USD',
       });
 
@@ -182,18 +181,25 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
     user.lastLogin = new Date();
     await user.save();
 
+    const loginResponse: any = {
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        twoFactorEnabled: user.twoFactorEnabled,
+      },
+      accessToken,
+      refreshToken,
+    };
+
+    // If user is a merchant, include merchantId
+    if (user.role === UserRole.MERCHANT) {
+      loginResponse.merchantId = user._id.toString();
+    }
+
     res.json({
       success: true,
-      data: {
-        user: {
-          id: user._id,
-          email: user.email,
-          role: user.role,
-          twoFactorEnabled: user.twoFactorEnabled,
-        },
-        accessToken,
-        refreshToken,
-      },
+      data: loginResponse,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -418,11 +424,41 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
+    const responseData: any = {
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        twoFactorEnabled: user.twoFactorEnabled,
+        lastLogin: user.lastLogin,
+      },
+    };
+
+    // If user is a merchant, include merchant data
+    if (user.role === UserRole.MERCHANT) {
+      responseData.merchant = {
+        _id: user._id, // For merchants, the user ID is the merchant ID
+        userId: user._id,
+        legalName: user.legalName,
+        dba: user.dba,
+        registrationNumber: user.registrationNumber,
+        website: user.website,
+        industry: user.industry,
+        address: user.address,
+        phone: user.phone,
+        supportEmail: user.supportEmail,
+        telegram: user.telegram,
+        onboardingStatus: user.onboardingStatus,
+        rejectionReason: user.rejectionReason,
+        approvedAt: user.approvedAt,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
+    }
+
     res.json({
       success: true,
-      data: {
-        user: user,
-      },
+      data: responseData,
     });
   } catch (error) {
     console.error('Get user error:', error);

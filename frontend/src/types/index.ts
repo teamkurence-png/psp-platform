@@ -126,7 +126,6 @@ export interface Balance {
   merchantId: string;
   available: number;
   pending: number;
-  reserve: number;
   currency: string;
   pendingBreakdown: Array<{
     amount: number;

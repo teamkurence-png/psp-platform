@@ -12,6 +12,7 @@ import PaymentRequestDetail from './pages/PaymentRequestDetail';
 import Balances from './pages/Balances';
 import Withdrawals from './pages/Withdrawals';
 import CreateWithdrawal from './pages/CreateWithdrawal';
+import WithdrawalDetail from './pages/WithdrawalDetail';
 import Merchants from './pages/Merchants';
 import ManualConfirmations from './pages/ManualConfirmations';
 import Settings from './pages/Settings';
@@ -71,6 +72,7 @@ function App() {
               <Route path="balances" element={<Balances />} />
               <Route path="withdrawals" element={<Withdrawals />} />
               <Route path="withdrawals/new" element={<CreateWithdrawal />} />
+              <Route path="withdrawals/:id" element={<WithdrawalDetail />} />
               <Route path="merchants" element={<Merchants />} />
               <Route path="settings" element={<Settings />} />
               <Route path="settings/users" element={<AdminUsers />} />

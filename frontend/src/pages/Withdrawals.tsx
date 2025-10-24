@@ -1,36 +1,72 @@
 import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import EmptyState from '../components/ui/EmptyState';
 import StatusBadge from '../components/ui/StatusBadge';
 import FilterBar from '../components/ui/FilterBar';
+import Pagination from '../components/ui/Pagination';
 import { formatDateTime } from '../lib/utils';
 import { useList, useSearch, useFilter } from '../hooks';
 import { withdrawalService, type Withdrawal } from '../services';
 import { WITHDRAWAL_STATUS_OPTIONS, getAssetLabel } from '../constants';
-import { Bitcoin, ExternalLink } from 'lucide-react';
+import { Bitcoin, ExternalLink, Wallet } from 'lucide-react';
 import { useAuth } from '../lib/auth';
+import { formatCurrency } from '../lib/utils';
+import type { Balance } from '../types/index';
+import api from '../lib/api';
 
 const Withdrawals: React.FC = () => {
   const { merchantId } = useAuth();
+  const navigate = useNavigate();
   const { items: withdrawals, loading, setItems, setLoading } = useList<Withdrawal>();
+  const [balance, setBalance] = React.useState<Balance | null>(null);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
+  const [totalItems, setTotalItems] = React.useState(0);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     fetchWithdrawals();
-  }, []);
+    if (merchantId) {
+      fetchBalance();
+    }
+  }, [merchantId, currentPage]);
+
+  const fetchBalance = async () => {
+    try {
+      const response = await api.get('/balances');
+      setBalance(response.data.data);
+    } catch (error) {
+      console.error('Failed to fetch balance:', error);
+    }
+  };
 
   const fetchWithdrawals = async () => {
     try {
       setLoading(true);
-      const response = await withdrawalService.getAll();
+      const response = await withdrawalService.getAll({
+        page: currentPage,
+        limit: itemsPerPage,
+      });
       setItems(response.data.data.withdrawals || []);
+      
+      // Extract pagination data
+      const pagination = response.data.data.pagination;
+      if (pagination) {
+        setTotalPages(pagination.pages);
+        setTotalItems(pagination.total);
+      }
     } catch (error) {
       console.error('Failed to fetch withdrawals:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   const { searchTerm, setSearchTerm, filteredItems: searchedWithdrawals } = useSearch(
@@ -54,6 +90,13 @@ const Withdrawals: React.FC = () => {
     'all'
   );
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (searchTerm || statusFilter !== 'all') {
+      setCurrentPage(1);
+    }
+  }, [searchTerm, statusFilter]);
+
   if (loading) {
     return <LoadingSpinner message="Loading withdrawals..." />;
   }
@@ -61,20 +104,61 @@ const Withdrawals: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Withdrawals</h1>
-          <p className="text-muted-foreground">Withdraw funds to bank accounts or crypto wallets</p>
-        </div>
-        {merchantId && (
-          <Button asChild>
-            <Link to="/withdrawals/new">
-              <Bitcoin className="mr-2 h-4 w-4" />
-              New Withdrawal
-            </Link>
-          </Button>
-        )}
+      <div>
+        <h1 className="text-3xl font-bold">Withdrawals</h1>
+        <p className="text-muted-foreground">Withdraw funds to bank accounts or crypto wallets</p>
       </div>
+
+      {/* Available Balance Card */}
+      {merchantId && balance && (
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <Wallet className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-green-900 font-medium">Available to Withdraw</p>
+                  <p className="text-3xl font-bold text-green-900 mt-1">
+                    {formatCurrency(balance.available, balance.currency)}
+                  </p>
+                  <p className="text-xs text-green-700 mt-1">
+                    Total Balance: {formatCurrency(balance.available + balance.pending, balance.currency)} 
+                    {balance.pending > 0 && ` • Pending: ${formatCurrency(balance.pending, balance.currency)}`}
+                  </p>
+                </div>
+              </div>
+              <Button asChild size="lg" className="bg-green-600 hover:bg-green-700">
+                <Link to="/withdrawals/new">
+                  <Bitcoin className="mr-2 h-4 w-4" />
+                  Withdraw Now
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Admin Notice */}
+      {!merchantId && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <Wallet className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-blue-900">Admin View</h3>
+                <p className="text-sm text-blue-700 mt-1">
+                  Withdrawals can only be created by merchant accounts. You are viewing all withdrawals in the system.
+                  To create a withdrawal, please log in as a merchant account.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card>
@@ -121,7 +205,8 @@ const Withdrawals: React.FC = () => {
               {filteredWithdrawals.map((withdrawal) => (
                 <div
                   key={withdrawal._id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50"
+                  onClick={() => navigate(`/withdrawals/${withdrawal._id}`)}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 cursor-pointer"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -209,6 +294,19 @@ const Withdrawals: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Pagination - only show when no client-side filters are active */}
+          {totalPages > 1 && !searchTerm && statusFilter === 'all' && (
+            <div className="mt-6 pt-6 border-t">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+              />
             </div>
           )}
         </CardContent>

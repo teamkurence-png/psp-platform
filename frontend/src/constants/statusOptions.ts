@@ -4,6 +4,7 @@ export const WITHDRAWAL_STATUS_OPTIONS = [
   { value: 'on_chain', label: 'On Chain' },
   { value: 'paid', label: 'Paid' },
   { value: 'failed', label: 'Failed' },
+  { value: 'reversed', label: 'Reversed' },
 ];
 
 export const PAYMENT_REQUEST_STATUS_OPTIONS = [

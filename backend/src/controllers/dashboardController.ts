@@ -77,7 +77,6 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
           userId: userObjectId,
           available: 0,
           pending: 0,
-          reserve: 0,
           currency: 'USD',
           pendingBreakdown: [],
         });
@@ -92,7 +91,6 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
         pendingReviews,
         availableBalance: balance?.available || 0,
         pendingBalance: balance?.pending || 0,
-        reserveBalance: balance?.reserve || 0,
         currency: balance?.currency || 'USD',
       },
     });

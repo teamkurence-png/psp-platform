@@ -254,7 +254,7 @@ export const updateWithdrawalStatus = async (req: AuthRequest, res: Response): P
     }
 
     const { id } = req.params;
-    const { status, txHash, confirmations, failureReason } = req.body;
+    const { status, failureReason } = req.body;
 
     const validStatuses = [WithdrawalStatus.ON_CHAIN, WithdrawalStatus.PAID, WithdrawalStatus.FAILED, WithdrawalStatus.REVERSED];
     if (!validStatuses.includes(status)) {
@@ -269,20 +269,6 @@ export const updateWithdrawalStatus = async (req: AuthRequest, res: Response): P
     }
 
     withdrawal.status = status;
-    
-    if (txHash) withdrawal.txHash = txHash;
-    if (confirmations !== undefined) withdrawal.confirmations = confirmations;
-    
-    if (status === WithdrawalStatus.ON_CHAIN && txHash && withdrawal.network) {
-      // Generate explorer URL based on network
-      const explorerUrls: Record<string, string> = {
-        'TRC20': `https://tronscan.org/#/transaction/${txHash}`,
-        'ERC20': `https://etherscan.io/tx/${txHash}`,
-        'BTC': `https://blockchain.info/tx/${txHash}`,
-        'ETH': `https://etherscan.io/tx/${txHash}`,
-      };
-      withdrawal.explorerUrl = explorerUrls[withdrawal.network] || '';
-    }
 
     if (status === WithdrawalStatus.PAID) {
       // Mark as completed

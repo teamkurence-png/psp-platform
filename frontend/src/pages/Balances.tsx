@@ -9,7 +9,7 @@ import api from '../lib/api';
 import { useFetch } from '../hooks';
 import { useAuth } from '../lib/auth';
 import { formatCurrency, formatDateTime } from '../lib/utils';
-import { DollarSign, TrendingUp, Clock, ArrowDownCircle } from 'lucide-react';
+import { DollarSign, Clock, ArrowDownCircle } from 'lucide-react';
 
 interface BalanceHistory {
   _id: string;
@@ -91,7 +91,7 @@ const Balances: React.FC = () => {
       </div>
 
       {/* Balance Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -125,25 +125,6 @@ const Balances: React.FC = () => {
               </div>
               <div className="p-3 bg-orange-100 rounded-full">
                 <Clock className="h-6 w-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Reserve Balance</p>
-                <h3 className="text-3xl font-bold mt-2 text-blue-600">
-                  {formatCurrency(balance?.reserve || 0, balance?.currency || 'USD')}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Risk reserve
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <TrendingUp className="h-6 w-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
