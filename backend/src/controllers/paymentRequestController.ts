@@ -4,17 +4,16 @@ import { PaymentRequest } from '../models/PaymentRequest.js';
 import { BankAccount } from '../models/BankAccount.js';
 import { Card } from '../models/Card.js';
 import { AuthRequest, UserRole, PaymentMethod, BankRail, PaymentRequestStatus } from '../types/index.js';
-import { generateReferenceCode } from '../utils/generators.js';
+import { generateReason } from '../utils/generators.js';
 import { updateMerchantBalance, addToPendingBalance } from '../services/balanceService.js';
 
 // Validation schema
 const createPaymentRequestSchema = z.object({
   amount: z.number().positive(),
   currency: z.string().default('USD'),
-  description: z.string().optional(),
-  invoiceNumber: z.string().optional(),
-  dueDate: z.string().optional().transform((val) => {
-    if (!val) return undefined;
+  description: z.string().min(1, 'Description is required'),
+  invoiceNumber: z.string().min(1, 'Invoice number is required'),
+  dueDate: z.string().min(1, 'Due date is required').transform((val) => {
     // If it's already a datetime string, return as is
     if (val.includes('T')) return val;
     // If it's a date string (YYYY-MM-DD), convert to datetime
@@ -22,11 +21,11 @@ const createPaymentRequestSchema = z.object({
   }),
   customerReference: z.string().optional(),
   customerInfo: z.object({
-    name: z.string().optional(),
-    email: z.string().email().optional(),
-    phone: z.string().optional(),
-    billingCountry: z.string().optional(),
-  }).optional(),
+    name: z.string().min(1, 'Customer name is required'),
+    email: z.string().email('Valid customer email is required'),
+    phone: z.string().min(1, 'Customer phone is required'),
+    billingCountry: z.string().min(1, 'Customer billing country is required'),
+  }),
   paymentMethods: z.array(z.enum([PaymentMethod.BANK_WIRE, PaymentMethod.CARD])).min(1, 'At least one payment method is required'),
 });
 
@@ -54,7 +53,7 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       }
 
       const availableBanks = await BankAccount.find({ 
-        geo: customerGeo, 
+        supportedGeos: customerGeo, 
         isActive: true 
       });
 
@@ -81,21 +80,21 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
     }
 
     // Auto-assign bank or card based on payment method
-    let referenceCode;
+    let reason;
     let bankDetails;
     let bankAccountId;
     let cardId;
 
     // Handle Bank Wire auto-assignment
     if (validatedData.paymentMethods.includes(PaymentMethod.BANK_WIRE)) {
-      referenceCode = generateReferenceCode();
+      reason = generateReason();
 
       // Get customer's billing country (GEO)
       const customerGeo = validatedData.customerInfo?.billingCountry!;
 
       // Find active banks matching the customer's GEO (already validated above)
       const availableBanks = await BankAccount.find({ 
-        geo: customerGeo, 
+        supportedGeos: customerGeo, 
         isActive: true 
       });
 
@@ -140,7 +139,7 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       bankAccountId,
       cardId,
       bankDetails,
-      referenceCode,
+      reason,
     });
 
     // Add amount to pending balance when payment request is created

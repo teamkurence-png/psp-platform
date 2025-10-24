@@ -82,7 +82,7 @@ const PaymentRequests: React.FC = () => {
           <FilterBar
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
-            searchPlaceholder="Search by customer, invoice #, or reference..."
+            searchPlaceholder="Search by customer, invoice #, or reason..."
             filterValue={statusFilter}
             onFilterChange={setStatusFilter}
             filterOptions={PAYMENT_REQUEST_STATUS_OPTIONS}

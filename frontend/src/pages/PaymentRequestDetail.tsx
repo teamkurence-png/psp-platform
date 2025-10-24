@@ -343,25 +343,25 @@ const PaymentRequestDetail: React.FC = () => {
                     </div>
                   )}
                 </div>
-                {paymentRequest.referenceCode && (
+                {paymentRequest.reason && (
                   <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm font-semibold text-yellow-900 mb-1">
-                      Important: Include Reference Code
+                      Important: Include Reason
                     </p>
                     <div className="flex items-center gap-2">
                       <p className="text-lg font-mono font-bold text-yellow-900">
-                        {paymentRequest.referenceCode}
+                        {paymentRequest.reason}
                       </p>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleCopy(paymentRequest.referenceCode!, 'Reference Code')}
+                        onClick={() => handleCopy(paymentRequest.reason!, 'Reason')}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
                     <p className="text-xs text-yellow-700 mt-1">
-                      Customer must include this code in the transfer reference
+                      Customer must include this reason in the transfer reference
                     </p>
                   </div>
                 )}

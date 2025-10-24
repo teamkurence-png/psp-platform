@@ -2,9 +2,9 @@ import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
 /**
- * Generate a unique reference code for bank wire transfers
+ * Generate a unique reason for bank wire transfers
  */
-export const generateReferenceCode = (): string => {
+export const generateReason = (): string => {
   return `REF${Date.now()}${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 };
 

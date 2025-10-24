@@ -57,7 +57,7 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({ request, onClose,
           <div className="space-y-4">
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="text-sm text-gray-600 mb-1">Payment Request</div>
-              <div className="font-mono text-sm text-gray-900">{request.referenceCode || request._id}</div>
+              <div className="font-mono text-sm text-gray-900">{request.reason || request._id}</div>
               <div className="text-lg font-semibold text-gray-900 mt-2">
                 {formatCurrency(request.amount, request.currency)}
               </div>
@@ -175,7 +175,7 @@ const ManualConfirmations: React.FC = () => {
   };
 
   const filteredRequests = paymentRequests?.filter((req: any) =>
-    req.referenceCode?.toLowerCase().includes(search.toLowerCase()) ||
+    req.reason?.toLowerCase().includes(search.toLowerCase()) ||
     req.customerInfo?.email?.toLowerCase().includes(search.toLowerCase()) ||
     req.customerInfo?.name?.toLowerCase().includes(search.toLowerCase()) ||
     req.invoiceNumber?.toLowerCase().includes(search.toLowerCase())
@@ -199,7 +199,7 @@ const ManualConfirmations: React.FC = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by reference, customer, or invoice..."
+                placeholder="Search by reason, customer, or invoice..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background"
@@ -269,7 +269,7 @@ const ManualConfirmations: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Reference / Invoice
+                  Reason / Invoice
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Customer
@@ -306,8 +306,8 @@ const ManualConfirmations: React.FC = () => {
                   <tr key={request._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        {request.referenceCode && (
-                          <div className="font-mono text-sm text-gray-900">{request.referenceCode}</div>
+                        {request.reason && (
+                          <div className="font-mono text-sm text-gray-900">{request.reason}</div>
                         )}
                         {request.invoiceNumber && (
                           <div className="text-sm text-gray-500">Invoice: {request.invoiceNumber}</div>

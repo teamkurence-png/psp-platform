@@ -12,7 +12,7 @@ const createBankAccountSchema = z.object({
   iban: z.string().optional(),
   bankAddress: z.string().optional(),
   beneficiaryName: z.string().optional(),
-  geo: z.string().optional(),
+  supportedGeos: z.array(z.string()).min(1, 'At least one country must be selected'),
 });
 
 const updateBankAccountSchema = z.object({
@@ -23,7 +23,7 @@ const updateBankAccountSchema = z.object({
   iban: z.string().optional(),
   bankAddress: z.string().optional(),
   beneficiaryName: z.string().optional(),
-  geo: z.string().optional(),
+  supportedGeos: z.array(z.string()).min(1, 'At least one country must be selected').optional(),
   isActive: z.boolean().optional(),
 });
 

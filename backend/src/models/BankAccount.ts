@@ -8,7 +8,7 @@ export interface IBankAccount extends Document {
   iban?: string;
   bankAddress?: string;
   beneficiaryName?: string;
-  geo?: string;
+  supportedGeos: string[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -29,7 +29,11 @@ const bankAccountSchema = new Schema<IBankAccount>(
     iban: String,
     bankAddress: String,
     beneficiaryName: String,
-    geo: String,
+    supportedGeos: {
+      type: [String],
+      required: true,
+      default: [],
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -43,6 +47,7 @@ const bankAccountSchema = new Schema<IBankAccount>(
 // Indexes
 bankAccountSchema.index({ isActive: 1 });
 bankAccountSchema.index({ bankName: 1 });
+bankAccountSchema.index({ supportedGeos: 1 }); // For efficient geo-based queries
 
 export const BankAccount = mongoose.model<IBankAccount>('BankAccount', bankAccountSchema);
 

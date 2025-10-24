@@ -6,17 +6,17 @@ export interface PaymentRequest {
   requestId: string;
   amount: number;
   currency: string;
-  description?: string;
-  invoiceNumber?: string;
+  description: string;
+  invoiceNumber: string;
   status: PaymentRequestStatus;
   paymentMethods: PaymentMethod[];
-  customerInfo?: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    billingCountry?: string;
+  customerInfo: {
+    name: string;
+    email: string;
+    phone: string;
+    billingCountry: string;
   };
-  dueDate?: string;
+  dueDate: string;
   paidAt?: string;
   createdAt: string;
 }
@@ -24,10 +24,10 @@ export interface PaymentRequest {
 export interface CreatePaymentRequestDto {
   amount: number;
   currency: string;
-  description?: string;
-  invoiceNumber?: string;
-  dueDate?: string;
-  customerInfo?: {
+  description: string;
+  invoiceNumber: string;
+  dueDate: string;
+  customerInfo: {
     name: string;
     email: string;
     phone: string;

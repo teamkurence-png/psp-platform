@@ -1,7 +1,6 @@
 import api from '../lib/api';
 
 export interface DashboardStats {
-  volume: number;
   approvals: number;
   declines: number;
   pendingReviews: number;

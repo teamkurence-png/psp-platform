@@ -49,25 +49,6 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
       query.userId = userId;
     }
 
-    // Get volume - sum of all paid payment requests in date range
-    const volumeResult = await PaymentRequest.aggregate([
-      { 
-        $match: {
-          ...query,
-          status: PaymentRequestStatus.PAID,
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalVolume: { $sum: '$amount' },
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
-    const volume = volumeResult.length > 0 ? volumeResult[0].totalVolume : 0;
-
     // Get approvals (paid) and declines (cancelled/expired)
     const approvals = await PaymentRequest.countDocuments({
       ...query,
@@ -106,7 +87,6 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
     res.json({
       success: true,
       data: {
-        volume,
         approvals,
         declines,
         pendingReviews,
@@ -138,37 +118,6 @@ export const getDashboardAlerts = async (req: AuthRequest, res: Response): Promi
 
     // Check for pending payment requests
     if (userId) {
-      const pendingCount = await PaymentRequest.countDocuments({
-        userId,
-        status: { $in: [PaymentRequestStatus.SENT, PaymentRequestStatus.VIEWED] },
-      });
-
-      if (pendingCount > 0) {
-        alerts.push({
-          id: 'pending-payments',
-          type: 'info',
-          message: `You have ${pendingCount} payment request${pendingCount > 1 ? 's' : ''} awaiting payment`,
-        });
-      }
-
-      // Check for expiring payment requests (due in next 3 days)
-      const threeDaysFromNow = new Date();
-      threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-      
-      const expiringCount = await PaymentRequest.countDocuments({
-        userId,
-        status: { $in: [PaymentRequestStatus.SENT, PaymentRequestStatus.VIEWED] },
-        dueDate: { $lte: threeDaysFromNow, $gte: new Date() },
-      });
-
-      if (expiringCount > 0) {
-        alerts.push({
-          id: 'expiring-requests',
-          type: 'warning',
-          message: `${expiringCount} payment request${expiringCount > 1 ? 's are' : ' is'} expiring soon`,
-        });
-      }
-
       // Check balance
       const userObjectId = new mongoose.Types.ObjectId(userId);
       const balance = await Balance.findOne({ userId: userObjectId });

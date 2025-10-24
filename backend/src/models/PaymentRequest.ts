@@ -2,10 +2,10 @@ import mongoose, { Document, Schema } from 'mongoose';
 import { PaymentMethod, PaymentRequestStatus, BankRail } from '../types/index.js';
 
 export interface ICustomerInfo {
-  name?: string;
-  email?: string;
-  phone?: string;
-  billingCountry?: string;
+  name: string;
+  email: string;
+  phone: string;
+  billingCountry: string;
 }
 
 export interface IBankDetails {
@@ -29,14 +29,14 @@ export interface IPaymentRequest extends Document {
   userId: mongoose.Types.ObjectId;
   amount: number;
   currency: string;
-  description?: string;
-  invoiceNumber?: string;
-  dueDate?: Date;
+  description: string;
+  invoiceNumber: string;
+  dueDate: Date;
   customerReference?: string;
-  customerInfo?: ICustomerInfo;
+  customerInfo: ICustomerInfo;
   paymentMethods: PaymentMethod[];
   status: PaymentRequestStatus;
-  referenceCode?: string;
+  reason?: string;
   checkoutUrl?: string;
   bankAccountId?: mongoose.Types.ObjectId;
   cardId?: mongoose.Types.ObjectId;
@@ -49,10 +49,10 @@ export interface IPaymentRequest extends Document {
 }
 
 const customerInfoSchema = new Schema<ICustomerInfo>({
-  name: String,
-  email: String,
-  phone: String,
-  billingCountry: String,
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  phone: { type: String, required: true },
+  billingCountry: { type: String, required: true },
 }, { _id: false });
 
 const bankDetailsSchema = new Schema<IBankDetails>({
@@ -88,11 +88,23 @@ const paymentRequestSchema = new Schema<IPaymentRequest>(
       required: true,
       default: 'USD',
     },
-    description: String,
-    invoiceNumber: String,
-    dueDate: Date,
+    description: {
+      type: String,
+      required: true,
+    },
+    invoiceNumber: {
+      type: String,
+      required: true,
+    },
+    dueDate: {
+      type: Date,
+      required: true,
+    },
     customerReference: String,
-    customerInfo: customerInfoSchema,
+    customerInfo: {
+      type: customerInfoSchema,
+      required: true,
+    },
     paymentMethods: {
       type: [String],
       enum: Object.values(PaymentMethod),
@@ -103,7 +115,7 @@ const paymentRequestSchema = new Schema<IPaymentRequest>(
       enum: Object.values(PaymentRequestStatus),
       default: PaymentRequestStatus.SENT,
     },
-    referenceCode: String,
+    reason: String,
     checkoutUrl: String,
     bankAccountId: {
       type: Schema.Types.ObjectId,
@@ -125,7 +137,7 @@ const paymentRequestSchema = new Schema<IPaymentRequest>(
 
 // Indexes
 paymentRequestSchema.index({ status: 1 });
-paymentRequestSchema.index({ referenceCode: 1 });
+paymentRequestSchema.index({ reason: 1 });
 paymentRequestSchema.index({ createdAt: -1 });
 paymentRequestSchema.index({ userId: 1, status: 1 }); // Compound index for queries
 

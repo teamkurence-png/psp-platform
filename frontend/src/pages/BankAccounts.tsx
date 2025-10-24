@@ -30,8 +30,9 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
     iban: bankAccount?.iban || '',
     bankAddress: bankAccount?.bankAddress || '',
     beneficiaryName: bankAccount?.beneficiaryName || '',
-    geo: bankAccount?.geo || '',
+    supportedGeos: bankAccount?.supportedGeos || [],
   });
+  const [geoSearch, setGeoSearch] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +42,20 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const toggleGeo = (countryCode: string) => {
+    setFormData(prev => ({
+      ...prev,
+      supportedGeos: prev.supportedGeos.includes(countryCode)
+        ? prev.supportedGeos.filter(code => code !== countryCode)
+        : [...prev.supportedGeos, countryCode]
+    }));
+  };
+
+  const filteredCountries = COUNTRIES.filter(country =>
+    country.name.toLowerCase().includes(geoSearch.toLowerCase()) ||
+    country.code.toLowerCase().includes(geoSearch.toLowerCase())
+  );
 
   return (
     <div 
@@ -140,21 +155,41 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
               />
             </div>
 
-            <div>
-              <Label htmlFor="geo">Country/Region (GEO)</Label>
-              <select
-                id="geo"
-                value={formData.geo}
-                onChange={(e) => handleChange('geo', e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="">Select country</option>
-                {COUNTRIES.map((country) => (
-                  <option key={country.code} value={country.code}>
-                    {country.name}
-                  </option>
-                ))}
-              </select>
+            <div className="md:col-span-2">
+              <Label htmlFor="supportedGeos">Supported Countries/Regions (GEO) *</Label>
+              <div className="border border-gray-300 rounded-md p-4 max-h-64 overflow-y-auto">
+                <Input
+                  placeholder="Search countries..."
+                  value={geoSearch}
+                  onChange={(e) => setGeoSearch(e.target.value)}
+                  className="mb-3"
+                />
+                <div className="space-y-2">
+                  {filteredCountries.length === 0 ? (
+                    <p className="text-sm text-gray-500">No countries found</p>
+                  ) : (
+                    filteredCountries.map((country) => (
+                      <label 
+                        key={country.code}
+                        className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.supportedGeos.includes(country.code)}
+                          onChange={() => toggleGeo(country.code)}
+                          className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                        />
+                        <span className="text-sm">{country.name} ({country.code})</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+              {formData.supportedGeos.length > 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {formData.supportedGeos.length} {formData.supportedGeos.length === 1 ? 'country' : 'countries'} selected
+                </p>
+              )}
             </div>
           </div>
 
@@ -384,9 +419,23 @@ const BankAccounts: React.FC = () => {
                         {bank.iban && <div className="font-mono text-xs">{bank.iban}</div>}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {bank.geo ? COUNTRIES.find(c => c.code === bank.geo)?.name || bank.geo : 'N/A'}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {bank.supportedGeos && bank.supportedGeos.length > 0 ? (
+                          bank.supportedGeos.map((geoCode) => {
+                            const country = COUNTRIES.find(c => c.code === geoCode);
+                            return (
+                              <span 
+                                key={geoCode}
+                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                              >
+                                {country?.name || geoCode}
+                              </span>
+                            );
+                          })
+                        ) : (
+                          <span className="text-sm text-gray-500">No countries</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

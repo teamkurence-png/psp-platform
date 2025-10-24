@@ -84,19 +84,19 @@ export interface PaymentRequest {
   merchantId: string;
   amount: number;
   currency: string;
-  description?: string;
-  invoiceNumber?: string;
-  dueDate?: string;
+  description: string;
+  invoiceNumber: string;
+  dueDate: string;
   customerReference?: string;
-  customerInfo?: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    billingCountry?: string;
+  customerInfo: {
+    name: string;
+    email: string;
+    phone: string;
+    billingCountry: string;
   };
   paymentMethods: PaymentMethod[];
   status: PaymentRequestStatus;
-  referenceCode?: string;
+  reason?: string;
   checkoutUrl?: string;
   bankAccountId?: string;
   cardId?: string;
@@ -165,7 +165,7 @@ export interface BankAccount {
   iban?: string;
   bankAddress?: string;
   beneficiaryName?: string;
-  geo?: string;
+  supportedGeos: string[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

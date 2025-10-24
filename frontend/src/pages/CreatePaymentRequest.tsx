@@ -62,7 +62,7 @@ const CreatePaymentRequest: React.FC = () => {
         currency: formData.currency,
         description: formData.description,
         invoiceNumber: formData.invoiceNumber,
-        dueDate: formData.dueDate || undefined,
+        dueDate: formData.dueDate,
         customerInfo: {
           name: formData.customerName,
           email: formData.customerEmail,
@@ -135,30 +135,33 @@ const CreatePaymentRequest: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Description *</Label>
               <Input
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFieldValue('description', e.target.value)}
+                required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="invoiceNumber">Invoice Number</Label>
+                <Label htmlFor="invoiceNumber">Invoice Number *</Label>
                 <Input
                   id="invoiceNumber"
                   value={formData.invoiceNumber}
                   onChange={(e) => setFieldValue('invoiceNumber', e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dueDate">Due Date</Label>
+                <Label htmlFor="dueDate">Due Date *</Label>
                 <Input
                   id="dueDate"
                   type="date"
                   value={formData.dueDate}
                   onChange={(e) => setFieldValue('dueDate', e.target.value)}
+                  required
                 />
               </div>
             </div>
@@ -169,34 +172,37 @@ const CreatePaymentRequest: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle>Customer Information</CardTitle>
-            <CardDescription>Optional but recommended for tracking</CardDescription>
+            <CardDescription>All customer information is required</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="customerName">Name</Label>
+              <Label htmlFor="customerName">Name *</Label>
               <Input
                 id="customerName"
                 value={formData.customerName}
                 onChange={(e) => setFieldValue('customerName', e.target.value)}
+                required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="customerEmail">Email</Label>
+                <Label htmlFor="customerEmail">Email *</Label>
                 <Input
                   id="customerEmail"
                   type="email"
                   value={formData.customerEmail}
                   onChange={(e) => setFieldValue('customerEmail', e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="customerPhone">Phone</Label>
+                <Label htmlFor="customerPhone">Phone *</Label>
                 <Input
                   id="customerPhone"
                   value={formData.customerPhone}
                   onChange={(e) => setFieldValue('customerPhone', e.target.value)}
+                  required
                 />
               </div>
             </div>
