@@ -369,6 +369,38 @@ const PaymentRequestDetail: React.FC = () => {
             </Card>
           )}
 
+          {/* Commission Breakdown */}
+          {(paymentRequest.bankAccountId || paymentRequest.cardId) && paymentRequest.commissionPercent !== undefined && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Commission Breakdown</CardTitle>
+                <CardDescription>Fee structure for this transaction</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-muted-foreground">Original Amount</p>
+                    <p className="font-medium">{formatCurrency(paymentRequest.amount, paymentRequest.currency)}</p>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-muted-foreground">Commission</p>
+                    <p className="font-medium text-orange-600">
+                      {paymentRequest.commissionPercent}% - {formatCurrency(paymentRequest.commissionAmount || 0, paymentRequest.currency)}
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm font-semibold">Net Amount (Merchant Receives)</p>
+                      <p className="text-lg font-bold text-green-600">
+                        {formatCurrency(paymentRequest.netAmount || paymentRequest.amount, paymentRequest.currency)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Card Payment Details */}
           {paymentRequest.paymentMethods.includes(PaymentMethod.CARD) && assignedCard && (
             <Card>

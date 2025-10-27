@@ -129,6 +129,9 @@ export interface PaymentRequest {
     require3DS: boolean;
     expiryDate?: string;
   };
+  commissionPercent?: number;
+  commissionAmount?: number;
+  netAmount?: number;
   viewedAt?: string;
   paidAt?: string;
   createdAt: string;
@@ -181,6 +184,7 @@ export interface BankAccount {
   supportedGeos: string[];
   minTransactionLimit: number;
   maxTransactionLimit: number;
+  commissionPercent: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -190,6 +194,7 @@ export interface Card {
   _id: string;
   name: string;
   pspLink: string;
+  commissionPercent: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

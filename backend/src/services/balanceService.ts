@@ -5,15 +5,17 @@ import mongoose from 'mongoose';
 /**
  * Updates merchant balance based on payment request status change
  * @param userId - The merchant's user ID
- * @param amount - The payment request amount
+ * @param amount - The payment request amount (for pending balance)
  * @param oldStatus - The previous payment request status
  * @param newStatus - The new payment request status
+ * @param netAmount - The net amount after commission (used when marking as paid)
  */
 export async function updateMerchantBalance(
   userId: string,
   amount: number,
   oldStatus: PaymentRequestStatus,
-  newStatus: PaymentRequestStatus
+  newStatus: PaymentRequestStatus,
+  netAmount?: number
 ): Promise<void> {
   const userObjectId = new mongoose.Types.ObjectId(userId);
   
@@ -33,18 +35,22 @@ export async function updateMerchantBalance(
   const isPendingStatus = (status: PaymentRequestStatus) =>
     status === PaymentRequestStatus.SENT || status === PaymentRequestStatus.VIEWED;
 
+  // Use netAmount for all operations if available, otherwise fall back to amount
+  const effectiveAmount = netAmount !== undefined ? netAmount : amount;
+
   // Remove old status effect
   if (oldStatus === PaymentRequestStatus.PAID) {
-    balance.available -= amount;
+    balance.available -= effectiveAmount;
   } else if (isPendingStatus(oldStatus)) {
-    balance.pending -= amount;
+    balance.pending -= effectiveAmount;
   }
 
   // Apply new status effect
   if (newStatus === PaymentRequestStatus.PAID) {
-    balance.available += amount;
+    // Use netAmount (after commission) when marking as paid
+    balance.available += effectiveAmount;
   } else if (isPendingStatus(newStatus)) {
-    balance.pending += amount;
+    balance.pending += effectiveAmount;
   }
 
   balance.lastUpdated = new Date();

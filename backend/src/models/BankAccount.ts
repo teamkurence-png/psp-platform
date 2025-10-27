@@ -11,6 +11,7 @@ export interface IBankAccount extends Document {
   supportedGeos: string[];
   minTransactionLimit: number;
   maxTransactionLimit: number;
+  commissionPercent: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -45,6 +46,13 @@ const bankAccountSchema = new Schema<IBankAccount>(
       type: Number,
       required: true,
       min: [0, 'Maximum transaction limit must be at least 0'],
+    },
+    commissionPercent: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: [0, 'Commission percent must be at least 0'],
+      max: [100, 'Commission percent must not exceed 100'],
     },
     isActive: {
       type: Boolean,

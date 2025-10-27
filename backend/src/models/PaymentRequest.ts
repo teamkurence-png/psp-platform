@@ -42,6 +42,9 @@ export interface IPaymentRequest extends Document {
   cardId?: mongoose.Types.ObjectId;
   bankDetails?: IBankDetails;
   cardSettings?: ICardSettings;
+  commissionPercent?: number;
+  commissionAmount?: number;
+  netAmount?: number;
   viewedAt?: Date;
   paidAt?: Date;
   createdAt: Date;
@@ -127,6 +130,9 @@ const paymentRequestSchema = new Schema<IPaymentRequest>(
     },
     bankDetails: bankDetailsSchema,
     cardSettings: cardSettingsSchema,
+    commissionPercent: Number,
+    commissionAmount: Number,
+    netAmount: Number,
     viewedAt: Date,
     paidAt: Date,
   },

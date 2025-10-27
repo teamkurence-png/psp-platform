@@ -7,11 +7,13 @@ import { AuthRequest, UserRole } from '../types/index.js';
 const createCardSchema = z.object({
   name: z.string().min(1),
   pspLink: z.string().url(),
+  commissionPercent: z.number().min(0, 'Commission percent must be at least 0').max(100, 'Commission percent must not exceed 100').default(0),
 });
 
 const updateCardSchema = z.object({
   name: z.string().min(1).optional(),
   pspLink: z.string().url().optional(),
+  commissionPercent: z.number().min(0, 'Commission percent must be at least 0').max(100, 'Commission percent must not exceed 100').optional(),
   isActive: z.boolean().optional(),
 });
 

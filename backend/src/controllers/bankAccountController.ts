@@ -15,6 +15,7 @@ const createBankAccountSchema = z.object({
   supportedGeos: z.array(z.string()).min(1, 'At least one country must be selected'),
   minTransactionLimit: z.number().nonnegative('Minimum transaction limit must be at least 0'),
   maxTransactionLimit: z.number().nonnegative('Maximum transaction limit must be at least 0'),
+  commissionPercent: z.number().min(0, 'Commission percent must be at least 0').max(100, 'Commission percent must not exceed 100').default(0),
 }).refine((data) => data.maxTransactionLimit >= data.minTransactionLimit, {
   message: 'Maximum transaction limit must be greater than or equal to minimum transaction limit',
   path: ['maxTransactionLimit'],
@@ -31,6 +32,7 @@ const updateBankAccountSchema = z.object({
   supportedGeos: z.array(z.string()).min(1, 'At least one country must be selected').optional(),
   minTransactionLimit: z.number().nonnegative('Minimum transaction limit must be at least 0').optional(),
   maxTransactionLimit: z.number().nonnegative('Maximum transaction limit must be at least 0').optional(),
+  commissionPercent: z.number().min(0, 'Commission percent must be at least 0').max(100, 'Commission percent must not exceed 100').optional(),
   isActive: z.boolean().optional(),
 }).refine((data) => {
   if (data.minTransactionLimit !== undefined && data.maxTransactionLimit !== undefined) {

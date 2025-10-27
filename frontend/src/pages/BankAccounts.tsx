@@ -33,6 +33,7 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
     supportedGeos: bankAccount?.supportedGeos || [],
     minTransactionLimit: bankAccount?.minTransactionLimit || 0,
     maxTransactionLimit: bankAccount?.maxTransactionLimit || 0,
+    commissionPercent: bankAccount?.commissionPercent ?? 0,
   });
   const [geoSearch, setGeoSearch] = useState('');
 
@@ -42,8 +43,8 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
   };
 
   const handleChange = (field: string, value: string) => {
-    // Convert to number for transaction limits
-    const processedValue = (field === 'minTransactionLimit' || field === 'maxTransactionLimit') 
+    // Convert to number for transaction limits and commission
+    const processedValue = (field === 'minTransactionLimit' || field === 'maxTransactionLimit' || field === 'commissionPercent') 
       ? parseFloat(value) || 0 
       : value;
     setFormData(prev => ({ ...prev, [field]: processedValue }));
@@ -189,6 +190,21 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
                 required
               />
               <p className="text-xs text-gray-500 mt-1">Maximum amount in USD for transactions</p>
+            </div>
+
+            <div className="md:col-span-2">
+              <Label htmlFor="commissionPercent">Commission Percentage (%)</Label>
+              <Input
+                id="commissionPercent"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.commissionPercent}
+                onChange={(e) => handleChange('commissionPercent', e.target.value)}
+                placeholder="e.g., 2.5"
+              />
+              <p className="text-xs text-gray-500 mt-1">Commission percentage to apply to transactions (0-100%)</p>
             </div>
 
             <div className="md:col-span-2">
@@ -417,6 +433,9 @@ const BankAccounts: React.FC = () => {
                   Transaction Limits
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Commission
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -430,7 +449,7 @@ const BankAccounts: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {bankAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
+                  <td colSpan={9} className="px-6 py-12 text-center">
                     <p className="text-gray-500">No bank accounts configured yet</p>
                     {isAdmin && (
                       <Button onClick={handleAddNew} className="mt-4">
@@ -482,6 +501,9 @@ const BankAccounts: React.FC = () => {
                         <div>Min: ${bank.minTransactionLimit?.toLocaleString() || '0'}</div>
                         <div>Max: ${bank.maxTransactionLimit?.toLocaleString() || '0'}</div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium">{bank.commissionPercent}%</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {bank.isActive ? (

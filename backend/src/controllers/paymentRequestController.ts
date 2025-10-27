@@ -96,6 +96,7 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
     let bankDetails;
     let bankAccountId;
     let cardId;
+    let commissionPercent = 0;
 
     // Handle Bank Wire auto-assignment
     if (validatedData.paymentMethods.includes(PaymentMethod.BANK_WIRE)) {
@@ -115,6 +116,7 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       // Randomly select a bank
       const selectedBank = availableBanks[Math.floor(Math.random() * availableBanks.length)];
       bankAccountId = selectedBank._id;
+      commissionPercent = selectedBank.commissionPercent;
 
       // Populate bank details
       bankDetails = {
@@ -137,7 +139,12 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       // Randomly select a card
       const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
       cardId = selectedCard._id;
+      commissionPercent = selectedCard.commissionPercent;
     }
+
+    // Calculate commission and net amount
+    const commissionAmount = validatedData.amount * (commissionPercent / 100);
+    const netAmount = validatedData.amount - commissionAmount;
 
     // Create payment request
     const paymentRequest = await PaymentRequest.create({
@@ -154,11 +161,14 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       cardId,
       bankDetails,
       reason,
+      commissionPercent,
+      commissionAmount,
+      netAmount,
     });
 
-    // Add amount to pending balance when payment request is created
+    // Add net amount (after commission) to pending balance when payment request is created
     // Default status is SENT which is a pending state
-    await addToPendingBalance(req.user.id, validatedData.amount, validatedData.currency);
+    await addToPendingBalance(req.user.id, netAmount, validatedData.currency);
 
     res.status(201).json({ success: true, data: paymentRequest });
   } catch (error) {
@@ -328,7 +338,8 @@ export const updatePaymentRequest = async (req: AuthRequest, res: Response): Pro
           paymentRequest.userId.toString(),
           paymentRequest.amount,
           oldStatus,
-          updates.status as PaymentRequestStatus
+          updates.status as PaymentRequestStatus,
+          paymentRequest.netAmount
         );
       }
     } else {
@@ -375,7 +386,8 @@ export const cancelPaymentRequest = async (req: AuthRequest, res: Response): Pro
       paymentRequest.userId.toString(),
       paymentRequest.amount,
       oldStatus,
-      PaymentRequestStatus.CANCELLED
+      PaymentRequestStatus.CANCELLED,
+      paymentRequest.netAmount
     );
 
     res.json({ success: true, message: 'Payment request cancelled', data: paymentRequest });

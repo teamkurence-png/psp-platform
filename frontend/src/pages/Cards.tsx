@@ -24,6 +24,7 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose, onSave, loading })
   const [formData, setFormData] = useState({
     name: card?.name || '',
     pspLink: card?.pspLink || '',
+    commissionPercent: card?.commissionPercent ?? 0,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,7 +33,11 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose, onSave, loading })
   };
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Convert to number for commission
+    const processedValue = field === 'commissionPercent' 
+      ? parseFloat(value) || 0 
+      : value;
+    setFormData(prev => ({ ...prev, [field]: processedValue }));
   };
 
   return (
@@ -82,6 +87,21 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose, onSave, loading })
                 placeholder="https://example.com/payment"
                 required
               />
+            </div>
+
+            <div>
+              <Label htmlFor="commissionPercent">Commission Percentage (%)</Label>
+              <Input
+                id="commissionPercent"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.commissionPercent}
+                onChange={(e) => handleChange('commissionPercent', e.target.value)}
+                placeholder="e.g., 2.5"
+              />
+              <p className="text-xs text-gray-500 mt-1">Commission percentage to apply to transactions (0-100%)</p>
             </div>
           </div>
 
@@ -264,6 +284,9 @@ const Cards: React.FC = () => {
                   PSP Link
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Commission
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -277,7 +300,7 @@ const Cards: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {cards.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
+                  <td colSpan={6} className="px-6 py-12 text-center">
                     <p className="text-gray-500">No cards configured yet</p>
                     {isAdmin && (
                       <Button onClick={handleAddNew} className="mt-4">
@@ -302,6 +325,9 @@ const Cards: React.FC = () => {
                       >
                         {card.pspLink}
                       </a>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium">{card.commissionPercent}%</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {card.isActive ? (
