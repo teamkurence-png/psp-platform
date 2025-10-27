@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './lib/auth';
 import AppLayout from './components/layout/AppLayout';
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -51,34 +52,94 @@ function App() {
         <AuthProvider>
           <Routes>
             {/* Public routes */}
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
             {/* Protected routes */}
             <Route
-              path="/"
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <AppLayout />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="payment-requests" element={<PaymentRequests />} />
-              <Route path="payment-requests/new" element={<CreatePaymentRequest />} />
-              <Route path="payment-requests/:id" element={<PaymentRequestDetail />} />
-              <Route path="confirmations" element={<ManualConfirmations />} />
-              <Route path="balances" element={<Balances />} />
-              <Route path="withdrawals" element={<Withdrawals />} />
-              <Route path="withdrawals/new" element={<CreateWithdrawal />} />
-              <Route path="withdrawals/:id" element={<WithdrawalDetail />} />
-              <Route path="merchants" element={<Merchants />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="settings/users" element={<AdminUsers />} />
-              <Route path="settings/bank-accounts" element={<BankAccounts />} />
-              <Route path="settings/cards" element={<Cards />} />
-              <Route path="settings/profile" element={<MerchantProfile />} />
+              <Route index element={<Dashboard />} />
+            </Route>
+
+            <Route
+              path="/payment-requests"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<PaymentRequests />} />
+              <Route path="new" element={<CreatePaymentRequest />} />
+              <Route path=":id" element={<PaymentRequestDetail />} />
+            </Route>
+
+            <Route
+              path="/confirmations"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<ManualConfirmations />} />
+            </Route>
+
+            <Route
+              path="/balances"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Balances />} />
+            </Route>
+
+            <Route
+              path="/withdrawals"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Withdrawals />} />
+              <Route path="new" element={<CreateWithdrawal />} />
+              <Route path=":id" element={<WithdrawalDetail />} />
+            </Route>
+
+            <Route
+              path="/merchants"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Merchants />} />
+            </Route>
+
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Settings />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="bank-accounts" element={<BankAccounts />} />
+              <Route path="cards" element={<Cards />} />
+              <Route path="profile" element={<MerchantProfile />} />
             </Route>
 
             {/* 404 */}
