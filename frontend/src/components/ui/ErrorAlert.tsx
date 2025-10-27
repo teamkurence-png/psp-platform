@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ErrorAlertProps {
-  error: string | null;
+  message: string | null;
   onDismiss?: () => void;
   className?: string;
 }
@@ -10,14 +10,14 @@ interface ErrorAlertProps {
  * Reusable error alert component
  * Displays error messages in a consistent format across the application
  */
-const ErrorAlert: React.FC<ErrorAlertProps> = ({ error, onDismiss, className = '' }) => {
-  if (!error) return null;
+const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onDismiss, className = '' }) => {
+  if (!message) return null;
 
   return (
     <div className={`bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm relative ${className}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
-          <p>{error}</p>
+          <p>{message}</p>
         </div>
         {onDismiss && (
           <button

@@ -99,7 +99,7 @@ const Register: React.FC = () => {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            <ErrorAlert error={error} onDismiss={clearError} />
+            <ErrorAlert message={error} onDismiss={clearError} />
 
             <div className="space-y-2">
               <Label htmlFor="legalName">Business Name</Label>
