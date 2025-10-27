@@ -44,28 +44,31 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose, onSave, loading })
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+      onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h3 className="text-xl font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+          <h3 className="text-2xl font-semibold text-gray-900">
             {card ? 'Edit Card' : 'Add New Card'}
           </h3>
           <button 
             onClick={onClose} 
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition-all duration-200"
             type="button"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1">
+          <div className="p-8">
+            <div className="space-y-6">
             <div>
               <Label htmlFor="name">Card Name *</Label>
               <Input
@@ -103,16 +106,17 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose, onSave, loading })
               />
               <p className="text-xs text-gray-500 mt-1">Commission percentage to apply to transactions (0-100%)</p>
             </div>
-          </div>
+            </div>
 
-          {/* Modal Footer */}
-          <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? 'Saving...' : (card ? 'Update Card' : 'Create Card')}
-            </Button>
-            <Button type="button" variant="outline" onClick={onClose} className="px-6">
-              Cancel
-            </Button>
+            {/* Modal Footer */}
+            <div className="flex gap-4 mt-8 pt-6 border-t border-gray-100 bg-gray-50 px-8 py-6 -mx-8 -mb-8">
+              <Button type="button" variant="outline" onClick={onClose} className="px-8">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading} className="flex-1">
+                {loading ? 'Saving...' : (card ? 'Update Card' : 'Create Card')}
+              </Button>
+            </div>
           </div>
         </form>
       </div>

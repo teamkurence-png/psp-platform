@@ -70,28 +70,31 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+      onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h3 className="text-xl font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+          <h3 className="text-2xl font-semibold text-gray-900">
             {bankAccount ? 'Edit Bank Account' : 'Add New Bank Account'}
           </h3>
           <button 
             onClick={onClose} 
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition-all duration-200"
             type="button"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1">
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <Label htmlFor="bankName">Bank Name *</Label>
               <Input
@@ -211,29 +214,29 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
 
             <div className="md:col-span-2">
               <Label htmlFor="supportedGeos">Supported Countries/Regions (GEO) *</Label>
-              <div className="border border-gray-300 rounded-md p-4 max-h-64 overflow-y-auto">
+              <div className="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
                 <Input
                   placeholder="Search countries..."
                   value={geoSearch}
                   onChange={(e) => setGeoSearch(e.target.value)}
                   className="mb-3"
                 />
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {filteredCountries.length === 0 ? (
                     <p className="text-sm text-gray-500">No countries found</p>
                   ) : (
                     filteredCountries.map((country) => (
                       <label 
                         key={country.code}
-                        className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                        className="flex items-center space-x-3 cursor-pointer hover:bg-white p-2.5 rounded-md transition-colors"
                       >
                         <input
                           type="checkbox"
                           checked={formData.supportedGeos.includes(country.code)}
                           onChange={() => toggleGeo(country.code)}
-                          className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                          className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
                         />
-                        <span className="text-sm">{country.name} ({country.code})</span>
+                        <span className="text-sm text-gray-700">{country.name} ({country.code})</span>
                       </label>
                     ))
                   )}
@@ -248,13 +251,14 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
           </div>
 
           {/* Modal Footer */}
-          <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+          <div className="flex gap-4 mt-8 pt-6 border-t border-gray-100 bg-gray-50 px-8 py-6 -mx-8 -mb-8">
+            <Button type="button" variant="outline" onClick={onClose} className="px-8">
+              Cancel
+            </Button>
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? 'Saving...' : (bankAccount ? 'Update Bank Account' : 'Create Bank Account')}
             </Button>
-            <Button type="button" variant="outline" onClick={onClose} className="px-6">
-              Cancel
-            </Button>
+          </div>
           </div>
         </form>
       </div>
