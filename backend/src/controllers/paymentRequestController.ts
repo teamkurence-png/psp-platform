@@ -54,11 +54,23 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
 
       const availableBanks = await BankAccount.find({ 
         supportedGeos: customerGeo, 
-        isActive: true 
+        isActive: true,
+        minTransactionLimit: { $lte: validatedData.amount },
+        maxTransactionLimit: { $gte: validatedData.amount }
       });
 
       if (availableBanks.length === 0) {
-        unavailableMethods.push(`Bank Wire (no active bank accounts available for ${customerGeo})`);
+        // Check if the issue is geo-related or amount-related
+        const banksForGeo = await BankAccount.find({ 
+          supportedGeos: customerGeo, 
+          isActive: true 
+        });
+        
+        if (banksForGeo.length === 0) {
+          unavailableMethods.push(`Bank Wire (no active bank accounts available for ${customerGeo})`);
+        } else {
+          unavailableMethods.push(`Bank Wire (amount $${validatedData.amount} is outside the transaction limits of available banks for ${customerGeo})`);
+        }
       }
     }
 
@@ -92,10 +104,12 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       // Get customer's billing country (GEO)
       const customerGeo = validatedData.customerInfo?.billingCountry!;
 
-      // Find active banks matching the customer's GEO (already validated above)
+      // Find active banks matching the customer's GEO and amount limits (already validated above)
       const availableBanks = await BankAccount.find({ 
         supportedGeos: customerGeo, 
-        isActive: true 
+        isActive: true,
+        minTransactionLimit: { $lte: validatedData.amount },
+        maxTransactionLimit: { $gte: validatedData.amount }
       });
 
       // Randomly select a bank

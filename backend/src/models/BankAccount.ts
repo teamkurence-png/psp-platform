@@ -9,6 +9,8 @@ export interface IBankAccount extends Document {
   bankAddress?: string;
   beneficiaryName?: string;
   supportedGeos: string[];
+  minTransactionLimit: number;
+  maxTransactionLimit: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -34,6 +36,16 @@ const bankAccountSchema = new Schema<IBankAccount>(
       required: true,
       default: [],
     },
+    minTransactionLimit: {
+      type: Number,
+      required: true,
+      min: [0, 'Minimum transaction limit must be at least 0'],
+    },
+    maxTransactionLimit: {
+      type: Number,
+      required: true,
+      min: [0, 'Maximum transaction limit must be at least 0'],
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -43,6 +55,15 @@ const bankAccountSchema = new Schema<IBankAccount>(
     timestamps: true,
   }
 );
+
+// Validation: Ensure maxTransactionLimit >= minTransactionLimit
+bankAccountSchema.pre('save', function(next) {
+  if (this.maxTransactionLimit < this.minTransactionLimit) {
+    next(new Error('Maximum transaction limit must be greater than or equal to minimum transaction limit'));
+  } else {
+    next();
+  }
+});
 
 // Indexes
 bankAccountSchema.index({ isActive: 1 });

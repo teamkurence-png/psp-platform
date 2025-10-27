@@ -179,6 +179,8 @@ export interface BankAccount {
   bankAddress?: string;
   beneficiaryName?: string;
   supportedGeos: string[];
+  minTransactionLimit: number;
+  maxTransactionLimit: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

@@ -31,6 +31,8 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
     bankAddress: bankAccount?.bankAddress || '',
     beneficiaryName: bankAccount?.beneficiaryName || '',
     supportedGeos: bankAccount?.supportedGeos || [],
+    minTransactionLimit: bankAccount?.minTransactionLimit || 0,
+    maxTransactionLimit: bankAccount?.maxTransactionLimit || 0,
   });
   const [geoSearch, setGeoSearch] = useState('');
 
@@ -40,7 +42,11 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
   };
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Convert to number for transaction limits
+    const processedValue = (field === 'minTransactionLimit' || field === 'maxTransactionLimit') 
+      ? parseFloat(value) || 0 
+      : value;
+    setFormData(prev => ({ ...prev, [field]: processedValue }));
   };
 
   const toggleGeo = (countryCode: string) => {
@@ -153,6 +159,36 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
                 onChange={(e) => handleChange('bankAddress', e.target.value)}
                 placeholder="Full bank address"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="minTransactionLimit">Minimum Transaction Limit (USD) *</Label>
+              <Input
+                id="minTransactionLimit"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.minTransactionLimit}
+                onChange={(e) => handleChange('minTransactionLimit', e.target.value)}
+                placeholder="e.g., 100"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Minimum amount in USD for transactions</p>
+            </div>
+
+            <div>
+              <Label htmlFor="maxTransactionLimit">Maximum Transaction Limit (USD) *</Label>
+              <Input
+                id="maxTransactionLimit"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.maxTransactionLimit}
+                onChange={(e) => handleChange('maxTransactionLimit', e.target.value)}
+                placeholder="e.g., 50000"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Maximum amount in USD for transactions</p>
             </div>
 
             <div className="md:col-span-2">
@@ -378,6 +414,9 @@ const BankAccounts: React.FC = () => {
                   Country
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Transaction Limits
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -391,7 +430,7 @@ const BankAccounts: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {bankAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <p className="text-gray-500">No bank accounts configured yet</p>
                     {isAdmin && (
                       <Button onClick={handleAddNew} className="mt-4">
@@ -436,6 +475,12 @@ const BankAccounts: React.FC = () => {
                         ) : (
                           <span className="text-sm text-gray-500">No countries</span>
                         )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm">
+                        <div>Min: ${bank.minTransactionLimit?.toLocaleString() || '0'}</div>
+                        <div>Max: ${bank.maxTransactionLimit?.toLocaleString() || '0'}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

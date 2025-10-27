@@ -13,6 +13,11 @@ const createBankAccountSchema = z.object({
   bankAddress: z.string().optional(),
   beneficiaryName: z.string().optional(),
   supportedGeos: z.array(z.string()).min(1, 'At least one country must be selected'),
+  minTransactionLimit: z.number().nonnegative('Minimum transaction limit must be at least 0'),
+  maxTransactionLimit: z.number().nonnegative('Maximum transaction limit must be at least 0'),
+}).refine((data) => data.maxTransactionLimit >= data.minTransactionLimit, {
+  message: 'Maximum transaction limit must be greater than or equal to minimum transaction limit',
+  path: ['maxTransactionLimit'],
 });
 
 const updateBankAccountSchema = z.object({
@@ -24,7 +29,17 @@ const updateBankAccountSchema = z.object({
   bankAddress: z.string().optional(),
   beneficiaryName: z.string().optional(),
   supportedGeos: z.array(z.string()).min(1, 'At least one country must be selected').optional(),
+  minTransactionLimit: z.number().nonnegative('Minimum transaction limit must be at least 0').optional(),
+  maxTransactionLimit: z.number().nonnegative('Maximum transaction limit must be at least 0').optional(),
   isActive: z.boolean().optional(),
+}).refine((data) => {
+  if (data.minTransactionLimit !== undefined && data.maxTransactionLimit !== undefined) {
+    return data.maxTransactionLimit >= data.minTransactionLimit;
+  }
+  return true;
+}, {
+  message: 'Maximum transaction limit must be greater than or equal to minimum transaction limit',
+  path: ['maxTransactionLimit'],
 });
 
 export const createBankAccount = async (req: AuthRequest, res: Response): Promise<void> => {
