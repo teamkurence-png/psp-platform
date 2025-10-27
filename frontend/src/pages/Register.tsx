@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { useApiError } from '../hooks/useApiError';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Label from '../components/ui/Label';
+import ErrorAlert from '../components/ui/ErrorAlert';
+import SuccessAlert from '../components/ui/SuccessAlert';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card';
 
 const Register: React.FC = () => {
@@ -11,17 +14,19 @@ const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [legalName, setLegalName] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(false);
   const [approvalMessage, setApprovalMessage] = useState('');
+  
   const { register } = useAuth();
+  const { error, setError, handleError, clearError } = useApiError();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    clearError();
 
+    // Client-side validation
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -46,7 +51,7 @@ const Register: React.FC = () => {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed');
+      handleError(err);
     } finally {
       setLoading(false);
     }
@@ -64,11 +69,11 @@ const Register: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-md">
-              <p className="font-medium mb-2">Your account has been created successfully.</p>
-              <p className="text-sm">{approvalMessage}</p>
-              <p className="text-sm mt-2">You will be able to log in once an administrator approves your account.</p>
-            </div>
+            <SuccessAlert
+              title="Your account has been created successfully."
+              message={approvalMessage}
+              description="You will be able to log in once an administrator approves your account."
+            />
           </CardContent>
           <CardFooter>
             <Button 
@@ -94,11 +99,7 @@ const Register: React.FC = () => {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && (
-              <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
-                {error}
-              </div>
-            )}
+            <ErrorAlert error={error} onDismiss={clearError} />
 
             <div className="space-y-2">
               <Label htmlFor="legalName">Business Name</Label>

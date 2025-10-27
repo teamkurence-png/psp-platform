@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { useApiError } from '../hooks/useApiError';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Label from '../components/ui/Label';
+import ErrorAlert from '../components/ui/ErrorAlert';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card';
 
 const Login: React.FC = () => {
@@ -11,14 +13,15 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [twoFactorToken, setTwoFactorToken] = useState('');
   const [requires2FA, setRequires2FA] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
   const { login } = useAuth();
+  const { error, handleError, clearError } = useApiError();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    clearError();
     setLoading(true);
 
     try {
@@ -29,7 +32,7 @@ const Login: React.FC = () => {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
+      handleError(err);
     } finally {
       setLoading(false);
     }
@@ -46,11 +49,7 @@ const Login: React.FC = () => {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && (
-              <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
-                {error}
-              </div>
-            )}
+            <ErrorAlert error={error} onDismiss={clearError} />
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
