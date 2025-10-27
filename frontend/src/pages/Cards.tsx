@@ -24,30 +24,30 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose, onSave, loading })
   const [formData, setFormData] = useState({
     name: card?.name || '',
     pspLink: card?.pspLink || '',
-    commissionPercent: card?.commissionPercent ?? 0,
+    commissionPercent: card?.commissionPercent ?? '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    // Convert string value to number before saving
+    const dataToSave = {
+      ...formData,
+      commissionPercent: parseFloat(formData.commissionPercent as any) || 0,
+    };
+    onSave(dataToSave);
   };
 
   const handleChange = (field: string, value: string) => {
-    // Convert to number for commission
-    const processedValue = field === 'commissionPercent' 
-      ? parseFloat(value) || 0 
-      : value;
-    setFormData(prev => ({ ...prev, [field]: processedValue }));
+    // Keep as string for numeric fields to allow clearing
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
     >
       <div 
         className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">

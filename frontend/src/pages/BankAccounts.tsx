@@ -31,23 +31,27 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
     bankAddress: bankAccount?.bankAddress || '',
     beneficiaryName: bankAccount?.beneficiaryName || '',
     supportedGeos: bankAccount?.supportedGeos || [],
-    minTransactionLimit: bankAccount?.minTransactionLimit || 0,
-    maxTransactionLimit: bankAccount?.maxTransactionLimit || 0,
-    commissionPercent: bankAccount?.commissionPercent ?? 0,
+    minTransactionLimit: bankAccount?.minTransactionLimit ?? '',
+    maxTransactionLimit: bankAccount?.maxTransactionLimit ?? '',
+    commissionPercent: bankAccount?.commissionPercent ?? '',
   });
   const [geoSearch, setGeoSearch] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    // Convert string values to numbers before saving
+    const dataToSave = {
+      ...formData,
+      minTransactionLimit: parseFloat(formData.minTransactionLimit as any) || 0,
+      maxTransactionLimit: parseFloat(formData.maxTransactionLimit as any) || 0,
+      commissionPercent: parseFloat(formData.commissionPercent as any) || 0,
+    };
+    onSave(dataToSave);
   };
 
   const handleChange = (field: string, value: string) => {
-    // Convert to number for transaction limits and commission
-    const processedValue = (field === 'minTransactionLimit' || field === 'maxTransactionLimit' || field === 'commissionPercent') 
-      ? parseFloat(value) || 0 
-      : value;
-    setFormData(prev => ({ ...prev, [field]: processedValue }));
+    // Keep as string for numeric fields to allow clearing
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const toggleGeo = (countryCode: string) => {
@@ -67,11 +71,9 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
     >
       <div 
         className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -192,7 +194,7 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
               <p className="text-xs text-gray-500 mt-1">Maximum amount in USD for transactions</p>
             </div>
 
-            <div className="md:col-span-2">
+            <div>
               <Label htmlFor="commissionPercent">Commission Percentage (%)</Label>
               <Input
                 id="commissionPercent"
@@ -204,7 +206,7 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
                 onChange={(e) => handleChange('commissionPercent', e.target.value)}
                 placeholder="e.g., 2.5"
               />
-              <p className="text-xs text-gray-500 mt-1">Commission percentage to apply to transactions (0-100%)</p>
+              <p className="text-xs text-gray-500 mt-1">Commission % for transactions (0-100)</p>
             </div>
 
             <div className="md:col-span-2">
