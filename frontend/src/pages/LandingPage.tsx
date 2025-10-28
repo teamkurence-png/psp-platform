@@ -51,7 +51,7 @@ const LandingPage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex items-center gap-2">
-                <img src="/assets/psp-icon.png" alt="HighrPay" className="h-8 w-8" />
+                <img src="/psp-icon.png" alt="HighrPay" className="h-8 w-8" />
                 <span className="text-xl font-bold text-gray-900">HighrPay</span>
               </div>
             </div>
