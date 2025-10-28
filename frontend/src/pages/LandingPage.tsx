@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
+import ContactForm from '../components/forms/ContactForm';
 import { 
   CreditCard, 
   Bitcoin, 
@@ -10,7 +11,8 @@ import {
   Zap,
   ArrowRight,
   BarChart3,
-  Lock
+  Lock,
+  MessageCircle
 } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
@@ -196,6 +198,61 @@ const LandingPage: React.FC = () => {
               <p className="text-gray-600 leading-relaxed">
                 Built with compliance in mind. KYC verification, transaction monitoring, and audit trails.
               </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          {/* Left Column - Text */}
+          <div className="space-y-6">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg">
+              <MessageCircle className="h-6 w-6 text-primary" />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              Get in Touch
+            </h2>
+            <p className="text-lg text-gray-600 leading-relaxed">
+              Have questions about our payment platform? Want to learn more about how we can help your business? 
+              We'd love to hear from you. Send us a message and our team will get back to you as soon as possible.
+            </p>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Quick Response</p>
+                  <p className="text-sm text-gray-600">We typically respond within 24 hours</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Expert Support</p>
+                  <p className="text-sm text-gray-600">Our team is here to help you succeed</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">No Obligation</p>
+                  <p className="text-sm text-gray-600">Just a friendly conversation about your needs</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Form */}
+          <Card className="border-2 shadow-xl">
+            <CardContent className="p-8">
+              <ContactForm />
             </CardContent>
           </Card>
         </div>

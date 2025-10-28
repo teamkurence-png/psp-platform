@@ -20,6 +20,7 @@ import Settings from './pages/Settings';
 import AdminUsers from './pages/AdminUsers';
 import BankAccounts from './pages/BankAccounts';
 import Cards from './pages/Cards';
+import FormSubmissions from './pages/FormSubmissions';
 
 const queryClient = new QueryClient();
 
@@ -140,6 +141,17 @@ function App() {
               <Route path="bank-accounts" element={<BankAccounts />} />
               <Route path="cards" element={<Cards />} />
               <Route path="profile" element={<MerchantProfile />} />
+            </Route>
+
+            <Route
+              path="/form-submissions"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<FormSubmissions />} />
             </Route>
 
             {/* 404 */}

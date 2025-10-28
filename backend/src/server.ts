@@ -19,6 +19,7 @@ import customerRoutes from './routes/customers.js';
 import settingsRoutes from './routes/settings.js';
 import bankAccountRoutes from './routes/bankAccounts.js';
 import cardRoutes from './routes/cards.js';
+import contactRoutes from './routes/contacts.js';
 
 // Load environment variables
 dotenv.config();
@@ -70,6 +71,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/bank-accounts', bankAccountRoutes);
 app.use('/api/cards', cardRoutes);
+app.use('/api/contacts', contactRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

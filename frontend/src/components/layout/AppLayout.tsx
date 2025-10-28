@@ -12,6 +12,7 @@ import {
   X,
   Bitcoin,
   UserCheck,
+  MessageSquare,
 } from 'lucide-react';
 import { UserRole } from '../../types';
 import Button from '../ui/Button';
@@ -58,6 +59,12 @@ const AppLayout: React.FC = () => {
         href: '/merchants', 
         icon: Building2,
         roles: [UserRole.OPS, UserRole.FINANCE, UserRole.ADMIN]
+      },
+      { 
+        name: 'Form Submissions', 
+        href: '/form-submissions', 
+        icon: MessageSquare,
+        roles: [UserRole.ADMIN]
       },
       { name: 'Settings', href: '/settings', icon: Settings },
     ];
