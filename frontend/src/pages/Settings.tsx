@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from '../components/ui/Card';
 import { Settings as SettingsIcon, User, Users, Building2, CreditCard } from 'lucide-react';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 
 const Settings: React.FC = () => {

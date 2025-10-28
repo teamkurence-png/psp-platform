@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../lib/auth';
+import { useAuth } from '../../hooks/useAuth';
 import {
   LayoutDashboard,
   FileText,
@@ -134,7 +134,10 @@ const AppLayout: React.FC = () => {
           />
           <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
             <div className="flex items-center justify-between h-16 px-4 border-b">
-              <span className="text-xl font-bold text-primary">PSP Platform</span>
+              <div className="flex items-center gap-2">
+                <img src="/assets/psp-icon.png" alt="HighrPay" className="h-8 w-8" />
+                <span className="text-xl font-bold text-primary">HighrPay</span>
+              </div>
               <button 
                 onClick={() => setSidebarOpen(false)}
                 className="text-gray-500 hover:text-gray-700"
@@ -151,7 +154,8 @@ const AppLayout: React.FC = () => {
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-grow bg-white border-r">
           <div className="flex items-center h-16 px-4 border-b">
-            <span className="text-xl font-bold text-primary">PSP Platform</span>
+            <img src="/assets/psp-icon.png" alt="HighrPay" className="h-8 w-8 mr-2" />
+            <span className="text-xl font-bold text-primary">HighrPay</span>
           </div>
           {renderNavLinks()}
           {renderUserInfo()}
@@ -169,7 +173,10 @@ const AppLayout: React.FC = () => {
             <Menu className="h-6 w-6" />
           </button>
           <div className="flex flex-1 items-center justify-between px-4">
-            <span className="text-xl font-bold text-primary lg:hidden">PSP Platform</span>
+            <div className="flex items-center gap-2 lg:hidden">
+              <img src="/assets/psp-icon.png" alt="HighrPay" className="h-8 w-8" />
+              <span className="text-xl font-bold text-primary">HighrPay</span>
+            </div>
             <div className="ml-auto">
               <NotificationBell />
             </div>

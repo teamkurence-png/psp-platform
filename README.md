@@ -1,4 +1,4 @@
-# PSP Platform
+# HighrPay
 
 A complete Payment Service Provider platform with merchant onboarding, payment processing, manual reviews, settlements, and crypto withdrawals.
 
@@ -83,7 +83,7 @@ PORT=5000
 NODE_ENV=development
 
 # Database
-MONGODB_URI=mongodb://localhost:27017/psp-platform
+MONGODB_URI=mongodb://localhost:27017/highrpay
 
 # JWT Configuration
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production

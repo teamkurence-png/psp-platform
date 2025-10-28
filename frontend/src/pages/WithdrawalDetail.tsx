@@ -9,7 +9,7 @@ import { formatDateTime, formatCurrency } from '../lib/utils';
 import { withdrawalService, type Withdrawal, type UpdateWithdrawalStatusDto } from '../services';
 import { getAssetLabel } from '../constants';
 import { ArrowLeft, ExternalLink, Save, XCircle } from 'lucide-react';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../hooks/useAuth';
 import ErrorAlert from '../components/ui/ErrorAlert';
 
 const WithdrawalDetail: React.FC = () => {

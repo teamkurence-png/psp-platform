@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import ContactForm from '../components/forms/ContactForm';
@@ -51,10 +51,8 @@ const LandingPage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <CreditCard className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-xl font-bold text-gray-900">PSP Platform</span>
+                <img src="/assets/psp-icon.png" alt="HighrPay" className="h-8 w-8" />
+                <span className="text-xl font-bold text-gray-900">HighrPay</span>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -266,7 +264,7 @@ const LandingPage: React.FC = () => {
               Ready to get started?
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Join hundreds of businesses already using PSP Platform to power their payments
+              Join hundreds of businesses already using HighrPay to power their payments
             </p>
             <div className="flex items-center justify-center gap-4">
               <Link to="/register">
@@ -287,7 +285,7 @@ const LandingPage: React.FC = () => {
       <footer className="border-t bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-sm text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} PSP Platform. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} HighrPay. All rights reserved.</p>
           </div>
         </div>
       </footer>

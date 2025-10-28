@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../hooks/useAuth';
 import { useApiError } from '../hooks/useApiError';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -42,7 +42,7 @@ const Login: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign in to PSP Platform</CardTitle>
+          <CardTitle>Sign in to HighrPay</CardTitle>
           <CardDescription>
             Enter your credentials to access your account
           </CardDescription>

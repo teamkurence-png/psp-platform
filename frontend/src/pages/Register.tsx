@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../hooks/useAuth';
 import { useApiError } from '../hooks/useApiError';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';

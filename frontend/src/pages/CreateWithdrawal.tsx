@@ -8,7 +8,7 @@ import EmptyState from '../components/ui/EmptyState';
 import type { Balance } from '../types/index';
 import { CryptoAsset } from '../types/index';
 import api from '../lib/api';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../hooks/useAuth';
 import { formatCurrency } from '../lib/utils';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 

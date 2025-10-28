@@ -12,7 +12,7 @@ import { useList, useSearch, useFilter } from '../hooks';
 import { withdrawalService, type Withdrawal } from '../services';
 import { WITHDRAWAL_STATUS_OPTIONS, getAssetLabel } from '../constants';
 import { Bitcoin, ExternalLink, Wallet } from 'lucide-react';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../hooks/useAuth';
 import { formatCurrency } from '../lib/utils';
 import type { Balance } from '../types/index';
 import api from '../lib/api';

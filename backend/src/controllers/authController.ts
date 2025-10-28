@@ -301,7 +301,7 @@ export const setup2FA = async (req: AuthRequest, res: Response): Promise<void> =
 
     // Generate secret
     const secret = speakeasy.generateSecret({
-      name: `PSP Platform (${user.email})`,
+      name: `HighrPay (${user.email})`,
     });
 
     // Generate QR code

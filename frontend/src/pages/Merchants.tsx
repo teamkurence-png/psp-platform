@@ -10,7 +10,7 @@ import { formatDateTime } from '../lib/utils';
 import { useList, useSearch } from '../hooks';
 import { merchantService } from '../services';
 import { OnboardingStatus, UserRole, type Merchant } from '../types';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../hooks/useAuth';
 import { CheckCircle, XCircle, Building2 } from 'lucide-react';
 
 const Merchants: React.FC = () => {

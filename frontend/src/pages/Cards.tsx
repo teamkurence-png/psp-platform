@@ -11,7 +11,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorAlert from '../components/ui/ErrorAlert';
 import { CreditCard, Plus, Edit2, Trash2, X } from 'lucide-react';
 import { formatDate } from '../lib/utils';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../hooks/useAuth';
 
 interface CardModalProps {
   card?: Card | null;

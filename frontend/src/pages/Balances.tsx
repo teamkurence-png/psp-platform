@@ -7,7 +7,7 @@ import EmptyState from '../components/ui/EmptyState';
 import type { Balance } from '../types/index';
 import api from '../lib/api';
 import { useFetch } from '../hooks';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../hooks/useAuth';
 import { formatCurrency, formatDateTime } from '../lib/utils';
 import { DollarSign, Clock, ArrowDownCircle } from 'lucide-react';
 

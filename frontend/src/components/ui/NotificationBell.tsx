@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Check, X } from 'lucide-react';
-import { useAuth } from '../../lib/auth';
+import { useAuth } from '../../hooks/useAuth';
 import { formatDate } from '../../lib/utils';
 import io from 'socket.io-client';
 

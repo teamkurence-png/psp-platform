@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, useAuth } from './lib/auth';
+import { useAuth } from './hooks/useAuth';
+import AuthInitializer from './components/AuthInitializer';
 import AppLayout from './components/layout/AppLayout';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
@@ -49,116 +50,116 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <AuthProvider>
+      <AuthInitializer>
+        <Router>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            
-            {/* Protected routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Dashboard />} />
-            </Route>
+          
+          {/* Protected routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Dashboard />} />
+          </Route>
 
-            <Route
-              path="/payment-requests"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<PaymentRequests />} />
-              <Route path="new" element={<CreatePaymentRequest />} />
-              <Route path=":id" element={<PaymentRequestDetail />} />
-            </Route>
+          <Route
+            path="/payment-requests"
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<PaymentRequests />} />
+            <Route path="new" element={<CreatePaymentRequest />} />
+            <Route path=":id" element={<PaymentRequestDetail />} />
+          </Route>
 
-            <Route
-              path="/confirmations"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<ManualConfirmations />} />
-            </Route>
+          <Route
+            path="/confirmations"
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ManualConfirmations />} />
+          </Route>
 
-            <Route
-              path="/balances"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Balances />} />
-            </Route>
+          <Route
+            path="/balances"
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Balances />} />
+          </Route>
 
-            <Route
-              path="/withdrawals"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Withdrawals />} />
-              <Route path="new" element={<CreateWithdrawal />} />
-              <Route path=":id" element={<WithdrawalDetail />} />
-            </Route>
+          <Route
+            path="/withdrawals"
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Withdrawals />} />
+            <Route path="new" element={<CreateWithdrawal />} />
+            <Route path=":id" element={<WithdrawalDetail />} />
+          </Route>
 
-            <Route
-              path="/merchants"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Merchants />} />
-            </Route>
+          <Route
+            path="/merchants"
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Merchants />} />
+          </Route>
 
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Settings />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="bank-accounts" element={<BankAccounts />} />
-              <Route path="cards" element={<Cards />} />
-              <Route path="profile" element={<MerchantProfile />} />
-            </Route>
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Settings />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="bank-accounts" element={<BankAccounts />} />
+            <Route path="cards" element={<Cards />} />
+            <Route path="profile" element={<MerchantProfile />} />
+          </Route>
 
-            <Route
-              path="/form-submissions"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<FormSubmissions />} />
-            </Route>
+          <Route
+            path="/form-submissions"
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<FormSubmissions />} />
+          </Route>
 
             {/* 404 */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </AuthProvider>
-      </Router>
+        </Router>
+      </AuthInitializer>
     </QueryClientProvider>
   );
 }
