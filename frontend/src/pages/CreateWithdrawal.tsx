@@ -67,14 +67,9 @@ const CreateWithdrawal: React.FC = () => {
       };
       setFormData(prev => ({ ...prev, network: networkMapping[formData.asset] }));
 
-      // Calculate estimated fee for crypto
-      const feeRates: Record<CryptoAsset, number> = {
-        [CryptoAsset.USDT_TRC20]: 1,
-        [CryptoAsset.USDT_ERC20]: 5,
-        [CryptoAsset.BTC]: 0.0001 * parseFloat(formData.amount || '0'),
-        [CryptoAsset.ETH]: 0.001 * parseFloat(formData.amount || '0'),
-      };
-      setEstimatedFee(feeRates[formData.asset] || 0);
+      // Calculate estimated fee for crypto - Fixed 10% commission
+      const amount = parseFloat(formData.amount || '0');
+      setEstimatedFee(0.10 * amount);
     } else {
       // No fee for bank transfers
       setEstimatedFee(0);

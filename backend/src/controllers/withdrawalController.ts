@@ -48,14 +48,8 @@ const validateCryptoAddress = (asset: CryptoAsset, address: string): boolean => 
 };
 
 const calculateWithdrawalFee = (asset: CryptoAsset, amount: number): number => {
-  // Simplified fee calculation
-  const feeRates: Record<CryptoAsset, number> = {
-    [CryptoAsset.USDT_TRC20]: 1, // Flat fee
-    [CryptoAsset.USDT_ERC20]: 5, // Higher gas fees
-    [CryptoAsset.BTC]: 0.0001 * amount, // 0.01% of amount
-    [CryptoAsset.ETH]: 0.001 * amount, // 0.1% of amount
-  };
-  return feeRates[asset] || 1;
+  // Fixed 10% commission for all crypto withdrawals
+  return 0.10 * amount;
 };
 
 export const createWithdrawal = async (req: AuthRequest, res: Response): Promise<void> => {
