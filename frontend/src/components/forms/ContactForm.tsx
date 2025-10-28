@@ -88,14 +88,13 @@ const ContactForm: React.FC<ContactFormProps> = ({ className = '' }) => {
       {successMessage && (
         <SuccessAlert
           message={successMessage}
-          onClose={() => setSuccessMessage('')}
         />
       )}
 
       {errorMessage && (
         <ErrorAlert
           message={errorMessage}
-          onClose={() => setErrorMessage('')}
+          onDismiss={() => setErrorMessage('')}
         />
       )}
 

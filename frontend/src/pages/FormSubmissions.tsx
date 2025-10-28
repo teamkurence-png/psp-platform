@@ -71,7 +71,7 @@ const FormSubmissions: React.FC = () => {
         </p>
       </div>
 
-      {error && <ErrorAlert message={error} onClose={() => setError('')} />}
+      {error && <ErrorAlert message={error} onDismiss={() => setError('')} />}
 
       <Card>
         <CardHeader>
@@ -108,9 +108,7 @@ const FormSubmissions: React.FC = () => {
             </div>
           ) : submissions.length === 0 ? (
             <EmptyState
-              icon={MessageSquare}
-              title="No submissions yet"
-              description={
+              message={
                 searchTerm
                   ? 'No submissions match your search criteria.'
                   : 'Contact form submissions will appear here once users submit the form.'
@@ -168,6 +166,8 @@ const FormSubmissions: React.FC = () => {
                   <Pagination
                     currentPage={pagination.page}
                     totalPages={pagination.totalPages}
+                    totalItems={pagination.total}
+                    itemsPerPage={pagination.limit}
                     onPageChange={handlePageChange}
                   />
                 </div>
