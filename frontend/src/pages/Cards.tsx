@@ -320,12 +320,13 @@ const Cards: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium">{card.name}</div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 max-w-xs">
                       <a 
                         href={card.pspLink} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:text-blue-800 break-all"
+                        className="text-sm text-blue-600 hover:text-blue-800 truncate block"
+                        title={card.pspLink}
                       >
                         {card.pspLink}
                       </a>

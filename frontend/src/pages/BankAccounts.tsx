@@ -12,7 +12,7 @@ import ErrorAlert from '../components/ui/ErrorAlert';
 import { Building2, Plus, Edit2, Trash2, X } from 'lucide-react';
 import { formatDate } from '../lib/utils';
 import { useAuth } from '../lib/auth';
-import { COUNTRIES } from '../constants/countries';
+import { COUNTRIES, EEA_COUNTRIES } from '../constants/countries';
 
 interface BankAccountModalProps {
   bankAccount?: BankAccount | null;
@@ -60,6 +60,20 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
       supportedGeos: prev.supportedGeos.includes(countryCode)
         ? prev.supportedGeos.filter(code => code !== countryCode)
         : [...prev.supportedGeos, countryCode]
+    }));
+  };
+
+  const selectAllEEA = () => {
+    setFormData(prev => ({
+      ...prev,
+      supportedGeos: [...new Set([...prev.supportedGeos, ...EEA_COUNTRIES])]
+    }));
+  };
+
+  const clearAllGeos = () => {
+    setFormData(prev => ({
+      ...prev,
+      supportedGeos: []
     }));
   };
 
@@ -221,6 +235,26 @@ const BankAccountModal: React.FC<BankAccountModalProps> = ({ bankAccount, onClos
                   onChange={(e) => setGeoSearch(e.target.value)}
                   className="mb-3"
                 />
+                <div className="flex gap-2 mb-3">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={selectAllEEA}
+                    className="text-xs"
+                  >
+                    Select All EEA ({EEA_COUNTRIES.length})
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={clearAllGeos}
+                    className="text-xs"
+                  >
+                    Clear All
+                  </Button>
+                </div>
                 <div className="space-y-1">
                   {filteredCountries.length === 0 ? (
                     <p className="text-sm text-gray-500">No countries found</p>
@@ -486,17 +520,31 @@ const BankAccounts: React.FC = () => {
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
                         {bank.supportedGeos && bank.supportedGeos.length > 0 ? (
-                          bank.supportedGeos.map((geoCode) => {
-                            const country = COUNTRIES.find(c => c.code === geoCode);
-                            return (
+                          <>
+                            {bank.supportedGeos.slice(0, 2).map((geoCode) => {
+                              const country = COUNTRIES.find(c => c.code === geoCode);
+                              return (
+                                <span 
+                                  key={geoCode}
+                                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                                  title={country?.name || geoCode}
+                                >
+                                  {geoCode}
+                                </span>
+                              );
+                            })}
+                            {bank.supportedGeos.length > 2 && (
                               <span 
-                                key={geoCode}
-                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700"
+                                title={bank.supportedGeos.slice(2).map((code) => {
+                                  const country = COUNTRIES.find(c => c.code === code);
+                                  return country?.name || code;
+                                }).join(', ')}
                               >
-                                {country?.name || geoCode}
+                                +{bank.supportedGeos.length - 2} more
                               </span>
-                            );
-                          })
+                            )}
+                          </>
                         ) : (
                           <span className="text-sm text-gray-500">No countries</span>
                         )}

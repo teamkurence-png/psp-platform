@@ -32,6 +32,11 @@ export const COUNTRIES: Country[] = [
   { code: 'LT', name: 'Lithuania' },
   { code: 'LV', name: 'Latvia' },
   { code: 'EE', name: 'Estonia' },
+  { code: 'CY', name: 'Cyprus' },
+  { code: 'LU', name: 'Luxembourg' },
+  { code: 'MT', name: 'Malta' },
+  { code: 'IS', name: 'Iceland' },
+  { code: 'LI', name: 'Liechtenstein' },
   { code: 'CA', name: 'Canada' },
   { code: 'AU', name: 'Australia' },
   { code: 'NZ', name: 'New Zealand' },
@@ -59,5 +64,40 @@ export const COUNTRIES: Country[] = [
   { code: 'ID', name: 'Indonesia' },
   { code: 'PH', name: 'Philippines' },
   { code: 'VN', name: 'Vietnam' },
+];
+
+// EEA (European Economic Area) countries
+// Includes all EU member states plus Iceland, Liechtenstein, and Norway
+export const EEA_COUNTRIES = [
+  'AT', // Austria
+  'BE', // Belgium
+  'BG', // Bulgaria
+  'HR', // Croatia
+  'CY', // Cyprus
+  'CZ', // Czech Republic
+  'DK', // Denmark
+  'EE', // Estonia
+  'FI', // Finland
+  'FR', // France
+  'DE', // Germany
+  'GR', // Greece
+  'HU', // Hungary
+  'IS', // Iceland
+  'IE', // Ireland
+  'IT', // Italy
+  'LV', // Latvia
+  'LI', // Liechtenstein
+  'LT', // Lithuania
+  'LU', // Luxembourg
+  'MT', // Malta
+  'NL', // Netherlands
+  'NO', // Norway
+  'PL', // Poland
+  'PT', // Portugal
+  'RO', // Romania
+  'SK', // Slovakia
+  'SI', // Slovenia
+  'ES', // Spain
+  'SE', // Sweden
 ];
 
