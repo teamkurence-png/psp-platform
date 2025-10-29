@@ -81,7 +81,7 @@ const PSPPaymentForm: React.FC = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Secure Payment</h1>
-          <p className="text-gray-600">Complete your payment to {paymentInfo.merchantName}</p>
+          <p className="text-gray-600">Complete your payment securely</p>
         </div>
 
         {/* Payment Info Card */}
