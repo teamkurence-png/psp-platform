@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { pspPaymentService } from '../services/pspPaymentService';
 import { paymentRequestService } from '../services/paymentRequestService';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../hooks/useAuth';
+import { usePspPaymentActions } from '../hooks/usePspPaymentActions';
+import { usePaymentStatusUpdate } from '../hooks/usePaymentStatusUpdate';
 import { Card, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -352,6 +354,10 @@ const ManualPay: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
+  // Custom hooks for payment actions
+  const { reviewPayment, isReviewing } = usePspPaymentActions();
+  const { updateStatus, isUpdating } = usePaymentStatusUpdate();
+
   // WebSocket for real-time updates
   useWebSocket({
     userId: user?.id,
@@ -436,51 +442,37 @@ const ManualPay: React.FC = () => {
   const isLoading = activeTab === 'card' ? isLoadingCard : isLoadingBank;
   const error = activeTab === 'card' ? errorCard : errorBank;
 
-  // Review payment mutation
-  const reviewMutation = useMutation({
-    mutationFn: async ({ submissionId, decision }: { 
-      submissionId: string; 
-      decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
-    }) => {
-      return pspPaymentService.reviewPspPayment(submissionId, decision);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['psp-payments'] });
+  // Handler for reviewing PSP payments
+  const handleReview = async (submissionId: string, decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push') => {
+    try {
+      await reviewPayment(submissionId, decision);
       setSelectedPayment(null);
       // Don't reset to page 1 - keep admin on current page to see the updated status
-    },
-    onError: (error: any) => {
+    } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to review payment');
-    },
-  });
-
-  const handleReview = (submissionId: string, decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push') => {
-    reviewMutation.mutate({ submissionId, decision });
-  };
-
-  // Bank Wire status update mutation
-  const updateBankStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: PaymentRequestStatus }) => {
-      return paymentRequestService.updateStatus(id, status);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bank-payment-requests'] });
-      setSelectedBankRequest(null);
-    },
-    onError: (error: any) => {
-      alert(error.response?.data?.error || 'Failed to update status');
-    },
-  });
-
-  const handleBankStatusUpdate = (status: string) => {
-    if (selectedBankRequest) {
-      updateBankStatusMutation.mutate({ 
-        id: selectedBankRequest._id, 
-        status: status as PaymentRequestStatus 
-      });
     }
   };
 
+  // Handler for updating bank wire payment status
+  const handleBankStatusUpdate = async (status: string) => {
+    if (!selectedBankRequest) return;
+    
+    try {
+      await updateStatus(selectedBankRequest._id, status as PaymentRequestStatus);
+      setSelectedBankRequest(null);
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to update status');
+    }
+  };
+
+  // Handler for rejecting pending PSP payments
+  const handleRejectPendingPayment = async (paymentRequestId: string) => {
+    try {
+      await updateStatus(paymentRequestId, PaymentRequestStatus.REJECTED);
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to reject payment');
+    }
+  };
 
   const filteredPayments = payments?.filter((payment: any) =>
     payment.paymentRequest.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
@@ -834,7 +826,7 @@ const ManualPay: React.FC = () => {
                           <Button
                             size="sm"
                             onClick={() => setSelectedPayment(payment)}
-                            disabled={reviewMutation.isPending}
+                            disabled={isReviewing}
                           >
                             Review
                           </Button>
@@ -842,7 +834,7 @@ const ManualPay: React.FC = () => {
                           <Button
                             size="sm"
                             onClick={() => setSelectedPayment(payment)}
-                            disabled={reviewMutation.isPending}
+                            disabled={isReviewing}
                             className="bg-blue-600 hover:bg-blue-700"
                           >
                             {payment.paymentRequest.status === 'processed_awaiting_exchange' ? 'Complete Exchange' : 'Final Review'}
@@ -853,6 +845,20 @@ const ManualPay: React.FC = () => {
                               Awaiting Verification
                             </span>
                           </div>
+                        ) : payment.paymentRequest.status === 'pending_submission' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (confirm('Are you sure you want to reject this pending payment? The customer has not yet submitted their card details.')) {
+                                handleRejectPendingPayment(payment.paymentRequest._id);
+                              }
+                            }}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
                         ) : payment.cardSubmission?.reviewedAt ? (
                           <span className="text-xs text-gray-500 px-2 py-1">
                             Reviewed {formatDate(payment.cardSubmission.reviewedAt)}
@@ -953,7 +959,7 @@ const ManualPay: React.FC = () => {
                             <Button
                               size="sm"
                               onClick={() => setSelectedBankRequest(request)}
-                              disabled={updateBankStatusMutation.isPending}
+                              disabled={isUpdating}
                             >
                               Update Status
                             </Button>
@@ -990,7 +996,7 @@ const ManualPay: React.FC = () => {
           payment={selectedPayment}
           onClose={() => setSelectedPayment(null)}
           onReview={handleReview}
-          isLoading={reviewMutation.isPending}
+          isLoading={isReviewing}
         />
       )}
 
@@ -1003,7 +1009,7 @@ const ManualPay: React.FC = () => {
           defaultStatus={PaymentRequestStatus.PAID}
           onClose={() => setSelectedBankRequest(null)}
           onSubmit={handleBankStatusUpdate}
-          isLoading={updateBankStatusMutation.isPending}
+          isLoading={isUpdating}
         />
       )}
     </div>
