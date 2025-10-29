@@ -66,18 +66,25 @@ const CreatePaymentRequest: React.FC = () => {
         return;
       }
 
+      // Build customer info based on payment method
+      const customerInfo: any = {
+        billingCountry: formData.customerCountry,
+      };
+
+      // For bank wire, include all customer information
+      if (formData.paymentMethods.includes(PaymentMethod.BANK_WIRE)) {
+        customerInfo.name = formData.customerName;
+        customerInfo.email = formData.customerEmail;
+        customerInfo.phone = formData.customerPhone;
+      }
+
       const payload = {
         amount,
         currency: formData.currency,
         description: formData.description,
-        invoiceNumber: formData.invoiceNumber,
+        invoiceNumber: '', // Invoice number removed as per requirements
         dueDate: formData.dueDate,
-        customerInfo: {
-          name: formData.customerName,
-          email: formData.customerEmail,
-          phone: formData.customerPhone,
-          billingCountry: formData.customerCountry,
-        },
+        customerInfo,
         paymentMethods: formData.paymentMethods,
       };
 
@@ -109,134 +116,7 @@ const CreatePaymentRequest: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && <ErrorAlert message={error} onDismiss={() => setError('')} />}
 
-        {/* Payment Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Payment Details</CardTitle>
-            <CardDescription>Basic information about this payment request</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount *</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.amount}
-                  onChange={(e) => setFieldValue('amount', e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="currency">Currency</Label>
-                <select
-                  id="currency"
-                  value={formData.currency}
-                  onChange={(e) => setFieldValue('currency', e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description *</Label>
-              <Input
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFieldValue('description', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="invoiceNumber">Invoice Number *</Label>
-                <Input
-                  id="invoiceNumber"
-                  value={formData.invoiceNumber}
-                  onChange={(e) => setFieldValue('invoiceNumber', e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dueDate">Due Date *</Label>
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) => setFieldValue('dueDate', e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Customer Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer Information</CardTitle>
-            <CardDescription>All customer information is required</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="customerName">Name *</Label>
-              <Input
-                id="customerName"
-                value={formData.customerName}
-                onChange={(e) => setFieldValue('customerName', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="customerEmail">Email *</Label>
-                <Input
-                  id="customerEmail"
-                  type="email"
-                  value={formData.customerEmail}
-                  onChange={(e) => setFieldValue('customerEmail', e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="customerPhone">Phone *</Label>
-                <Input
-                  id="customerPhone"
-                  value={formData.customerPhone}
-                  onChange={(e) => setFieldValue('customerPhone', e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="customerCountry">Billing Country *</Label>
-              <select
-                id="customerCountry"
-                value={formData.customerCountry}
-                onChange={(e) => setFieldValue('customerCountry', e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                required
-              >
-                <option value="">Select country</option>
-                {COUNTRIES.map((country) => (
-                  <option key={country.code} value={country.code}>
-                    {country.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Payment Methods */}
+        {/* Payment Methods - Moved to Top */}
         <Card>
           <CardHeader>
             <CardTitle>Payment Method *</CardTitle>
@@ -294,6 +174,154 @@ const CreatePaymentRequest: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Payment Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Payment Details</CardTitle>
+            <CardDescription>Basic information about this payment request</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount *</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={(e) => setFieldValue('amount', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <select
+                  id="currency"
+                  value={formData.currency}
+                  onChange={(e) => setFieldValue('currency', e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description *</Label>
+              <Input
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFieldValue('description', e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Due Date *</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={formData.dueDate}
+                onChange={(e) => setFieldValue('dueDate', e.target.value)}
+                required
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Customer Information - Conditional based on payment method */}
+        {formData.paymentMethods.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Customer Information</CardTitle>
+              <CardDescription>
+                {formData.paymentMethods.includes(PaymentMethod.CARD) 
+                  ? 'Billing country is required for card payments'
+                  : 'All customer information is required'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Bank Wire Transfer: Show all fields */}
+              {formData.paymentMethods.includes(PaymentMethod.BANK_WIRE) && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="customerName">Name *</Label>
+                    <Input
+                      id="customerName"
+                      value={formData.customerName}
+                      onChange={(e) => setFieldValue('customerName', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="customerEmail">Email *</Label>
+                      <Input
+                        id="customerEmail"
+                        type="email"
+                        value={formData.customerEmail}
+                        onChange={(e) => setFieldValue('customerEmail', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="customerPhone">Phone *</Label>
+                      <Input
+                        id="customerPhone"
+                        value={formData.customerPhone}
+                        onChange={(e) => setFieldValue('customerPhone', e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="customerCountry">Billing Country *</Label>
+                    <select
+                      id="customerCountry"
+                      value={formData.customerCountry}
+                      onChange={(e) => setFieldValue('customerCountry', e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      required
+                    >
+                      <option value="">Select country</option>
+                      {COUNTRIES.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {/* PSP Card: Show only billing country */}
+              {formData.paymentMethods.includes(PaymentMethod.CARD) && (
+                <div className="space-y-2">
+                  <Label htmlFor="customerCountry">Billing Country *</Label>
+                  <select
+                    id="customerCountry"
+                    value={formData.customerCountry}
+                    onChange={(e) => setFieldValue('customerCountry', e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    required
+                  >
+                    <option value="">Select country</option>
+                    {COUNTRIES.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Submit */}
         <div className="flex justify-end space-x-4">
