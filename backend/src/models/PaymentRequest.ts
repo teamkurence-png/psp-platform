@@ -38,6 +38,8 @@ export interface IPaymentRequest extends Document {
   status: PaymentRequestStatus;
   reason?: string;
   checkoutUrl?: string;
+  pspPaymentLink?: string;
+  pspPaymentToken?: string;
   bankAccountId?: mongoose.Types.ObjectId;
   cardId?: mongoose.Types.ObjectId;
   bankDetails?: IBankDetails;
@@ -120,6 +122,13 @@ const paymentRequestSchema = new Schema<IPaymentRequest>(
     },
     reason: String,
     checkoutUrl: String,
+    pspPaymentLink: String,
+    pspPaymentToken: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     bankAccountId: {
       type: Schema.Types.ObjectId,
       ref: 'BankAccount',

@@ -47,7 +47,7 @@ const AppLayout: React.FC = () => {
         roles: [UserRole.MERCHANT]
       },
       { 
-        name: 'Manual Confirmations', 
+        name: 'Manual Pay', 
         href: '/confirmations', 
         icon: UserCheck,
         roles: [UserRole.OPS, UserRole.FINANCE, UserRole.ADMIN]

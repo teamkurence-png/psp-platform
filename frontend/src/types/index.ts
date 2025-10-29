@@ -26,6 +26,11 @@ export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod];
 export const PaymentRequestStatus = {
   SENT: 'sent',
   VIEWED: 'viewed',
+  PENDING_SUBMISSION: 'pending_submission',
+  SUBMITTED: 'submitted',
+  PROCESSED: 'processed',
+  REJECTED: 'rejected',
+  INSUFFICIENT_FUNDS: 'insufficient_funds',
   PAID: 'paid',
   EXPIRED: 'expired',
   CANCELLED: 'cancelled',
@@ -112,6 +117,8 @@ export interface PaymentRequest {
   status: PaymentRequestStatus;
   reason?: string;
   checkoutUrl?: string;
+  pspPaymentLink?: string;
+  pspPaymentToken?: string;
   bankAccountId?: string;
   cardId?: string;
   bankDetails?: {

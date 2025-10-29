@@ -23,6 +23,11 @@ export enum PaymentMethod {
 export enum PaymentRequestStatus {
   SENT = 'sent',
   VIEWED = 'viewed',
+  PENDING_SUBMISSION = 'pending_submission',
+  SUBMITTED = 'submitted',
+  PROCESSED = 'processed',
+  REJECTED = 'rejected',
+  INSUFFICIENT_FUNDS = 'insufficient_funds',
   PAID = 'paid',
   EXPIRED = 'expired',
   CANCELLED = 'cancelled',

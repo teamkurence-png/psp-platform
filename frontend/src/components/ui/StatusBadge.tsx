@@ -71,17 +71,20 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, type, label }) => {
 function detectStatusType(status: string): StatusType {
   const lowerStatus = status.toLowerCase();
   
-  if (['completed', 'paid', 'approved', 'active', 'success'].includes(lowerStatus)) {
+  if (['completed', 'paid', 'approved', 'active', 'success', 'processed'].includes(lowerStatus)) {
     return 'success';
   }
-  if (['pending', 'initiated', 'processing'].includes(lowerStatus)) {
+  if (['pending', 'initiated', 'processing', 'sent', 'viewed', 'pending_submission'].includes(lowerStatus)) {
     return 'pending';
   }
-  if (['failed', 'rejected', 'declined', 'reversed', 'cancelled'].includes(lowerStatus)) {
+  if (['failed', 'rejected', 'declined', 'reversed', 'cancelled', 'expired'].includes(lowerStatus)) {
     return 'failed';
   }
-  if (['on_chain', 'in_progress'].includes(lowerStatus)) {
+  if (['on_chain', 'in_progress', 'submitted'].includes(lowerStatus)) {
     return 'info';
+  }
+  if (['insufficient_funds'].includes(lowerStatus)) {
+    return 'warning';
   }
   
   return 'pending';

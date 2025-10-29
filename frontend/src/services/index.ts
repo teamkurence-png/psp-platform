@@ -5,6 +5,5 @@ export * from './balanceService';
 export * from './merchantService';
 export * from './settingsService';
 export { bankAccountService } from './bankAccountService';
-export { cardService } from './cardService';
 export { contactService } from './contactService';
 

@@ -35,8 +35,25 @@ A complete Payment Service Provider platform with merchant onboarding, payment p
    - Customer information management
    - Payment method configuration
    - List and filter payment requests
+   - Real-time status updates via WebSocket
 
-5. **Transaction Management**
+5. **PSP Card Payment Flow**
+   - Unique payment links for each card payment request
+   - Customer payment form with card details (encrypted at rest)
+   - Real-time payment submission notifications
+   - Manual admin review and processing
+   - Secure AES-256 encryption for card data
+   - Status tracking: Pending → Submitted → Processed/Rejected
+   - 30% commission on all card payments
+
+6. **Manual Pay (Admin)**
+   - Review card payment submissions
+   - Decrypt and view card details (admin only)
+   - Approve, reject, or mark insufficient funds
+   - Real-time notifications on new submissions
+   - Filtered view for card payments only
+
+7. **Transaction Management**
    - Transaction list with filters
    - Status tracking (Pending Review → Approved → Settled)
    - Merchant confirmation status
@@ -48,7 +65,9 @@ All backend models and controllers are implemented:
 - User authentication
 - Merchant profile management
 - Document uploads
-- Payment requests
+- Payment requests (with PSP card payment links)
+- PSP payment processing (public endpoints + admin review)
+- Card submission with encrypted storage
 - Transactions
 - Balances
 - Settlements
@@ -56,6 +75,7 @@ All backend models and controllers are implemented:
 - Customers
 - Notifications
 - Settings
+- Real-time WebSocket events
 
 ## Setup Instructions
 
@@ -91,8 +111,15 @@ JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this-in-production
 JWT_EXPIRES_IN=1h
 JWT_REFRESH_EXPIRES_IN=7d
 
+# Encryption (Required for card payment data)
+# Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+ENCRYPTION_KEY=your-32-byte-hex-string-for-aes-256-encryption
+
 # CORS
 CORS_ORIGIN=http://localhost:5173
+
+# Frontend URL (for PSP payment links)
+FRONTEND_URL=http://localhost:5173
 
 # File Upload
 UPLOAD_DIR=./uploads

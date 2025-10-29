@@ -7,11 +7,13 @@ import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { connectDatabase } from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { notificationService } from './services/notificationService.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
 import merchantRoutes from './routes/merchants.js';
 import paymentRequestRoutes from './routes/paymentRequests.js';
+import pspPaymentRoutes from './routes/pspPayments.js';
 import dashboardRoutes from './routes/dashboard.js';
 import balanceRoutes from './routes/balances.js';
 import withdrawalRoutes from './routes/withdrawals.js';
@@ -64,6 +66,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/merchants', merchantRoutes);
 app.use('/api/payment-requests', paymentRequestRoutes);
+app.use('/api/psp-payments', pspPaymentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/balances', balanceRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
@@ -86,6 +89,20 @@ io.on('connection', (socket) => {
     console.log(`User ${userId} joined their room`);
   });
 
+  socket.on('join_admin', () => {
+    socket.join('admin');
+    console.log('Admin joined admin room');
+  });
+
+  socket.on('join_psp_token', (token: string) => {
+    if (!token) {
+      console.warn('Join PSP token attempt with no token');
+      return;
+    }
+    socket.join(`psp_token:${token}`);
+    console.log(`Customer joined PSP token room: ${token}`);
+  });
+
   socket.on('disconnect', (reason) => {
     console.log('Client disconnected:', socket.id, 'reason:', reason);
   });
@@ -97,6 +114,9 @@ io.on('connection', (socket) => {
 
 // Make io accessible in controllers
 app.set('io', io);
+
+// Initialize notification service with Socket.IO instance
+notificationService.setSocketIO(io);
 
 // Error handler (must be last)
 app.use(errorHandler);

@@ -16,12 +16,13 @@ import Withdrawals from './pages/Withdrawals';
 import CreateWithdrawal from './pages/CreateWithdrawal';
 import WithdrawalDetail from './pages/WithdrawalDetail';
 import Merchants from './pages/Merchants';
-import ManualConfirmations from './pages/ManualConfirmations';
+import ManualPay from './pages/ManualPay';
 import Settings from './pages/Settings';
 import AdminUsers from './pages/AdminUsers';
 import BankAccounts from './pages/BankAccounts';
-import Cards from './pages/Cards';
 import FormSubmissions from './pages/FormSubmissions';
+import PSPPaymentForm from './pages/PSPPaymentForm';
+import PSPPaymentStatus from './pages/PSPPaymentStatus';
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,10 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            
+            {/* Public PSP payment routes */}
+            <Route path="/pay/:token" element={<PSPPaymentForm />} />
+            <Route path="/pay/:token/status" element={<PSPPaymentStatus />} />
           
           {/* Protected routes */}
           <Route
@@ -91,7 +96,7 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<ManualConfirmations />} />
+            <Route index element={<ManualPay />} />
           </Route>
 
           <Route
@@ -140,7 +145,6 @@ function App() {
             <Route index element={<Settings />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="bank-accounts" element={<BankAccounts />} />
-            <Route path="cards" element={<Cards />} />
             <Route path="profile" element={<MerchantProfile />} />
           </Route>
 

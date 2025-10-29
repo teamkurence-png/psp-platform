@@ -2,10 +2,17 @@ import { Response } from 'express';
 import { z } from 'zod';
 import { PaymentRequest } from '../models/PaymentRequest.js';
 import { BankAccount } from '../models/BankAccount.js';
-import { Card } from '../models/Card.js';
 import { AuthRequest, UserRole, PaymentMethod, BankRail, PaymentRequestStatus } from '../types/index.js';
 import { generateReason } from '../utils/generators.js';
 import { updateMerchantBalance, addToPendingBalance } from '../services/balanceService.js';
+import { PSPPaymentService } from '../services/pspPaymentService.js';
+import { EncryptionService } from '../services/encryptionService.js';
+import { notificationService } from '../services/notificationService.js';
+import { commissionService } from '../services/commissionService.js';
+
+// Initialize PSP payment service
+const encryptionService = new EncryptionService();
+const pspPaymentService = new PSPPaymentService(encryptionService, notificationService);
 
 // Validation schema
 const createPaymentRequestSchema = z.object({
@@ -74,13 +81,8 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       }
     }
 
-    // Check card availability if card is requested
-    if (validatedData.paymentMethods.includes(PaymentMethod.CARD)) {
-      const availableCards = await Card.find({ isActive: true });
-      if (availableCards.length === 0) {
-        unavailableMethods.push('Card Payment (no active payment cards available)');
-      }
-    }
+    // Card payments no longer require pre-configured cards - PSP links are generated dynamically
+    // Only validate bank availability if bank wire is requested
 
     // If any payment methods don't have available processors, return error
     if (unavailableMethods.length > 0) {
@@ -131,20 +133,39 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       };
     }
 
-    // Handle Card auto-assignment
+    // Handle Card payment - generate dynamic PSP link
+    let pspPaymentToken;
+    let pspPaymentLink;
+    let initialStatus = PaymentRequestStatus.SENT;
+    let commissionResult;
+    
     if (validatedData.paymentMethods.includes(PaymentMethod.CARD)) {
-      // Find all active cards (already validated above)
-      const availableCards = await Card.find({ isActive: true });
-
-      // Randomly select a card
-      const selectedCard = availableCards[Math.floor(Math.random() * availableCards.length)];
-      cardId = selectedCard._id;
-      commissionPercent = selectedCard.commissionPercent;
+      // Use commission service for card payment calculation
+      commissionResult = commissionService.calculate(validatedData.amount, PaymentMethod.CARD);
+      commissionPercent = commissionResult.commissionPercent;
+      
+      // Use PSP service to generate payment link
+      const pspLinkData = pspPaymentService.generatePaymentLink();
+      pspPaymentToken = pspLinkData.token;
+      pspPaymentLink = pspLinkData.link;
+      
+      // Set initial status to pending_submission for card payments
+      initialStatus = PaymentRequestStatus.PENDING_SUBMISSION;
+      
+      // Optional: Try to find a card reference for backward compatibility
+      cardId = await pspPaymentService.findCardReference();
+    } else {
+      // For bank wire, calculate commission based on selected bank
+      commissionResult = commissionService.calculate(
+        validatedData.amount, 
+        PaymentMethod.BANK_WIRE, 
+        commissionPercent
+      );
     }
 
-    // Calculate commission and net amount
-    const commissionAmount = validatedData.amount * (commissionPercent / 100);
-    const netAmount = validatedData.amount - commissionAmount;
+    // Use calculated commission values
+    const commissionAmount = commissionResult.commissionAmount;
+    const netAmount = commissionResult.netAmount;
 
     // Create payment request
     const paymentRequest = await PaymentRequest.create({
@@ -157,10 +178,13 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       customerReference: validatedData.customerReference,
       customerInfo: validatedData.customerInfo,
       paymentMethods: validatedData.paymentMethods,
+      status: initialStatus,
       bankAccountId,
       cardId,
       bankDetails,
       reason,
+      pspPaymentToken,
+      pspPaymentLink,
       commissionPercent,
       commissionAmount,
       netAmount,

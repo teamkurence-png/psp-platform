@@ -1,0 +1,29 @@
+import { Router } from 'express';
+import {
+  getPaymentFormByToken,
+  submitCardPayment,
+  getPaymentStatus,
+} from '../controllers/pspPaymentController.js';
+import {
+  listPspPayments,
+  getPspPaymentDetails,
+  reviewPspPayment,
+} from '../controllers/manualPayController.js';
+import { authenticate } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/errorHandler.js';
+
+const router = Router();
+
+// Public routes (no authentication required)
+router.get('/:token', asyncHandler(getPaymentFormByToken));
+router.post('/:token/submit', asyncHandler(submitCardPayment));
+router.get('/:token/status', asyncHandler(getPaymentStatus));
+
+// Protected admin routes
+router.use('/admin', authenticate);
+router.get('/admin/list', asyncHandler(listPspPayments));
+router.get('/admin/:submissionId/details', asyncHandler(getPspPaymentDetails));
+router.post('/admin/:submissionId/review', asyncHandler(reviewPspPayment));
+
+export default router;
+

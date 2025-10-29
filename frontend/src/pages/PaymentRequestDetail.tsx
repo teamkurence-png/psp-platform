@@ -4,6 +4,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import Button from '../components/ui/Button';
 import type { PaymentRequest, Card as CardType } from '../types/index';
 import { PaymentRequestStatus, PaymentMethod, BankRail } from '../types/index';
+import { useAuth } from '../hooks/useAuth';
+import { useWebSocket } from '../hooks/useWebSocket';
 import api from '../lib/api';
 import { formatCurrency, formatDateTime } from '../lib/utils';
 import { 
@@ -15,14 +17,27 @@ import {
   Clock, 
   XCircle,
   Eye,
-  ExternalLink
+  ExternalLink,
+  Link as LinkIcon
 } from 'lucide-react';
 
 const PaymentRequestDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
   const [assignedCard, setAssignedCard] = useState<CardType | null>(null);
+
+  // WebSocket for real-time status updates
+  useWebSocket({
+    userId: user?.id,
+    onPaymentRequestStatusUpdated: (data) => {
+      if (data.paymentRequestId === id) {
+        console.log('Payment request status updated:', data);
+        fetchPaymentRequest();
+      }
+    },
+  });
 
   useEffect(() => {
     if (id) {
@@ -81,11 +96,26 @@ const PaymentRequestDetail: React.FC = () => {
 
   const getStatusBadge = (status: PaymentRequestStatus) => {
     switch (status) {
+      case PaymentRequestStatus.PROCESSED:
       case PaymentRequestStatus.PAID:
         return (
           <div className="flex items-center gap-2 text-green-600">
             <CheckCircle className="h-5 w-5" />
-            <span className="font-semibold">Paid</span>
+            <span className="font-semibold capitalize">{status.replace(/_/g, ' ')}</span>
+          </div>
+        );
+      case PaymentRequestStatus.SUBMITTED:
+        return (
+          <div className="flex items-center gap-2 text-blue-600">
+            <Clock className="h-5 w-5" />
+            <span className="font-semibold">Submitted (Under Review)</span>
+          </div>
+        );
+      case PaymentRequestStatus.PENDING_SUBMISSION:
+        return (
+          <div className="flex items-center gap-2 text-yellow-600">
+            <Clock className="h-5 w-5" />
+            <span className="font-semibold">Awaiting Customer Submission</span>
           </div>
         );
       case PaymentRequestStatus.VIEWED:
@@ -95,11 +125,19 @@ const PaymentRequestDetail: React.FC = () => {
             <span className="font-semibold">Viewed</span>
           </div>
         );
+      case PaymentRequestStatus.REJECTED:
       case PaymentRequestStatus.EXPIRED:
         return (
           <div className="flex items-center gap-2 text-red-600">
             <XCircle className="h-5 w-5" />
-            <span className="font-semibold">Expired</span>
+            <span className="font-semibold capitalize">{status.replace(/_/g, ' ')}</span>
+          </div>
+        );
+      case PaymentRequestStatus.INSUFFICIENT_FUNDS:
+        return (
+          <div className="flex items-center gap-2 text-orange-600">
+            <XCircle className="h-5 w-5" />
+            <span className="font-semibold">Insufficient Funds</span>
           </div>
         );
       case PaymentRequestStatus.CANCELLED:
@@ -402,45 +440,80 @@ const PaymentRequestDetail: React.FC = () => {
           )}
 
           {/* Card Payment Details */}
-          {paymentRequest.paymentMethods.includes(PaymentMethod.CARD) && assignedCard && (
+          {paymentRequest.paymentMethods.includes(PaymentMethod.CARD) && paymentRequest.pspPaymentLink && (
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5" />
-                  <CardTitle>Card Payment Details</CardTitle>
+                  <CardTitle>Card Payment Link</CardTitle>
                 </div>
-                <CardDescription>PSP card assigned for this payment request</CardDescription>
+                <CardDescription>Share this unique payment link with your customer</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Card Name</p>
-                  <p className="font-medium">{assignedCard.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Payment Link</p>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={assignedCard.pspLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 font-medium break-all"
-                    >
-                      {assignedCard.pspLink}
-                    </a>
+                  <p className="text-sm text-muted-foreground mb-2">PSP Payment Link</p>
+                  <div className="flex items-center gap-2 p-3 bg-gray-50 border rounded-lg">
+                    <LinkIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <code className="text-sm font-mono break-all flex-1">
+                      {paymentRequest.pspPaymentLink}
+                    </code>
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => window.open(assignedCard.pspLink, '_blank')}
+                      onClick={() => handleCopy(paymentRequest.pspPaymentLink!, 'Payment Link')}
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <Copy className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(paymentRequest.pspPaymentLink, '_blank')}
+                    className="flex-1"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open Link
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleCopy(paymentRequest.pspPaymentLink!, 'Payment Link')}
+                    className="flex-1"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Link
+                  </Button>
+                </div>
+
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    Use this payment link to complete the card payment.
+                  <p className="text-sm font-semibold text-blue-900 mb-1">
+                    📧 Next Steps
+                  </p>
+                  <p className="text-xs text-blue-800">
+                    1. Copy the payment link above<br />
+                    2. Send it to your customer via email or messenger<br />
+                    3. Customer fills the payment form with their card details<br />
+                    4. You'll be notified when the payment is processed
                   </p>
                 </div>
+
+                {paymentRequest.status === PaymentRequestStatus.PENDING_SUBMISSION && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      ⏳ Waiting for customer to submit payment details
+                    </p>
+                  </div>
+                )}
+
+                {paymentRequest.status === PaymentRequestStatus.SUBMITTED && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      🔄 Payment submitted and under review by admin
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
