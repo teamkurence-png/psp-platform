@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './hooks/useAuth';
+import { UserRole } from './types/index';
 import AuthInitializer from './components/AuthInitializer';
 import AppLayout from './components/layout/AppLayout';
 import LandingPage from './pages/LandingPage';
@@ -27,7 +28,7 @@ import PSPPaymentStatus from './pages/PSPPaymentStatus';
 const queryClient = new QueryClient();
 
 // Protected Route wrapper
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: UserRole[] }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -43,6 +44,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Check if user role is allowed (if allowedRoles is specified)
+  if (allowedRoles && user.role && !allowedRoles.includes(user.role as UserRole)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
@@ -91,7 +97,7 @@ function App() {
           <Route
             path="/confirmations"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.OPS, UserRole.FINANCE]}>
                 <AppLayout />
               </ProtectedRoute>
             }
@@ -126,7 +132,7 @@ function App() {
           <Route
             path="/merchants"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.OPS, UserRole.FINANCE]}>
                 <AppLayout />
               </ProtectedRoute>
             }
@@ -151,7 +157,7 @@ function App() {
           <Route
             path="/form-submissions"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
                 <AppLayout />
               </ProtectedRoute>
             }

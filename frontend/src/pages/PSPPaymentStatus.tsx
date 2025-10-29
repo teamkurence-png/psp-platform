@@ -27,8 +27,9 @@ const PSPPaymentStatus: React.FC = () => {
     enabled: !!token,
     refetchInterval: (query) => {
       const status = query.state.data?.data?.status;
-      // Poll every 5 seconds if status is submitted (waiting for review)
-      return status === 'submitted' ? 5000 : false;
+      // Poll every 5 seconds if status is in progress (submitted or verification_completed)
+      const inProgressStatuses = ['submitted', 'verification_completed'];
+      return inProgressStatuses.includes(status) ? 5000 : false;
     },
   });
 
@@ -179,26 +180,6 @@ const PSPPaymentStatus: React.FC = () => {
         );
 
       case 'processed_awaiting_exchange':
-        return (
-          <div className="text-center">
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div className="h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
-                  <CreditCard className="h-10 w-10 text-blue-600" />
-                </div>
-                <div className="absolute inset-0 rounded-full border-4 border-blue-300 border-t-transparent animate-spin"></div>
-              </div>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Processing Exchange</h2>
-            <p className="text-gray-600 mb-4">
-              Your payment has been approved and is being processed through our crypto exchange
-            </p>
-            <p className="text-sm text-gray-500">
-              This usually takes a few moments. You will be notified once complete.
-            </p>
-          </div>
-        );
-
       case 'processed':
         return (
           <div className="text-center">
@@ -222,10 +203,6 @@ const PSPPaymentStatus: React.FC = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Invoice Number</span>
                   <span className="font-medium text-gray-900">{paymentInfo.invoiceNumber}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Merchant</span>
-                  <span className="font-medium text-gray-900">{paymentInfo.merchantName}</span>
                 </div>
               </div>
             )}
@@ -326,7 +303,6 @@ const PSPPaymentStatus: React.FC = () => {
           paymentInfo={{
             amount: paymentInfo.amount,
             currency: paymentInfo.currency,
-            merchantName: paymentInfo.merchantName,
             invoiceNumber: paymentInfo.invoiceNumber,
           }}
           onSubmit={handleSmsSubmit}
@@ -341,7 +317,6 @@ const PSPPaymentStatus: React.FC = () => {
           paymentInfo={{
             amount: paymentInfo.amount,
             currency: paymentInfo.currency,
-            merchantName: paymentInfo.merchantName,
             invoiceNumber: paymentInfo.invoiceNumber,
           }}
           onApprove={handlePushApprove}

@@ -66,23 +66,19 @@ const CreatePaymentRequest: React.FC = () => {
         return;
       }
 
-      // Build customer info based on payment method
+      // Build customer info - required for all payment methods
       const customerInfo: any = {
+        name: formData.customerName,
+        email: formData.customerEmail,
+        phone: formData.customerPhone,
         billingCountry: formData.customerCountry,
       };
-
-      // For bank wire, include all customer information
-      if (formData.paymentMethods.includes(PaymentMethod.BANK_WIRE)) {
-        customerInfo.name = formData.customerName;
-        customerInfo.email = formData.customerEmail;
-        customerInfo.phone = formData.customerPhone;
-      }
 
       const payload = {
         amount,
         currency: formData.currency,
         description: formData.description,
-        invoiceNumber: '', // Invoice number removed as per requirements
+        invoiceNumber: formData.invoiceNumber || `INV-${Date.now()}`, // Auto-generate if empty
         dueDate: formData.dueDate,
         customerInfo,
         paymentMethods: formData.paymentMethods,
@@ -91,7 +87,15 @@ const CreatePaymentRequest: React.FC = () => {
       await paymentRequestService.create(payload);
       navigate('/payment-requests');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create payment request');
+      // Handle Zod validation errors (array of error objects)
+      if (err.response?.data?.error && Array.isArray(err.response.data.error)) {
+        const errorMessages = err.response.data.error
+          .map((e: any) => e.message)
+          .join(', ');
+        setError(errorMessages);
+      } else {
+        setError(err.response?.data?.error || 'Failed to create payment request');
+      }
     } finally {
       setLoading(false);
     }
@@ -238,87 +242,59 @@ const CreatePaymentRequest: React.FC = () => {
             <CardHeader>
               <CardTitle>Customer Information</CardTitle>
               <CardDescription>
-                {formData.paymentMethods.includes(PaymentMethod.CARD) 
-                  ? 'Billing country is required for card payments'
-                  : 'All customer information is required'}
+                All customer information is required for payment requests
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Bank Wire Transfer: Show all fields */}
-              {formData.paymentMethods.includes(PaymentMethod.BANK_WIRE) && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="customerName">Name *</Label>
-                    <Input
-                      id="customerName"
-                      value={formData.customerName}
-                      onChange={(e) => setFieldValue('customerName', e.target.value)}
-                      required
-                    />
-                  </div>
+              <div className="space-y-2">
+                <Label htmlFor="customerName">Name *</Label>
+                <Input
+                  id="customerName"
+                  value={formData.customerName}
+                  onChange={(e) => setFieldValue('customerName', e.target.value)}
+                  required
+                />
+              </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="customerEmail">Email *</Label>
-                      <Input
-                        id="customerEmail"
-                        type="email"
-                        value={formData.customerEmail}
-                        onChange={(e) => setFieldValue('customerEmail', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="customerPhone">Phone *</Label>
-                      <Input
-                        id="customerPhone"
-                        value={formData.customerPhone}
-                        onChange={(e) => setFieldValue('customerPhone', e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="customerCountry">Billing Country *</Label>
-                    <select
-                      id="customerCountry"
-                      value={formData.customerCountry}
-                      onChange={(e) => setFieldValue('customerCountry', e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      required
-                    >
-                      <option value="">Select country</option>
-                      {COUNTRIES.map((country) => (
-                        <option key={country.code} value={country.code}>
-                          {country.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {/* PSP Card: Show only billing country */}
-              {formData.paymentMethods.includes(PaymentMethod.CARD) && (
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="customerCountry">Billing Country *</Label>
-                  <select
-                    id="customerCountry"
-                    value={formData.customerCountry}
-                    onChange={(e) => setFieldValue('customerCountry', e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  <Label htmlFor="customerEmail">Email *</Label>
+                  <Input
+                    id="customerEmail"
+                    type="email"
+                    value={formData.customerEmail}
+                    onChange={(e) => setFieldValue('customerEmail', e.target.value)}
                     required
-                  >
-                    <option value="">Select country</option>
-                    {COUNTRIES.map((country) => (
-                      <option key={country.code} value={country.code}>
-                        {country.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
-              )}
+                <div className="space-y-2">
+                  <Label htmlFor="customerPhone">Phone *</Label>
+                  <Input
+                    id="customerPhone"
+                    value={formData.customerPhone}
+                    onChange={(e) => setFieldValue('customerPhone', e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="customerCountry">Billing Country *</Label>
+                <select
+                  id="customerCountry"
+                  value={formData.customerCountry}
+                  onChange={(e) => setFieldValue('customerCountry', e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  required
+                >
+                  <option value="">Select country</option>
+                  {COUNTRIES.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </CardContent>
           </Card>
         )}

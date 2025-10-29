@@ -31,12 +31,16 @@ export async function updateMerchantBalance(
     });
   }
 
-  // Pending states: sent, viewed, pending_submission, submitted
+  // Pending states: sent, viewed, pending_submission, submitted, verification statuses, processed_awaiting_exchange
   const isPendingStatus = (status: PaymentRequestStatus) =>
     status === PaymentRequestStatus.SENT || 
     status === PaymentRequestStatus.VIEWED ||
     status === PaymentRequestStatus.PENDING_SUBMISSION ||
-    status === PaymentRequestStatus.SUBMITTED;
+    status === PaymentRequestStatus.SUBMITTED ||
+    status === PaymentRequestStatus.AWAITING_3D_SMS ||
+    status === PaymentRequestStatus.AWAITING_3D_PUSH ||
+    status === PaymentRequestStatus.VERIFICATION_COMPLETED ||
+    status === PaymentRequestStatus.PROCESSED_AWAITING_EXCHANGE;
 
   // Final/completed states: paid, processed
   const isCompletedStatus = (status: PaymentRequestStatus) =>

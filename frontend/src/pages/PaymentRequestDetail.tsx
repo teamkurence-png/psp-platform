@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import type { PaymentRequest, Card as CardType } from '../types/index';
-import { PaymentRequestStatus, PaymentMethod, BankRail } from '../types/index';
+import type { PaymentRequest } from '../types/index';
+import { PaymentRequestStatus, PaymentMethod, BankRail, UserRole } from '../types/index';
 import { useAuth } from '../hooks/useAuth';
 import { useWebSocket } from '../hooks/useWebSocket';
 import api from '../lib/api';
@@ -27,7 +27,10 @@ const PaymentRequestDetail: React.FC = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
-  const [assignedCard, setAssignedCard] = useState<CardType | null>(null);
+
+  // Determine the back link based on user role
+  const backLink = user?.role === UserRole.MERCHANT ? '/payment-requests' : '/confirmations';
+  const backLinkText = user?.role === UserRole.MERCHANT ? 'Back to Payment Requests' : 'Back to Confirmations';
 
   // WebSocket for real-time status updates
   useWebSocket({
@@ -52,16 +55,6 @@ const PaymentRequestDetail: React.FC = () => {
       const response = await api.get(`/payment-requests/${id}`);
       const data = response.data.data;
       setPaymentRequest(data);
-      
-      // Fetch assigned card if cardId is present
-      if (data.cardId) {
-        try {
-          const cardResponse = await api.get(`/cards/${data.cardId}`);
-          setAssignedCard(cardResponse.data.data);
-        } catch (error) {
-          console.error('Failed to fetch assigned card:', error);
-        }
-      }
     } catch (error) {
       console.error('Failed to fetch payment request:', error);
       alert('Failed to load payment request');
@@ -214,8 +207,8 @@ const PaymentRequestDetail: React.FC = () => {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Payment request not found</p>
-        <Link to="/confirmations">
-          <Button className="mt-4">Back to Confirmations</Button>
+        <Link to={backLink}>
+          <Button className="mt-4">{backLinkText}</Button>
         </Link>
       </div>
     );
@@ -226,10 +219,10 @@ const PaymentRequestDetail: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/confirmations">
+          <Link to={backLink}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Confirmations
+              {backLinkText}
             </Button>
           </Link>
           <div>

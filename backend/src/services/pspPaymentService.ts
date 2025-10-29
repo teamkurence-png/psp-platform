@@ -71,7 +71,7 @@ export class PSPPaymentService {
   async findCardReference(): Promise<string | undefined> {
     try {
       const card = await Card.findOne({ isActive: true });
-      return card?._id.toString();
+      return card?._id?.toString();
     } catch (error) {
       console.log('No Card record found, continuing without card association');
       return undefined;
@@ -128,8 +128,8 @@ export class PSPPaymentService {
 
     // Notify admin and merchant via WebSocket
     await this.notificationService.notifyPaymentSubmitted({
-      paymentRequestId: paymentRequest._id.toString(),
-      submissionId: cardSubmission._id.toString(),
+      paymentRequestId: (paymentRequest._id as any).toString(),
+      submissionId: (cardSubmission._id as any).toString(),
       amount: paymentRequest.amount,
       currency: paymentRequest.currency,
       merchantId: paymentRequest.userId.toString(),
@@ -137,8 +137,8 @@ export class PSPPaymentService {
     });
 
     return {
-      submissionId: cardSubmission._id.toString(),
-      paymentRequestId: paymentRequest._id.toString(),
+      submissionId: (cardSubmission._id as any).toString(),
+      paymentRequestId: (paymentRequest._id as any).toString(),
     };
   }
 
@@ -191,13 +191,13 @@ export class PSPPaymentService {
       
       // Notify customer about verification request
       await this.notificationService.notifyVerificationRequested({
-        paymentRequestId: paymentRequest._id.toString(),
+        paymentRequestId: (paymentRequest._id as any).toString(),
         pspPaymentToken: paymentRequest.pspPaymentToken!,
         verificationType,
       });
       
       return {
-        paymentRequestId: paymentRequest._id.toString(),
+        paymentRequestId: (paymentRequest._id as any).toString(),
         status: newCardStatus,
       };
     }
@@ -231,7 +231,7 @@ export class PSPPaymentService {
 
     // Notify customer and merchant
     await this.notificationService.notifyPaymentReviewed({
-      paymentRequestId: paymentRequest._id.toString(),
+      paymentRequestId: (paymentRequest._id as any).toString(),
       pspPaymentToken: paymentRequest.pspPaymentToken!,
       merchantId: paymentRequest.userId.toString(),
       status: newStatus,
@@ -239,7 +239,7 @@ export class PSPPaymentService {
     });
 
     return {
-      paymentRequestId: paymentRequest._id.toString(),
+      paymentRequestId: (paymentRequest._id as any).toString(),
       status: newStatus,
     };
   }
@@ -334,15 +334,15 @@ export class PSPPaymentService {
 
     // Notify admin that customer completed verification
     await this.notificationService.notifyVerificationCompleted({
-      paymentRequestId: paymentRequest._id.toString(),
-      submissionId: cardSubmission._id.toString(),
+      paymentRequestId: (paymentRequest._id as any).toString(),
+      submissionId: (cardSubmission._id as any).toString(),
       verificationType: cardSubmission.verificationType!,
       merchantId: paymentRequest.userId.toString(),
     });
 
     return {
       success: true,
-      paymentRequestId: paymentRequest._id.toString(),
+      paymentRequestId: (paymentRequest._id as any).toString(),
     };
   }
 

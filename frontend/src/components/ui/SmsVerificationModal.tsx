@@ -7,7 +7,6 @@ interface SmsVerificationModalProps {
   paymentInfo: {
     amount: number;
     currency: string;
-    merchantName: string;
     invoiceNumber: string;
   };
   onSubmit: (code: string) => void;
@@ -70,10 +69,6 @@ const SmsVerificationModal: React.FC<SmsVerificationModalProps> = ({
                 <span className="font-semibold text-gray-900">
                   {formatCurrency(paymentInfo.amount, paymentInfo.currency)}
                 </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Merchant:</span>
-                <span className="font-medium text-gray-900">{paymentInfo.merchantName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Invoice:</span>

@@ -7,7 +7,6 @@ interface PushVerificationModalProps {
   paymentInfo: {
     amount: number;
     currency: string;
-    merchantName: string;
     invoiceNumber: string;
   };
   onApprove: () => void;
@@ -61,10 +60,6 @@ const PushVerificationModal: React.FC<PushVerificationModalProps> = ({
                 <span className="font-semibold text-gray-900">
                   {formatCurrency(paymentInfo.amount, paymentInfo.currency)}
                 </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Merchant:</span>
-                <span className="font-medium text-gray-900">{paymentInfo.merchantName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Invoice:</span>
