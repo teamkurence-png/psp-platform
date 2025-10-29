@@ -180,7 +180,7 @@ const PSPPaymentReviewModal: React.FC<PSPPaymentReviewModalProps> = ({
                     </div>
                     <div>
                       <span className="text-blue-700">Card Number:</span>
-                      <span className="ml-2 font-mono font-medium text-blue-900">{cardDetails.cardNumberMasked}</span>
+                      <span className="ml-2 font-mono font-medium text-blue-900">{cardDetails.cardNumber}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
