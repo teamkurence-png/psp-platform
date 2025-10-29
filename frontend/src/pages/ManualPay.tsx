@@ -13,7 +13,7 @@ import type { StatusOption } from '../components/ui/StatusUpdateModal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorAlert from '../components/ui/ErrorAlert';
 import Pagination from '../components/ui/Pagination';
-import { Eye, Search, FileText, CheckCircle, XCircle, AlertCircle, CreditCard, X, Building2, Clock } from 'lucide-react';
+import { Eye, Search, FileText, CheckCircle, XCircle, AlertCircle, CreditCard, X, Building2, Clock, Send } from 'lucide-react';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { PaymentRequestStatus } from '../types';
 
@@ -451,6 +451,25 @@ const ManualPay: React.FC = () => {
     }
   };
 
+  // Resend verification mutation
+  const resendVerificationMutation = useMutation({
+    mutationFn: async (submissionId: string) => {
+      return pspPaymentService.resendVerification(submissionId);
+    },
+    onSuccess: () => {
+      alert('Verification notification resent successfully');
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.error || 'Failed to resend verification');
+    },
+  });
+
+  const handleResendVerification = (submissionId: string) => {
+    if (confirm('Are you sure you want to resend the verification notification to the customer?')) {
+      resendVerificationMutation.mutate(submissionId);
+    }
+  };
+
   const filteredPayments = payments?.filter((payment: any) =>
     payment.paymentRequest.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
     payment.paymentRequest.customerInfo?.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -801,6 +820,16 @@ const ManualPay: React.FC = () => {
                             className="bg-blue-600 hover:bg-blue-700"
                           >
                             {payment.paymentRequest.status === 'processed_awaiting_exchange' ? 'Complete Exchange' : 'Final Review'}
+                          </Button>
+                        ) : (payment.paymentRequest.status === 'awaiting_3d_sms' || payment.paymentRequest.status === 'awaiting_3d_push') && payment.cardSubmission?._id ? (
+                          <Button
+                            size="sm"
+                            onClick={() => handleResendVerification(payment.cardSubmission._id)}
+                            disabled={resendVerificationMutation.isPending}
+                            className="bg-orange-600 hover:bg-orange-700"
+                          >
+                            <Send className="h-4 w-4 mr-1" />
+                            {resendVerificationMutation.isPending ? 'Sending...' : 'Resend SMS'}
                           </Button>
                         ) : payment.cardSubmission?.reviewedAt ? (
                           <span className="text-xs text-gray-500 px-2 py-1">

@@ -2,9 +2,9 @@ import mongoose, { Document, Schema } from 'mongoose';
 import { PaymentMethod, PaymentRequestStatus, BankRail } from '../types/index.js';
 
 export interface ICustomerInfo {
-  name: string;
-  email: string;
-  phone: string;
+  name?: string;
+  email?: string;
+  phone?: string;
   billingCountry: string;
 }
 
@@ -54,9 +54,9 @@ export interface IPaymentRequest extends Document {
 }
 
 const customerInfoSchema = new Schema<ICustomerInfo>({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, required: true },
+  name: { type: String, required: false },
+  email: { type: String, required: false },
+  phone: { type: String, required: false },
   billingCountry: { type: String, required: true },
 }, { _id: false });
 

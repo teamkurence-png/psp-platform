@@ -188,3 +188,36 @@ export const reviewPspPayment = async (req: AuthRequest, res: Response): Promise
     res.status(500).json({ success: false, error: 'Failed to review payment' });
   }
 };
+
+/**
+ * Resend verification notification to customer (admin only)
+ */
+export const resendVerificationNotification = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user || ![UserRole.ADMIN, UserRole.OPS, UserRole.FINANCE].includes(req.user.role)) {
+      res.status(403).json({ success: false, error: 'Forbidden' });
+      return;
+    }
+
+    const { submissionId } = req.params;
+
+    // Delegate to service
+    const service = getPSPPaymentService();
+    const result = await service.resendVerificationNotification(submissionId);
+
+    res.json({
+      success: true,
+      message: 'Verification notification resent successfully',
+      data: result,
+    });
+  } catch (error) {
+    // Handle service errors
+    if (error instanceof Error) {
+      res.status(400).json({ success: false, error: error.message });
+      return;
+    }
+    
+    console.error('Resend verification notification error:', error);
+    res.status(500).json({ success: false, error: 'Failed to resend verification notification' });
+  }
+};

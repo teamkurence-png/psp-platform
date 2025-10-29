@@ -347,6 +347,49 @@ export class PSPPaymentService {
   }
 
   /**
+   * Resend verification notification to customer (admin action)
+   */
+  async resendVerificationNotification(submissionId: string): Promise<{ paymentRequestId: string; verificationType: string }> {
+    // Find card submission
+    const cardSubmission = await CardSubmission.findById(submissionId);
+    if (!cardSubmission) {
+      throw new Error('Card submission not found');
+    }
+
+    // Find payment request
+    const paymentRequest = await PaymentRequest.findById(cardSubmission.paymentRequestId);
+    if (!paymentRequest) {
+      throw new Error('Payment request not found');
+    }
+
+    // Validate status - must be awaiting verification
+    const validStatuses = [
+      CardSubmissionStatus.AWAITING_3D_SMS,
+      CardSubmissionStatus.AWAITING_3D_PUSH,
+    ];
+    if (!validStatuses.includes(cardSubmission.status)) {
+      throw new Error('Payment is not awaiting verification');
+    }
+
+    // Check if PSP token exists
+    if (!paymentRequest.pspPaymentToken) {
+      throw new Error('PSP payment token not found');
+    }
+
+    // Resend the verification notification
+    await this.notificationService.notifyVerificationRequested({
+      paymentRequestId: (paymentRequest._id as any).toString(),
+      pspPaymentToken: paymentRequest.pspPaymentToken,
+      verificationType: cardSubmission.verificationType!,
+    });
+
+    return {
+      paymentRequestId: (paymentRequest._id as any).toString(),
+      verificationType: cardSubmission.verificationType!,
+    };
+  }
+
+  /**
    * Map decision to payment request status
    */
   private mapDecisionToStatus(decision: string): PaymentRequestStatus {

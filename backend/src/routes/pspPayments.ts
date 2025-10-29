@@ -9,6 +9,7 @@ import {
   listPspPayments,
   getPspPaymentDetails,
   reviewPspPayment,
+  resendVerificationNotification,
 } from '../controllers/manualPayController.js';
 import { authenticate } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
@@ -26,6 +27,7 @@ router.use('/admin', authenticate);
 router.get('/admin/list', asyncHandler(listPspPayments));
 router.get('/admin/:submissionId/details', asyncHandler(getPspPaymentDetails));
 router.post('/admin/:submissionId/review', asyncHandler(reviewPspPayment));
+router.post('/admin/:submissionId/resend-verification', asyncHandler(resendVerificationNotification));
 
 export default router;
 

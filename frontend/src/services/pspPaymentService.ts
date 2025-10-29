@@ -133,6 +133,21 @@ class PspPaymentService {
     const response = await axios.post(`${API_URL}/psp-payments/${token}/verify`, data);
     return response.data;
   }
+
+  /**
+   * Resend verification notification to customer (protected, admin only)
+   */
+  async resendVerification(submissionId: string) {
+    const token = localStorage.getItem('accessToken');
+    const response = await axios.post(
+      `${API_URL}/psp-payments/admin/${submissionId}/resend-verification`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data;
+  }
 }
 
 export const pspPaymentService = new PspPaymentService();

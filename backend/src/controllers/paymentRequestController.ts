@@ -21,7 +21,7 @@ const getPSPPaymentService = (): PSPPaymentService => {
   return pspPaymentService;
 };
 
-// Validation schema
+// Validation schema with conditional customer info based on payment method
 const createPaymentRequestSchema = z.object({
   amount: z.number().positive(),
   currency: z.string().default('USD'),
@@ -35,12 +35,53 @@ const createPaymentRequestSchema = z.object({
   }),
   customerReference: z.string().optional(),
   customerInfo: z.object({
-    name: z.string().min(1, 'Customer name is required'),
-    email: z.string().email('Valid customer email is required'),
-    phone: z.string().min(1, 'Customer phone is required'),
+    name: z.string().optional(),
+    email: z.string().optional(),
+    phone: z.string().optional(),
     billingCountry: z.string().min(1, 'Customer billing country is required'),
   }),
   paymentMethods: z.array(z.enum([PaymentMethod.BANK_WIRE, PaymentMethod.CARD])).min(1, 'At least one payment method is required'),
+}).superRefine((data, ctx) => {
+  // For bank wire transfers, require all customer info fields
+  if (data.paymentMethods.includes(PaymentMethod.BANK_WIRE)) {
+    if (!data.customerInfo.name || data.customerInfo.name.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Customer name is required for bank wire transfers',
+        path: ['customerInfo', 'name'],
+      });
+    }
+    if (!data.customerInfo.email || data.customerInfo.email.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Customer email is required for bank wire transfers',
+        path: ['customerInfo', 'email'],
+      });
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.customerInfo.email)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Valid customer email is required for bank wire transfers',
+        path: ['customerInfo', 'email'],
+      });
+    }
+    if (!data.customerInfo.phone || data.customerInfo.phone.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Customer phone is required for bank wire transfers',
+        path: ['customerInfo', 'phone'],
+      });
+    }
+  }
+  // For card payments, validate email format if provided
+  if (data.paymentMethods.includes(PaymentMethod.CARD) && data.customerInfo.email) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.customerInfo.email)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Valid customer email is required',
+        path: ['customerInfo', 'email'],
+      });
+    }
+  }
 });
 
 export const createPaymentRequest = async (req: AuthRequest, res: Response): Promise<void> => {

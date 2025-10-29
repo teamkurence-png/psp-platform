@@ -66,13 +66,23 @@ const CreatePaymentRequest: React.FC = () => {
         return;
       }
 
-      // Build customer info - required for all payment methods
+      // Build customer info based on payment method
+      const isCardPayment = formData.paymentMethods.includes(PaymentMethod.CARD);
       const customerInfo: any = {
-        name: formData.customerName,
-        email: formData.customerEmail,
-        phone: formData.customerPhone,
         billingCountry: formData.customerCountry,
       };
+
+      // Only include name, email, phone for bank wire transfers
+      // For card payments, only billing country is required
+      if (!isCardPayment || formData.customerName) {
+        customerInfo.name = formData.customerName;
+      }
+      if (!isCardPayment || formData.customerEmail) {
+        customerInfo.email = formData.customerEmail;
+      }
+      if (!isCardPayment || formData.customerPhone) {
+        customerInfo.phone = formData.customerPhone;
+      }
 
       const payload = {
         amount,
@@ -242,41 +252,47 @@ const CreatePaymentRequest: React.FC = () => {
             <CardHeader>
               <CardTitle>Customer Information</CardTitle>
               <CardDescription>
-                All customer information is required for payment requests
+                {formData.paymentMethods.includes(PaymentMethod.CARD)
+                  ? 'Only billing country is required for card payments'
+                  : 'All customer information is required for bank wire transfers'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="customerName">Name *</Label>
-                <Input
-                  id="customerName"
-                  value={formData.customerName}
-                  onChange={(e) => setFieldValue('customerName', e.target.value)}
-                  required
-                />
-              </div>
+              {!formData.paymentMethods.includes(PaymentMethod.CARD) && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="customerName">Name *</Label>
+                    <Input
+                      id="customerName"
+                      value={formData.customerName}
+                      onChange={(e) => setFieldValue('customerName', e.target.value)}
+                      required
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="customerEmail">Email *</Label>
-                  <Input
-                    id="customerEmail"
-                    type="email"
-                    value={formData.customerEmail}
-                    onChange={(e) => setFieldValue('customerEmail', e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="customerPhone">Phone *</Label>
-                  <Input
-                    id="customerPhone"
-                    value={formData.customerPhone}
-                    onChange={(e) => setFieldValue('customerPhone', e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="customerEmail">Email *</Label>
+                      <Input
+                        id="customerEmail"
+                        type="email"
+                        value={formData.customerEmail}
+                        onChange={(e) => setFieldValue('customerEmail', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="customerPhone">Phone *</Label>
+                      <Input
+                        id="customerPhone"
+                        value={formData.customerPhone}
+                        onChange={(e) => setFieldValue('customerPhone', e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="customerCountry">Billing Country *</Label>
