@@ -775,7 +775,9 @@ const ManualPay: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="font-medium text-gray-900">{payment.paymentRequest.customerInfo?.name || 'N/A'}</div>
-                        <div className="text-sm text-gray-500">{payment.paymentRequest.customerInfo?.email || 'N/A'}</div>
+                        {payment.paymentRequest.customerInfo?.email && (
+                          <div className="text-sm text-gray-500">{payment.paymentRequest.customerInfo.email}</div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -789,10 +791,14 @@ const ManualPay: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <StatusBadge status={payment.paymentRequest.status} />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {payment.cardSubmission?.submittedAt 
-                        ? formatDate(payment.cardSubmission.submittedAt)
-                        : 'N/A'}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {payment.cardSubmission?.submittedAt ? (
+                        <span className="text-gray-900">{formatDate(payment.cardSubmission.submittedAt)}</span>
+                      ) : payment.paymentRequest.status === 'pending_submission' ? (
+                        <span className="text-yellow-600 font-medium">Pending</span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex gap-2">

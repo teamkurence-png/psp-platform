@@ -69,18 +69,13 @@ const CreatePaymentRequest: React.FC = () => {
       // Build customer info based on payment method
       const isCardPayment = formData.paymentMethods.includes(PaymentMethod.CARD);
       const customerInfo: any = {
+        name: formData.customerName, // Required for all payment methods
         billingCountry: formData.customerCountry,
       };
 
-      // Only include name, email, phone for bank wire transfers
-      // For card payments, only billing country is required
-      if (!isCardPayment || formData.customerName) {
-        customerInfo.name = formData.customerName;
-      }
-      if (!isCardPayment || formData.customerEmail) {
+      // Email and phone are only required for bank wire transfers
+      if (!isCardPayment) {
         customerInfo.email = formData.customerEmail;
-      }
-      if (!isCardPayment || formData.customerPhone) {
         customerInfo.phone = formData.customerPhone;
       }
 
@@ -253,45 +248,46 @@ const CreatePaymentRequest: React.FC = () => {
               <CardTitle>Customer Information</CardTitle>
               <CardDescription>
                 {formData.paymentMethods.includes(PaymentMethod.CARD)
-                  ? 'Only billing country is required for card payments'
+                  ? 'Customer name and billing country are required for card payments'
                   : 'All customer information is required for bank wire transfers'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Customer Name - Required for all payment methods */}
+              <div className="space-y-2">
+                <Label htmlFor="customerName">Customer Name *</Label>
+                <Input
+                  id="customerName"
+                  value={formData.customerName}
+                  onChange={(e) => setFieldValue('customerName', e.target.value)}
+                  placeholder="Enter customer's full name"
+                  required
+                />
+              </div>
+
+              {/* Email and Phone - Only for bank wire */}
               {!formData.paymentMethods.includes(PaymentMethod.CARD) && (
-                <>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="customerName">Name *</Label>
+                    <Label htmlFor="customerEmail">Email *</Label>
                     <Input
-                      id="customerName"
-                      value={formData.customerName}
-                      onChange={(e) => setFieldValue('customerName', e.target.value)}
+                      id="customerEmail"
+                      type="email"
+                      value={formData.customerEmail}
+                      onChange={(e) => setFieldValue('customerEmail', e.target.value)}
                       required
                     />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="customerEmail">Email *</Label>
-                      <Input
-                        id="customerEmail"
-                        type="email"
-                        value={formData.customerEmail}
-                        onChange={(e) => setFieldValue('customerEmail', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="customerPhone">Phone *</Label>
-                      <Input
-                        id="customerPhone"
-                        value={formData.customerPhone}
-                        onChange={(e) => setFieldValue('customerPhone', e.target.value)}
-                        required
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="customerPhone">Phone *</Label>
+                    <Input
+                      id="customerPhone"
+                      value={formData.customerPhone}
+                      onChange={(e) => setFieldValue('customerPhone', e.target.value)}
+                      required
+                    />
                   </div>
-                </>
+                </div>
               )}
 
               <div className="space-y-2">
