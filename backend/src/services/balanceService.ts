@@ -31,27 +31,39 @@ export async function updateMerchantBalance(
     });
   }
 
-  // Pending states: sent, viewed
+  // Pending states: sent, viewed, pending_submission, submitted
   const isPendingStatus = (status: PaymentRequestStatus) =>
-    status === PaymentRequestStatus.SENT || status === PaymentRequestStatus.VIEWED;
+    status === PaymentRequestStatus.SENT || 
+    status === PaymentRequestStatus.VIEWED ||
+    status === PaymentRequestStatus.PENDING_SUBMISSION ||
+    status === PaymentRequestStatus.SUBMITTED;
+
+  // Final/completed states: paid, processed
+  const isCompletedStatus = (status: PaymentRequestStatus) =>
+    status === PaymentRequestStatus.PAID || 
+    status === PaymentRequestStatus.PROCESSED;
 
   // Use netAmount for all operations if available, otherwise fall back to amount
   const effectiveAmount = netAmount !== undefined ? netAmount : amount;
 
   // Remove old status effect
-  if (oldStatus === PaymentRequestStatus.PAID) {
+  if (isCompletedStatus(oldStatus)) {
+    // Was in available, remove from available
     balance.available -= effectiveAmount;
   } else if (isPendingStatus(oldStatus)) {
+    // Was in pending, remove from pending
     balance.pending -= effectiveAmount;
   }
 
   // Apply new status effect
-  if (newStatus === PaymentRequestStatus.PAID) {
-    // Use netAmount (after commission) when marking as paid
+  if (isCompletedStatus(newStatus)) {
+    // Move to available balance (payment is confirmed/processed)
     balance.available += effectiveAmount;
   } else if (isPendingStatus(newStatus)) {
+    // Keep in pending balance
     balance.pending += effectiveAmount;
   }
+  // For rejected/cancelled/expired/insufficient_funds - don't add to either balance
 
   balance.lastUpdated = new Date();
   await balance.save();

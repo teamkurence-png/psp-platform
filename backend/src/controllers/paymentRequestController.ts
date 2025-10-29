@@ -10,9 +10,16 @@ import { EncryptionService } from '../services/encryptionService.js';
 import { notificationService } from '../services/notificationService.js';
 import { commissionService } from '../services/commissionService.js';
 
-// Initialize PSP payment service
-const encryptionService = new EncryptionService();
-const pspPaymentService = new PSPPaymentService(encryptionService, notificationService);
+// Lazy initialization to avoid loading env vars before they're set
+let pspPaymentService: PSPPaymentService | null = null;
+
+const getPSPPaymentService = (): PSPPaymentService => {
+  if (!pspPaymentService) {
+    const encryptionService = new EncryptionService();
+    pspPaymentService = new PSPPaymentService(encryptionService, notificationService);
+  }
+  return pspPaymentService;
+};
 
 // Validation schema
 const createPaymentRequestSchema = z.object({
@@ -145,7 +152,8 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       commissionPercent = commissionResult.commissionPercent;
       
       // Use PSP service to generate payment link
-      const pspLinkData = pspPaymentService.generatePaymentLink();
+      const service = getPSPPaymentService();
+      const pspLinkData = service.generatePaymentLink();
       pspPaymentToken = pspLinkData.token;
       pspPaymentLink = pspLinkData.link;
       
@@ -153,7 +161,7 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       initialStatus = PaymentRequestStatus.PENDING_SUBMISSION;
       
       // Optional: Try to find a card reference for backward compatibility
-      cardId = await pspPaymentService.findCardReference();
+      cardId = await service.findCardReference();
     } else {
       // For bank wire, calculate commission based on selected bank
       commissionResult = commissionService.calculate(

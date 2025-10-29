@@ -7,9 +7,16 @@ import { PSPPaymentService } from '../services/pspPaymentService.js';
 import { EncryptionService } from '../services/encryptionService.js';
 import { notificationService } from '../services/notificationService.js';
 
-// Initialize services
-const encryptionService = new EncryptionService();
-const pspPaymentService = new PSPPaymentService(encryptionService, notificationService);
+// Lazy initialization to avoid loading env vars before they're set
+let pspPaymentService: PSPPaymentService | null = null;
+
+const getPSPPaymentService = (): PSPPaymentService => {
+  if (!pspPaymentService) {
+    const encryptionService = new EncryptionService();
+    pspPaymentService = new PSPPaymentService(encryptionService, notificationService);
+  }
+  return pspPaymentService;
+};
 
 // Validation schema for card submission
 const cardSubmissionSchema = z.object({
@@ -95,7 +102,8 @@ export const submitCardPayment = async (req: Request, res: Response): Promise<vo
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     // Delegate to service
-    const result = await pspPaymentService.submitCardPayment(token, {
+    const service = getPSPPaymentService();
+    const result = await service.submitCardPayment(token, {
       ...validatedData,
       ipAddress,
       userAgent,

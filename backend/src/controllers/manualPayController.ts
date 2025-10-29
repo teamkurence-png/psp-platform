@@ -7,9 +7,16 @@ import { PSPPaymentService } from '../services/pspPaymentService.js';
 import { EncryptionService } from '../services/encryptionService.js';
 import { notificationService } from '../services/notificationService.js';
 
-// Initialize services
-const encryptionService = new EncryptionService();
-const pspPaymentService = new PSPPaymentService(encryptionService, notificationService);
+// Lazy initialization to avoid loading env vars before they're set
+let pspPaymentService: PSPPaymentService | null = null;
+
+const getPSPPaymentService = (): PSPPaymentService => {
+  if (!pspPaymentService) {
+    const encryptionService = new EncryptionService();
+    pspPaymentService = new PSPPaymentService(encryptionService, notificationService);
+  }
+  return pspPaymentService;
+};
 
 /**
  * List PSP payments for admin review (card payments only)
@@ -57,14 +64,14 @@ export const listPspPayments = async (req: AuthRequest, res: Response): Promise<
     });
 
     // Create a map of payment request ID to card submission
-    const submissionMap = new Map();
+    const submissionMap = new Map<string, typeof cardSubmissions[0]>();
     cardSubmissions.forEach(sub => {
       submissionMap.set(sub.paymentRequestId.toString(), sub);
     });
 
     // Combine data
     const results = paymentRequests.map(pr => {
-      const submission = submissionMap.get(pr._id.toString());
+      const submission = submissionMap.get(pr._id?.toString() || '');
       return {
         paymentRequest: pr,
         cardSubmission: submission || null,
@@ -118,7 +125,8 @@ export const getPspPaymentDetails = async (req: AuthRequest, res: Response): Pro
     }
 
     // Use service to get decrypted card details
-    const cardDetails = await pspPaymentService.getDecryptedCardDetails(submissionId);
+    const service = getPSPPaymentService();
+    const cardDetails = await service.getDecryptedCardDetails(submissionId);
 
     // Return combined data
     res.json({
@@ -156,7 +164,8 @@ export const reviewPspPayment = async (req: AuthRequest, res: Response): Promise
     const validatedData = reviewSchema.parse(req.body);
 
     // Delegate to service
-    const result = await pspPaymentService.reviewPayment(submissionId, validatedData.decision);
+    const service = getPSPPaymentService();
+    const result = await service.reviewPayment(submissionId, validatedData.decision);
 
     res.json({
       success: true,
