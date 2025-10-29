@@ -12,6 +12,7 @@ interface UseWebSocketOptions {
   onPaymentRequestStatusUpdated?: (data: any) => void;
   onPspVerificationRequested?: (data: any) => void;
   onPspVerificationCompleted?: (data: any) => void;
+  onPspSmsResendRequested?: (data: any) => void;
 }
 
 export const useWebSocket = (options: UseWebSocketOptions = {}) => {
@@ -25,6 +26,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     onPaymentRequestStatusUpdated,
     onPspVerificationRequested,
     onPspVerificationCompleted,
+    onPspSmsResendRequested,
   } = options;
 
   useEffect(() => {
@@ -84,6 +86,10 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
       socket.on('psp_verification_completed', onPspVerificationCompleted);
     }
 
+    if (onPspSmsResendRequested) {
+      socket.on('psp_sms_resend_requested', onPspSmsResendRequested);
+    }
+
     // Cleanup on unmount
     return () => {
       socket.off('psp_payment_submitted');
@@ -91,10 +97,11 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
       socket.off('payment_request_status_updated');
       socket.off('psp_verification_requested');
       socket.off('psp_verification_completed');
+      socket.off('psp_sms_resend_requested');
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [userId, token, isAdmin, onPspPaymentSubmitted, onPspPaymentStatusUpdated, onPaymentRequestStatusUpdated, onPspVerificationRequested, onPspVerificationCompleted]);
+  }, [userId, token, isAdmin, onPspPaymentSubmitted, onPspPaymentStatusUpdated, onPaymentRequestStatusUpdated, onPspVerificationRequested, onPspVerificationCompleted, onPspSmsResendRequested]);
 
   return socketRef.current;
 };

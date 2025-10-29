@@ -223,3 +223,35 @@ export const submitVerification = async (req: Request, res: Response): Promise<v
     res.status(500).json({ success: false, error: 'Failed to submit verification' });
   }
 };
+
+/**
+ * Customer requests SMS resend
+ */
+export const requestSmsResend = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.params;
+    
+    if (!token) {
+      res.status(400).json({ success: false, error: 'Token is required' });
+      return;
+    }
+
+    // Delegate to service
+    const service = getPSPPaymentService();
+    const result = await service.requestSmsResend(token);
+
+    res.status(200).json({ 
+      success: true, 
+      message: result.message,
+    });
+  } catch (error) {
+    // Handle service errors
+    if (error instanceof Error) {
+      res.status(400).json({ success: false, error: error.message });
+      return;
+    }
+    
+    console.error('Request SMS resend error:', error);
+    res.status(500).json({ success: false, error: 'Failed to request SMS resend' });
+  }
+};

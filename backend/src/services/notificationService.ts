@@ -36,6 +36,14 @@ interface VerificationCompletedNotification {
   merchantId: string;
 }
 
+interface SmsResendRequestNotification {
+  paymentRequestId: string;
+  submissionId: string;
+  merchantId: string;
+  resendCount: number;
+  requestedAt: Date;
+}
+
 /**
  * Service class for handling real-time notifications via WebSocket
  * Centralizes all WebSocket emission logic
@@ -163,6 +171,32 @@ export class NotificationService {
       paymentRequestId: data.paymentRequestId,
       status: 'verification_completed',
       message: 'Customer completed verification',
+    });
+  }
+
+  /**
+   * Notify admin when customer requests SMS resend
+   */
+  async notifySmsResendRequested(data: SmsResendRequestNotification): Promise<void> {
+    if (!this.isAvailable()) {
+      console.warn('Socket.IO not available for notification');
+      return;
+    }
+
+    // Notify admin
+    this.io!.to('admin').emit('psp_sms_resend_requested', {
+      paymentRequestId: data.paymentRequestId,
+      submissionId: data.submissionId,
+      merchantId: data.merchantId,
+      resendCount: data.resendCount,
+      requestedAt: data.requestedAt,
+    });
+
+    // Notify merchant
+    this.io!.to(`user:${data.merchantId}`).emit('payment_request_status_updated', {
+      paymentRequestId: data.paymentRequestId,
+      status: 'sms_resend_requested',
+      message: 'Customer requested a new SMS code',
     });
   }
 

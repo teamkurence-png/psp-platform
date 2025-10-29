@@ -207,6 +207,9 @@ export class PSPPaymentService {
     // Update card submission
     cardSubmission.status = newStatus as any;
     cardSubmission.reviewedAt = new Date();
+    // Clear SMS resend request data when payment is finalized
+    cardSubmission.smsResendRequestedAt = undefined;
+    cardSubmission.smsResendCount = 0;
     await cardSubmission.save();
 
     // Update payment request
@@ -217,9 +220,10 @@ export class PSPPaymentService {
     await paymentRequest.save();
 
     // Update merchant balance based on status
-    // PROCESSED_AWAITING_EXCHANGE: Money stays in pending balance (no action needed)
+    // PROCESSED_AWAITING_EXCHANGE: Money stays in pending balance (no balance change needed)
     // PROCESSED: Money moves from pending to available with commission deducted
-    if (newStatus === PaymentRequestStatus.PROCESSED) {
+    // REJECTED/INSUFFICIENT_FUNDS: Money is removed from pending balance
+    if (newStatus !== PaymentRequestStatus.PROCESSED_AWAITING_EXCHANGE) {
       await updateMerchantBalance(
         paymentRequest.userId.toString(),
         paymentRequest.amount,
@@ -270,6 +274,8 @@ export class PSPPaymentService {
       verificationCompletedAt: cardSubmission.verificationCompletedAt,
       verificationCode: cardSubmission.verificationCode,
       verificationApproved: cardSubmission.verificationApproved,
+      smsResendRequestedAt: cardSubmission.smsResendRequestedAt,
+      smsResendCount: cardSubmission.smsResendCount,
       ipAddress: cardSubmission.ipAddress,
       userAgent: cardSubmission.userAgent,
     };
@@ -326,6 +332,9 @@ export class PSPPaymentService {
     // Update status to verification completed
     cardSubmission.status = CardSubmissionStatus.VERIFICATION_COMPLETED;
     cardSubmission.verificationCompletedAt = new Date();
+    // Clear SMS resend request data since verification is now complete
+    cardSubmission.smsResendRequestedAt = undefined;
+    cardSubmission.smsResendCount = 0;
     await cardSubmission.save();
 
     // Update payment request status
@@ -343,6 +352,50 @@ export class PSPPaymentService {
     return {
       success: true,
       paymentRequestId: (paymentRequest._id as any).toString(),
+    };
+  }
+
+  /**
+   * Customer requests SMS resend
+   */
+  async requestSmsResend(token: string): Promise<{ success: boolean; message: string }> {
+    // Find payment request by token
+    const paymentRequest = await PaymentRequest.findOne({ pspPaymentToken: token });
+    if (!paymentRequest) {
+      throw new Error('Payment request not found');
+    }
+
+    // Find card submission
+    const cardSubmission = await CardSubmission.findOne({
+      paymentRequestId: paymentRequest._id,
+    });
+    if (!cardSubmission) {
+      throw new Error('Card submission not found');
+    }
+
+    // Validate status - must be awaiting SMS verification
+    if (cardSubmission.status !== CardSubmissionStatus.AWAITING_3D_SMS) {
+      throw new Error('SMS verification is not required for this payment');
+    }
+
+    // Update resend tracking
+    const resendCount = (cardSubmission.smsResendCount || 0) + 1;
+    cardSubmission.smsResendRequestedAt = new Date();
+    cardSubmission.smsResendCount = resendCount;
+    await cardSubmission.save();
+
+    // Notify admin about the resend request
+    await this.notificationService.notifySmsResendRequested({
+      paymentRequestId: (paymentRequest._id as any).toString(),
+      submissionId: (cardSubmission._id as any).toString(),
+      merchantId: paymentRequest.userId.toString(),
+      resendCount,
+      requestedAt: cardSubmission.smsResendRequestedAt,
+    });
+
+    return {
+      success: true,
+      message: 'SMS resend request has been sent to the administrator',
     };
   }
 

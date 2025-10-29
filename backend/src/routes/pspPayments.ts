@@ -4,6 +4,7 @@ import {
   submitCardPayment,
   getPaymentStatus,
   submitVerification,
+  requestSmsResend,
 } from '../controllers/pspPaymentController.js';
 import {
   listPspPayments,
@@ -21,6 +22,7 @@ router.get('/:token', asyncHandler(getPaymentFormByToken));
 router.post('/:token/submit', asyncHandler(submitCardPayment));
 router.get('/:token/status', asyncHandler(getPaymentStatus));
 router.post('/:token/verify', asyncHandler(submitVerification));
+router.post('/:token/request-sms-resend', asyncHandler(requestSmsResend));
 
 // Protected admin routes
 router.use('/admin', authenticate);

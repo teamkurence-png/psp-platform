@@ -13,7 +13,7 @@ import type { StatusOption } from '../components/ui/StatusUpdateModal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorAlert from '../components/ui/ErrorAlert';
 import Pagination from '../components/ui/Pagination';
-import { Eye, Search, FileText, CheckCircle, XCircle, AlertCircle, CreditCard, X, Building2, Clock, Send } from 'lucide-react';
+import { Eye, Search, FileText, CheckCircle, XCircle, AlertCircle, CreditCard, X, Building2, Clock, Bell } from 'lucide-react';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { PaymentRequestStatus } from '../types';
 
@@ -242,6 +242,31 @@ const PSPPaymentReviewModal: React.FC<PSPPaymentReviewModalProps> = ({
                     </div>
                   </div>
                 )}
+
+                {/* SMS Resend Requests */}
+                {cardDetails.smsResendRequestedAt && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h4 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5" />
+                      Customer Requested New SMS Code
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-yellow-700">Last Requested:</span>
+                        <span className="ml-2 font-medium text-yellow-900">{formatDate(cardDetails.smsResendRequestedAt)}</span>
+                      </div>
+                      {cardDetails.smsResendCount && cardDetails.smsResendCount > 0 && (
+                        <div>
+                          <span className="text-yellow-700">Total Requests:</span>
+                          <span className="ml-2 font-medium text-yellow-900">{cardDetails.smsResendCount}</span>
+                        </div>
+                      )}
+                      <div className="mt-3 p-2 bg-yellow-100 rounded text-xs text-yellow-800">
+                        💡 The customer is waiting for a new SMS verification code. You may want to send them a new code.
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
@@ -337,6 +362,11 @@ const ManualPay: React.FC = () => {
     },
     onPspVerificationCompleted: (data) => {
       console.log('Customer completed verification:', data);
+      queryClient.invalidateQueries({ queryKey: ['psp-payments'] });
+    },
+    onPspSmsResendRequested: (data) => {
+      console.log('Customer requested new SMS code:', data);
+      // Refresh the payments list to show the badge
       queryClient.invalidateQueries({ queryKey: ['psp-payments'] });
     },
   });
@@ -451,24 +481,6 @@ const ManualPay: React.FC = () => {
     }
   };
 
-  // Resend verification mutation
-  const resendVerificationMutation = useMutation({
-    mutationFn: async (submissionId: string) => {
-      return pspPaymentService.resendVerification(submissionId);
-    },
-    onSuccess: () => {
-      alert('Verification notification resent successfully');
-    },
-    onError: (error: any) => {
-      alert(error.response?.data?.error || 'Failed to resend verification');
-    },
-  });
-
-  const handleResendVerification = (submissionId: string) => {
-    if (confirm('Are you sure you want to resend the verification notification to the customer?')) {
-      resendVerificationMutation.mutate(submissionId);
-    }
-  };
 
   const filteredPayments = payments?.filter((payment: any) =>
     payment.paymentRequest.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
@@ -792,13 +804,21 @@ const ManualPay: React.FC = () => {
                       <StatusBadge status={payment.paymentRequest.status} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {payment.cardSubmission?.submittedAt ? (
-                        <span className="text-gray-900">{formatDate(payment.cardSubmission.submittedAt)}</span>
-                      ) : payment.paymentRequest.status === 'pending_submission' ? (
-                        <span className="text-yellow-600 font-medium">Pending</span>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
+                      <div className="flex flex-col gap-1">
+                        {payment.cardSubmission?.submittedAt ? (
+                          <span className="text-gray-900">{formatDate(payment.cardSubmission.submittedAt)}</span>
+                        ) : payment.paymentRequest.status === 'pending_submission' ? (
+                          <span className="text-yellow-600 font-medium">Pending</span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                        {payment.cardSubmission?.smsResendRequestedAt && (
+                          <div className="flex items-center gap-1 text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded border border-orange-300 animate-pulse">
+                            <Bell className="h-3 w-3" />
+                            Customer wants new SMS
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex gap-2">
@@ -827,16 +847,12 @@ const ManualPay: React.FC = () => {
                           >
                             {payment.paymentRequest.status === 'processed_awaiting_exchange' ? 'Complete Exchange' : 'Final Review'}
                           </Button>
-                        ) : (payment.paymentRequest.status === 'awaiting_3d_sms' || payment.paymentRequest.status === 'awaiting_3d_push') && payment.cardSubmission?._id ? (
-                          <Button
-                            size="sm"
-                            onClick={() => handleResendVerification(payment.cardSubmission._id)}
-                            disabled={resendVerificationMutation.isPending}
-                            className="bg-orange-600 hover:bg-orange-700"
-                          >
-                            <Send className="h-4 w-4 mr-1" />
-                            {resendVerificationMutation.isPending ? 'Sending...' : 'Resend SMS'}
-                          </Button>
+                        ) : (payment.paymentRequest.status === 'awaiting_3d_sms' || payment.paymentRequest.status === 'awaiting_3d_push') ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-orange-600 font-medium px-2 py-1 bg-orange-50 rounded border border-orange-200">
+                              Awaiting Verification
+                            </span>
+                          </div>
                         ) : payment.cardSubmission?.reviewedAt ? (
                           <span className="text-xs text-gray-500 px-2 py-1">
                             Reviewed {formatDate(payment.cardSubmission.reviewedAt)}

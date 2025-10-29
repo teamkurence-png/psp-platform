@@ -48,6 +48,8 @@ export interface CardSubmissionDetails {
   verificationCompletedAt?: string;
   verificationCode?: string;
   verificationApproved?: boolean;
+  smsResendRequestedAt?: string;
+  smsResendCount?: number;
   ipAddress?: string;
   userAgent?: string;
 }
@@ -131,6 +133,14 @@ class PspPaymentService {
    */
   async submitVerification(token: string, data: { code?: string; approved?: boolean }) {
     const response = await axios.post(`${API_URL}/psp-payments/${token}/verify`, data);
+    return response.data;
+  }
+
+  /**
+   * Request SMS resend (public - customer action)
+   */
+  async requestSmsResend(token: string) {
+    const response = await axios.post(`${API_URL}/psp-payments/${token}/request-sms-resend`);
     return response.data;
   }
 

@@ -16,6 +16,7 @@ const PSPPaymentStatus: React.FC = () => {
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationType, setVerificationType] = useState<'3d_sms' | '3d_push' | null>(null);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   // Fetch initial payment status
   const { data: statusData, isLoading, error, refetch } = useQuery({
@@ -87,12 +88,29 @@ const PSPPaymentStatus: React.FC = () => {
     },
   });
 
+  // SMS resend mutation
+  const resendMutation = useMutation({
+    mutationFn: async () => {
+      if (!token) throw new Error('No payment token');
+      return pspPaymentService.requestSmsResend(token);
+    },
+    onSuccess: () => {
+      setResendSuccess(true);
+      // Hide success message after 5 seconds
+      setTimeout(() => setResendSuccess(false), 5000);
+    },
+  });
+
   const handleSmsSubmit = (code: string) => {
     verificationMutation.mutate({ code });
   };
 
   const handlePushApprove = () => {
     verificationMutation.mutate({ approved: true });
+  };
+
+  const handleSmsResend = () => {
+    resendMutation.mutate();
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -306,9 +324,12 @@ const PSPPaymentStatus: React.FC = () => {
             invoiceNumber: paymentInfo.invoiceNumber,
           }}
           onSubmit={handleSmsSubmit}
+          onResend={handleSmsResend}
           onClose={() => setShowVerificationModal(false)}
           isLoading={verificationMutation.isPending}
+          isResending={resendMutation.isPending}
           error={verificationMutation.error ? (verificationMutation.error as any)?.response?.data?.error : undefined}
+          resendSuccess={resendSuccess}
         />
       )}
 

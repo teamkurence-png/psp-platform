@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, MessageSquare, Lock } from 'lucide-react';
+import { X, MessageSquare, Lock, RefreshCw } from 'lucide-react';
 import Button from './Button';
 import { formatCurrency } from '../../lib/utils';
 
@@ -10,17 +10,23 @@ interface SmsVerificationModalProps {
     invoiceNumber: string;
   };
   onSubmit: (code: string) => void;
+  onResend?: () => void;
   onClose: () => void;
   isLoading: boolean;
+  isResending?: boolean;
   error?: string;
+  resendSuccess?: boolean;
 }
 
 const SmsVerificationModal: React.FC<SmsVerificationModalProps> = ({
   paymentInfo,
   onSubmit,
+  onResend,
   onClose,
   isLoading,
+  isResending,
   error,
+  resendSuccess,
 }) => {
   const [code, setCode] = useState('');
 
@@ -111,6 +117,16 @@ const SmsVerificationModal: React.FC<SmsVerificationModalProps> = ({
               </div>
             )}
 
+            {/* Resend Success Message */}
+            {resendSuccess && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800">
+                  Your request for a new SMS code has been sent to the administrator. 
+                  Please wait for them to send you a new code.
+                </p>
+              </div>
+            )}
+
             {/* Submit Button */}
             <Button
               type="submit"
@@ -127,6 +143,34 @@ const SmsVerificationModal: React.FC<SmsVerificationModalProps> = ({
               )}
             </Button>
           </form>
+
+          {/* Resend SMS Button */}
+          {onResend && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600 mb-3 text-center">
+                Didn't receive the code?
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={onResend}
+                disabled={isLoading || isResending}
+              >
+                {isResending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                    Requesting...
+                  </span>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Request New SMS Code
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -25,6 +25,8 @@ export interface ICardSubmission extends Document {
   verificationCompletedAt?: Date;
   verificationCode?: string;
   verificationApproved?: boolean;
+  smsResendRequestedAt?: Date;
+  smsResendCount?: number;
   ipAddress?: string;
   userAgent?: string;
   createdAt: Date;
@@ -73,6 +75,11 @@ const cardSubmissionSchema = new Schema<ICardSubmission>(
     verificationCompletedAt: Date,
     verificationCode: String,
     verificationApproved: Boolean,
+    smsResendRequestedAt: Date,
+    smsResendCount: {
+      type: Number,
+      default: 0,
+    },
     ipAddress: String,
     userAgent: String,
   },
