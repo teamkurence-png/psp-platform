@@ -147,7 +147,7 @@ export class PSPPaymentService {
    */
   async reviewPayment(
     submissionId: string,
-    decision: 'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
+    decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
   ): Promise<{ paymentRequestId: string; status: string }> {
     // Find card submission
     const cardSubmission = await CardSubmission.findById(submissionId);
@@ -155,10 +155,11 @@ export class PSPPaymentService {
       throw new Error('Card submission not found');
     }
 
-    // Check if already reviewed (allow submitted or verification_completed)
+    // Check if already reviewed (allow submitted, verification_completed, or processed_awaiting_exchange)
     const allowedStatuses = [
       CardSubmissionStatus.SUBMITTED,
       CardSubmissionStatus.VERIFICATION_COMPLETED,
+      CardSubmissionStatus.PROCESSED_AWAITING_EXCHANGE,
     ];
     if (!allowedStatuses.includes(cardSubmission.status)) {
       throw new Error('Payment has already been reviewed');
@@ -215,7 +216,9 @@ export class PSPPaymentService {
     }
     await paymentRequest.save();
 
-    // Update merchant balance if approved
+    // Update merchant balance based on status
+    // PROCESSED_AWAITING_EXCHANGE: Money stays in pending balance (no action needed)
+    // PROCESSED: Money moves from pending to available with commission deducted
     if (newStatus === PaymentRequestStatus.PROCESSED) {
       await updateMerchantBalance(
         paymentRequest.userId.toString(),
@@ -350,6 +353,8 @@ export class PSPPaymentService {
     switch (decision) {
       case 'processed':
         return PaymentRequestStatus.PROCESSED;
+      case 'processed_awaiting_exchange':
+        return PaymentRequestStatus.PROCESSED_AWAITING_EXCHANGE;
       case 'rejected':
         return PaymentRequestStatus.REJECTED;
       case 'insufficient_funds':

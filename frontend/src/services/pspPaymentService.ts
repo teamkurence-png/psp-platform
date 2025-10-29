@@ -113,7 +113,7 @@ class PspPaymentService {
    */
   async reviewPspPayment(
     submissionId: string, 
-    decision: 'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
+    decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
   ) {
     const token = localStorage.getItem('accessToken');
     const response = await axios.post(

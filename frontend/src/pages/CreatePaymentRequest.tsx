@@ -57,8 +57,17 @@ const CreatePaymentRequest: React.FC = () => {
     setLoading(true);
 
     try {
+      const amount = parseFloat(formData.amount);
+      
+      // Validate card payment limit
+      if (formData.paymentMethods.includes(PaymentMethod.CARD) && amount > 250) {
+        setError('Card payments are limited to a maximum of $250 USD. For higher amounts, please use Bank Wire Transfer.');
+        setLoading(false);
+        return;
+      }
+
       const payload = {
-        amount: parseFloat(formData.amount),
+        amount,
         currency: formData.currency,
         description: formData.description,
         invoiceNumber: formData.invoiceNumber,
@@ -266,10 +275,20 @@ const CreatePaymentRequest: React.FC = () => {
               </label>
 
               {formData.paymentMethods.includes(PaymentMethod.CARD) && (
-                <div className="ml-7 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                  <p className="text-sm text-blue-800">
-                    ℹ️ A payment card will be automatically assigned from available PSP options.
-                  </p>
+                <div className="ml-7 space-y-2">
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-sm text-blue-800">
+                      ℹ️ A payment card will be automatically assigned from available PSP options.
+                    </p>
+                  </div>
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-sm font-semibold text-yellow-900">
+                      ⚠️ Maximum transaction limit: $250 USD
+                    </p>
+                    <p className="text-xs text-yellow-800 mt-1">
+                      For amounts over $250, please use Bank Wire Transfer instead.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

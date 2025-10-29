@@ -80,7 +80,7 @@ function detectStatusType(status: string): StatusType {
   if (['failed', 'rejected', 'declined', 'reversed', 'cancelled', 'expired'].includes(lowerStatus)) {
     return 'failed';
   }
-  if (['on_chain', 'in_progress', 'submitted', 'verification_completed'].includes(lowerStatus)) {
+  if (['on_chain', 'in_progress', 'submitted', 'verification_completed', 'processed_awaiting_exchange'].includes(lowerStatus)) {
     return 'info';
   }
   if (['insufficient_funds', 'awaiting_3d_sms', 'awaiting_3d_push'].includes(lowerStatus)) {

@@ -178,6 +178,27 @@ const PSPPaymentStatus: React.FC = () => {
           </div>
         );
 
+      case 'processed_awaiting_exchange':
+        return (
+          <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
+                  <CreditCard className="h-10 w-10 text-blue-600" />
+                </div>
+                <div className="absolute inset-0 rounded-full border-4 border-blue-300 border-t-transparent animate-spin"></div>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Processing Exchange</h2>
+            <p className="text-gray-600 mb-4">
+              Your payment has been approved and is being processed through our crypto exchange
+            </p>
+            <p className="text-sm text-gray-500">
+              This usually takes a few moments. You will be notified once complete.
+            </p>
+          </div>
+        );
+
       case 'processed':
         return (
           <div className="text-center">

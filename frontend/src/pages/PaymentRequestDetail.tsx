@@ -140,6 +140,13 @@ const PaymentRequestDetail: React.FC = () => {
             <span className="font-semibold">Verification Complete (Review Pending)</span>
           </div>
         );
+      case PaymentRequestStatus.PROCESSED_AWAITING_EXCHANGE:
+        return (
+          <div className="flex items-center gap-2 text-blue-600">
+            <Clock className="h-5 w-5" />
+            <span className="font-semibold">Processed - Awaiting Crypto Exchange</span>
+          </div>
+        );
       case PaymentRequestStatus.VIEWED:
         return (
           <div className="flex items-center gap-2 text-blue-600">
@@ -557,6 +564,14 @@ const PaymentRequestDetail: React.FC = () => {
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
                       ✓ Customer completed verification - Under final review by admin
+                    </p>
+                  </div>
+                )}
+
+                {paymentRequest.status === PaymentRequestStatus.PROCESSED_AWAITING_EXCHANGE && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      🔄 Payment processed - Awaiting crypto exchange completion
                     </p>
                   </div>
                 )}

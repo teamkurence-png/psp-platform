@@ -90,6 +90,18 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
 
     // Card payments no longer require pre-configured cards - PSP links are generated dynamically
     // Only validate bank availability if bank wire is requested
+    
+    // Validate card payment limit ($250 maximum)
+    if (validatedData.paymentMethods.includes(PaymentMethod.CARD)) {
+      const CARD_PAYMENT_LIMIT = 250;
+      if (validatedData.amount > CARD_PAYMENT_LIMIT) {
+        res.status(400).json({ 
+          success: false, 
+          error: `Card payments are limited to a maximum of $${CARD_PAYMENT_LIMIT} USD. For higher amounts, please use Bank Wire Transfer.`
+        });
+        return;
+      }
+    }
 
     // If any payment methods don't have available processors, return error
     if (unavailableMethods.length > 0) {

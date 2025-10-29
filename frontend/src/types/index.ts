@@ -31,6 +31,7 @@ export const PaymentRequestStatus = {
   AWAITING_3D_SMS: 'awaiting_3d_sms',
   AWAITING_3D_PUSH: 'awaiting_3d_push',
   VERIFICATION_COMPLETED: 'verification_completed',
+  PROCESSED_AWAITING_EXCHANGE: 'processed_awaiting_exchange',
   PROCESSED: 'processed',
   REJECTED: 'rejected',
   INSUFFICIENT_FUNDS: 'insufficient_funds',

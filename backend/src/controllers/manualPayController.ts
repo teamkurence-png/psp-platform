@@ -147,7 +147,7 @@ export const getPspPaymentDetails = async (req: AuthRequest, res: Response): Pro
 
 // Validation schema for review
 const reviewSchema = z.object({
-  decision: z.enum(['processed', 'rejected', 'insufficient_funds', 'awaiting_3d_sms', 'awaiting_3d_push'] as const),
+  decision: z.enum(['processed', 'processed_awaiting_exchange', 'rejected', 'insufficient_funds', 'awaiting_3d_sms', 'awaiting_3d_push'] as const),
 });
 
 /**

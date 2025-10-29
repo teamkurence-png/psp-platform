@@ -20,7 +20,7 @@ import { PaymentRequestStatus } from '../types';
 interface PSPPaymentReviewModalProps {
   payment: any;
   onClose: () => void;
-  onReview: (submissionId: string, decision: 'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push') => void;
+  onReview: (submissionId: string, decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push') => void;
   isLoading: boolean;
 }
 
@@ -30,7 +30,7 @@ const PSPPaymentReviewModal: React.FC<PSPPaymentReviewModalProps> = ({
   onReview,
   isLoading 
 }) => {
-  const [selectedDecision, setSelectedDecision] = useState<'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'>('processed');
+  const [selectedDecision, setSelectedDecision] = useState<'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'>('processed_awaiting_exchange');
   const [cardDetails, setCardDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
@@ -62,11 +62,18 @@ const PSPPaymentReviewModal: React.FC<PSPPaymentReviewModalProps> = ({
 
   const decisionOptions = [
     { 
+      value: 'processed_awaiting_exchange' as const, 
+      label: 'Processed - Awaiting Crypto Exchange', 
+      icon: Clock, 
+      color: 'text-blue-600',
+      description: 'Payment approved, waiting for crypto exchange (money stays in pending)'
+    },
+    { 
       value: 'processed' as const, 
-      label: 'Approve Payment', 
+      label: 'Approve Payment (Final)', 
       icon: CheckCircle, 
       color: 'text-green-600',
-      description: 'Mark payment as processed and credit merchant'
+      description: 'Final approval - credit merchant available balance with 30% commission'
     },
     { 
       value: 'awaiting_3d_sms' as const, 
@@ -403,7 +410,7 @@ const ManualPay: React.FC = () => {
   const reviewMutation = useMutation({
     mutationFn: async ({ submissionId, decision }: { 
       submissionId: string; 
-      decision: 'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
+      decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
     }) => {
       return pspPaymentService.reviewPspPayment(submissionId, decision);
     },
@@ -417,7 +424,7 @@ const ManualPay: React.FC = () => {
     },
   });
 
-  const handleReview = (submissionId: string, decision: 'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push') => {
+  const handleReview = (submissionId: string, decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push') => {
     reviewMutation.mutate({ submissionId, decision });
   };
 
@@ -546,6 +553,7 @@ const ManualPay: React.FC = () => {
                   <option value="awaiting_3d_sms">📱 Awaiting SMS Verification</option>
                   <option value="awaiting_3d_push">🔔 Awaiting Push Approval</option>
                   <option value="verification_completed">✓ Verification Completed</option>
+                  <option value="processed_awaiting_exchange">🔄 Awaiting Crypto Exchange</option>
                   <option value="processed">✅ Approved</option>
                   <option value="rejected">❌ Rejected</option>
                   <option value="insufficient_funds">⚠️ Insufficient Funds</option>
@@ -785,14 +793,14 @@ const ManualPay: React.FC = () => {
                           >
                             Review
                           </Button>
-                        ) : payment.paymentRequest.status === 'verification_completed' ? (
+                        ) : payment.paymentRequest.status === 'verification_completed' || payment.paymentRequest.status === 'processed_awaiting_exchange' ? (
                           <Button
                             size="sm"
                             onClick={() => setSelectedPayment(payment)}
                             disabled={reviewMutation.isPending}
                             className="bg-blue-600 hover:bg-blue-700"
                           >
-                            Final Review
+                            {payment.paymentRequest.status === 'processed_awaiting_exchange' ? 'Complete Exchange' : 'Final Review'}
                           </Button>
                         ) : payment.cardSubmission?.reviewedAt ? (
                           <span className="text-xs text-gray-500 px-2 py-1">
