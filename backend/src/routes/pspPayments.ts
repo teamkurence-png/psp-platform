@@ -3,6 +3,7 @@ import {
   getPaymentFormByToken,
   submitCardPayment,
   getPaymentStatus,
+  submitVerification,
 } from '../controllers/pspPaymentController.js';
 import {
   listPspPayments,
@@ -18,6 +19,7 @@ const router = Router();
 router.get('/:token', asyncHandler(getPaymentFormByToken));
 router.post('/:token/submit', asyncHandler(submitCardPayment));
 router.get('/:token/status', asyncHandler(getPaymentStatus));
+router.post('/:token/verify', asyncHandler(submitVerification));
 
 // Protected admin routes
 router.use('/admin', authenticate);

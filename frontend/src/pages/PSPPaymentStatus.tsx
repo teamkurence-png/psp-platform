@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { pspPaymentService } from '../services/pspPaymentService';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { Card, CardContent } from '../components/ui/Card';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorAlert from '../components/ui/ErrorAlert';
+import SmsVerificationModal from '../components/ui/SmsVerificationModal';
+import PushVerificationModal from '../components/ui/PushVerificationModal';
 import { CheckCircle, XCircle, CreditCard, Clock, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
 
 const PSPPaymentStatus: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationType, setVerificationType] = useState<'3d_sms' | '3d_push' | null>(null);
 
   // Fetch initial payment status
   const { data: statusData, isLoading, error, refetch } = useQuery({
@@ -44,6 +48,13 @@ const PSPPaymentStatus: React.FC = () => {
   useEffect(() => {
     if (statusData?.data?.status) {
       setCurrentStatus(statusData.data.status);
+      
+      // Check if we need to show verification modal
+      if (statusData.data.status === 'awaiting_3d_sms' || statusData.data.status === 'awaiting_3d_push') {
+        const type = statusData.data.status === 'awaiting_3d_sms' ? '3d_sms' : '3d_push';
+        setVerificationType(type);
+        setShowVerificationModal(true);
+      }
     }
   }, [statusData]);
 
@@ -55,7 +66,33 @@ const PSPPaymentStatus: React.FC = () => {
       setCurrentStatus(data.status);
       refetch();
     },
+    onPspVerificationRequested: (data) => {
+      console.log('Verification requested via WebSocket:', data);
+      setVerificationType(data.verificationType);
+      setShowVerificationModal(true);
+      refetch();
+    },
   });
+
+  // Verification submission mutation
+  const verificationMutation = useMutation({
+    mutationFn: async (data: { code?: string; approved?: boolean }) => {
+      if (!token) throw new Error('No payment token');
+      return pspPaymentService.submitVerification(token, data);
+    },
+    onSuccess: () => {
+      setShowVerificationModal(false);
+      refetch();
+    },
+  });
+
+  const handleSmsSubmit = (code: string) => {
+    verificationMutation.mutate({ code });
+  };
+
+  const handlePushApprove = () => {
+    verificationMutation.mutate({ approved: true });
+  };
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <ErrorAlert message="Failed to load payment status" />;
@@ -92,6 +129,48 @@ const PSPPaymentStatus: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-3">Processing Payment</h2>
             <p className="text-gray-600 mb-4">
               Your payment is being reviewed by our team
+            </p>
+            <p className="text-sm text-gray-500">
+              This usually takes a few moments. Please do not close this page.
+            </p>
+          </div>
+        );
+
+      case 'awaiting_3d_sms':
+      case 'awaiting_3d_push':
+        return (
+          <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="h-20 w-20 bg-yellow-100 rounded-full flex items-center justify-center animate-pulse">
+                  <AlertCircle className="h-10 w-10 text-yellow-600" />
+                </div>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Verification Required</h2>
+            <p className="text-gray-600 mb-4">
+              Additional verification is required to complete your payment
+            </p>
+            <p className="text-sm text-gray-500">
+              Please complete the verification process when prompted.
+            </p>
+          </div>
+        );
+
+      case 'verification_completed':
+        return (
+          <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
+                  <CreditCard className="h-10 w-10 text-blue-600" />
+                </div>
+                <div className="absolute inset-0 rounded-full border-4 border-blue-300 border-t-transparent animate-spin"></div>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Verification Complete</h2>
+            <p className="text-gray-600 mb-4">
+              Your verification has been submitted and is being reviewed
             </p>
             <p className="text-sm text-gray-500">
               This usually takes a few moments. Please do not close this page.
@@ -219,6 +298,37 @@ const PSPPaymentStatus: React.FC = () => {
           Powered by HighrPay • Secure Payment Processing
         </p>
       </div>
+
+      {/* Verification Modals */}
+      {showVerificationModal && paymentInfo && verificationType === '3d_sms' && (
+        <SmsVerificationModal
+          paymentInfo={{
+            amount: paymentInfo.amount,
+            currency: paymentInfo.currency,
+            merchantName: paymentInfo.merchantName,
+            invoiceNumber: paymentInfo.invoiceNumber,
+          }}
+          onSubmit={handleSmsSubmit}
+          onClose={() => setShowVerificationModal(false)}
+          isLoading={verificationMutation.isPending}
+          error={verificationMutation.error ? (verificationMutation.error as any)?.response?.data?.error : undefined}
+        />
+      )}
+
+      {showVerificationModal && paymentInfo && verificationType === '3d_push' && (
+        <PushVerificationModal
+          paymentInfo={{
+            amount: paymentInfo.amount,
+            currency: paymentInfo.currency,
+            merchantName: paymentInfo.merchantName,
+            invoiceNumber: paymentInfo.invoiceNumber,
+          }}
+          onApprove={handlePushApprove}
+          onClose={() => setShowVerificationModal(false)}
+          isLoading={verificationMutation.isPending}
+          error={verificationMutation.error ? (verificationMutation.error as any)?.response?.data?.error : undefined}
+        />
+      )}
     </div>
   );
 };

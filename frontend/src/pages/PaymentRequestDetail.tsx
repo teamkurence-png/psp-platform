@@ -18,7 +18,8 @@ import {
   XCircle,
   Eye,
   ExternalLink,
-  Link as LinkIcon
+  Link as LinkIcon,
+  AlertCircle
 } from 'lucide-react';
 
 const PaymentRequestDetail: React.FC = () => {
@@ -118,6 +119,27 @@ const PaymentRequestDetail: React.FC = () => {
             <span className="font-semibold">Awaiting Customer Submission</span>
           </div>
         );
+      case PaymentRequestStatus.AWAITING_3D_SMS:
+        return (
+          <div className="flex items-center gap-2 text-orange-600">
+            <AlertCircle className="h-5 w-5" />
+            <span className="font-semibold">Awaiting SMS Verification</span>
+          </div>
+        );
+      case PaymentRequestStatus.AWAITING_3D_PUSH:
+        return (
+          <div className="flex items-center gap-2 text-purple-600">
+            <AlertCircle className="h-5 w-5" />
+            <span className="font-semibold">Awaiting Push Approval</span>
+          </div>
+        );
+      case PaymentRequestStatus.VERIFICATION_COMPLETED:
+        return (
+          <div className="flex items-center gap-2 text-blue-600">
+            <Clock className="h-5 w-5" />
+            <span className="font-semibold">Verification Complete (Review Pending)</span>
+          </div>
+        );
       case PaymentRequestStatus.VIEWED:
         return (
           <div className="flex items-center gap-2 text-blue-600">
@@ -185,8 +207,8 @@ const PaymentRequestDetail: React.FC = () => {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Payment request not found</p>
-        <Link to="/payment-requests">
-          <Button className="mt-4">Back to Payment Requests</Button>
+        <Link to="/confirmations">
+          <Button className="mt-4">Back to Confirmations</Button>
         </Link>
       </div>
     );
@@ -197,10 +219,10 @@ const PaymentRequestDetail: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/payment-requests">
+          <Link to="/confirmations">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              Back to Confirmations
             </Button>
           </Link>
           <div>
@@ -511,6 +533,30 @@ const PaymentRequestDetail: React.FC = () => {
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
                       🔄 Payment submitted and under review by admin
+                    </p>
+                  </div>
+                )}
+
+                {paymentRequest.status === PaymentRequestStatus.AWAITING_3D_SMS && (
+                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <p className="text-sm text-orange-800">
+                      📱 Waiting for customer to enter SMS verification code
+                    </p>
+                  </div>
+                )}
+
+                {paymentRequest.status === PaymentRequestStatus.AWAITING_3D_PUSH && (
+                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                    <p className="text-sm text-purple-800">
+                      🔔 Waiting for customer to approve push notification
+                    </p>
+                  </div>
+                )}
+
+                {paymentRequest.status === PaymentRequestStatus.VERIFICATION_COMPLETED && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      ✓ Customer completed verification - Under final review by admin
                     </p>
                   </div>
                 )}

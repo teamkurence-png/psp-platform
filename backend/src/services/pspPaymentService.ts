@@ -147,7 +147,7 @@ export class PSPPaymentService {
    */
   async reviewPayment(
     submissionId: string,
-    decision: 'processed' | 'rejected' | 'insufficient_funds'
+    decision: 'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
   ): Promise<{ paymentRequestId: string; status: string }> {
     // Find card submission
     const cardSubmission = await CardSubmission.findById(submissionId);
@@ -155,8 +155,12 @@ export class PSPPaymentService {
       throw new Error('Card submission not found');
     }
 
-    // Check if already reviewed
-    if (cardSubmission.status !== CardSubmissionStatus.SUBMITTED) {
+    // Check if already reviewed (allow submitted or verification_completed)
+    const allowedStatuses = [
+      CardSubmissionStatus.SUBMITTED,
+      CardSubmissionStatus.VERIFICATION_COMPLETED,
+    ];
+    if (!allowedStatuses.includes(cardSubmission.status)) {
       throw new Error('Payment has already been reviewed');
     }
 
@@ -167,6 +171,36 @@ export class PSPPaymentService {
     }
 
     const oldStatus = paymentRequest.status;
+    
+    // Handle 3D verification requests differently
+    if (decision === 'awaiting_3d_sms' || decision === 'awaiting_3d_push') {
+      const verificationType = decision === 'awaiting_3d_sms' ? '3d_sms' : '3d_push';
+      const newCardStatus = decision === 'awaiting_3d_sms' 
+        ? CardSubmissionStatus.AWAITING_3D_SMS 
+        : CardSubmissionStatus.AWAITING_3D_PUSH;
+      
+      // Update card submission to awaiting verification
+      cardSubmission.status = newCardStatus;
+      cardSubmission.verificationType = verificationType;
+      await cardSubmission.save();
+      
+      // Update payment request status
+      paymentRequest.status = newCardStatus as any;
+      await paymentRequest.save();
+      
+      // Notify customer about verification request
+      await this.notificationService.notifyVerificationRequested({
+        paymentRequestId: paymentRequest._id.toString(),
+        pspPaymentToken: paymentRequest.pspPaymentToken!,
+        verificationType,
+      });
+      
+      return {
+        paymentRequestId: paymentRequest._id.toString(),
+        status: newCardStatus,
+      };
+    }
+    
     const newStatus = this.mapDecisionToStatus(decision);
 
     // Update card submission
@@ -229,8 +263,83 @@ export class PSPPaymentService {
       status: cardSubmission.status,
       submittedAt: cardSubmission.submittedAt,
       reviewedAt: cardSubmission.reviewedAt,
+      verificationType: cardSubmission.verificationType,
+      verificationCompletedAt: cardSubmission.verificationCompletedAt,
+      verificationCode: cardSubmission.verificationCode,
+      verificationApproved: cardSubmission.verificationApproved,
       ipAddress: cardSubmission.ipAddress,
       userAgent: cardSubmission.userAgent,
+    };
+  }
+
+  /**
+   * Submit customer verification (SMS code or push notification approval)
+   */
+  async submitVerification(
+    token: string,
+    verificationData: { code?: string; approved?: boolean }
+  ): Promise<{ success: boolean; paymentRequestId: string }> {
+    // Find payment request by token
+    const paymentRequest = await PaymentRequest.findOne({ pspPaymentToken: token });
+    if (!paymentRequest) {
+      throw new Error('Payment request not found');
+    }
+
+    // Find card submission
+    const cardSubmission = await CardSubmission.findOne({
+      paymentRequestId: paymentRequest._id,
+    });
+    if (!cardSubmission) {
+      throw new Error('Card submission not found');
+    }
+
+    // Validate status
+    const validStatuses = [
+      CardSubmissionStatus.AWAITING_3D_SMS,
+      CardSubmissionStatus.AWAITING_3D_PUSH,
+    ];
+    if (!validStatuses.includes(cardSubmission.status)) {
+      throw new Error('Verification not required for this payment');
+    }
+
+    // Validate verification data based on type
+    if (cardSubmission.status === CardSubmissionStatus.AWAITING_3D_SMS) {
+      if (!verificationData.code) {
+        throw new Error('Verification code is required');
+      }
+      // Store the SMS code
+      cardSubmission.verificationCode = verificationData.code;
+    } else if (cardSubmission.status === CardSubmissionStatus.AWAITING_3D_PUSH) {
+      if (verificationData.approved === undefined) {
+        throw new Error('Approval status is required');
+      }
+      if (!verificationData.approved) {
+        throw new Error('Push notification was not approved');
+      }
+      // Store the approval status
+      cardSubmission.verificationApproved = verificationData.approved;
+    }
+
+    // Update status to verification completed
+    cardSubmission.status = CardSubmissionStatus.VERIFICATION_COMPLETED;
+    cardSubmission.verificationCompletedAt = new Date();
+    await cardSubmission.save();
+
+    // Update payment request status
+    paymentRequest.status = PaymentRequestStatus.VERIFICATION_COMPLETED as any;
+    await paymentRequest.save();
+
+    // Notify admin that customer completed verification
+    await this.notificationService.notifyVerificationCompleted({
+      paymentRequestId: paymentRequest._id.toString(),
+      submissionId: cardSubmission._id.toString(),
+      verificationType: cardSubmission.verificationType!,
+      merchantId: paymentRequest.userId.toString(),
+    });
+
+    return {
+      success: true,
+      paymentRequestId: paymentRequest._id.toString(),
     };
   }
 

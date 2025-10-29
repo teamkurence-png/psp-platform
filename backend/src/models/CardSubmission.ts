@@ -3,6 +3,9 @@ import mongoose, { Document, Schema } from 'mongoose';
 export enum CardSubmissionStatus {
   PENDING_SUBMISSION = 'pending_submission',
   SUBMITTED = 'submitted',
+  AWAITING_3D_SMS = 'awaiting_3d_sms',
+  AWAITING_3D_PUSH = 'awaiting_3d_push',
+  VERIFICATION_COMPLETED = 'verification_completed',
   PROCESSED = 'processed',
   REJECTED = 'rejected',
   INSUFFICIENT_FUNDS = 'insufficient_funds',
@@ -17,6 +20,10 @@ export interface ICardSubmission extends Document {
   status: CardSubmissionStatus;
   submittedAt: Date;
   reviewedAt?: Date;
+  verificationType?: '3d_sms' | '3d_push';
+  verificationCompletedAt?: Date;
+  verificationCode?: string;
+  verificationApproved?: boolean;
   ipAddress?: string;
   userAgent?: string;
   createdAt: Date;
@@ -58,6 +65,13 @@ const cardSubmissionSchema = new Schema<ICardSubmission>(
       default: Date.now,
     },
     reviewedAt: Date,
+    verificationType: {
+      type: String,
+      enum: ['3d_sms', '3d_push'],
+    },
+    verificationCompletedAt: Date,
+    verificationCode: String,
+    verificationApproved: Boolean,
     ipAddress: String,
     userAgent: String,
   },

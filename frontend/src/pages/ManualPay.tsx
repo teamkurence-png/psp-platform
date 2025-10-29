@@ -20,7 +20,7 @@ import { PaymentRequestStatus } from '../types';
 interface PSPPaymentReviewModalProps {
   payment: any;
   onClose: () => void;
-  onReview: (submissionId: string, decision: 'processed' | 'rejected' | 'insufficient_funds') => void;
+  onReview: (submissionId: string, decision: 'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push') => void;
   isLoading: boolean;
 }
 
@@ -30,7 +30,7 @@ const PSPPaymentReviewModal: React.FC<PSPPaymentReviewModalProps> = ({
   onReview,
   isLoading 
 }) => {
-  const [selectedDecision, setSelectedDecision] = useState<'processed' | 'rejected' | 'insufficient_funds'>('processed');
+  const [selectedDecision, setSelectedDecision] = useState<'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'>('processed');
   const [cardDetails, setCardDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
@@ -67,6 +67,20 @@ const PSPPaymentReviewModal: React.FC<PSPPaymentReviewModalProps> = ({
       icon: CheckCircle, 
       color: 'text-green-600',
       description: 'Mark payment as processed and credit merchant'
+    },
+    { 
+      value: 'awaiting_3d_sms' as const, 
+      label: 'Request 3D Approval - SMS Code', 
+      icon: AlertCircle, 
+      color: 'text-blue-600',
+      description: 'Request SMS verification code from customer'
+    },
+    { 
+      value: 'awaiting_3d_push' as const, 
+      label: 'Request 3D Approval - Push Notification', 
+      icon: AlertCircle, 
+      color: 'text-purple-600',
+      description: 'Request push notification approval from customer'
     },
     { 
       value: 'rejected' as const, 
@@ -146,42 +160,82 @@ const PSPPaymentReviewModal: React.FC<PSPPaymentReviewModalProps> = ({
                 <p className="mt-2 text-sm text-gray-600">Loading card details...</p>
               </div>
             ) : cardDetails ? (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Card Information
-                </h4>
-                <div className="space-y-3 text-sm">
-                  <div>
-                    <span className="text-blue-700">Cardholder Name:</span>
-                    <span className="ml-2 font-medium text-blue-900">{cardDetails.cardholderName}</span>
-                  </div>
-                  <div>
-                    <span className="text-blue-700">Card Number:</span>
-                    <span className="ml-2 font-mono font-medium text-blue-900">{cardDetails.cardNumberMasked}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+              <>
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Card Information
+                  </h4>
+                  <div className="space-y-3 text-sm">
                     <div>
-                      <span className="text-blue-700">Expiry:</span>
-                      <span className="ml-2 font-mono font-medium text-blue-900">{cardDetails.expiryDate}</span>
+                      <span className="text-blue-700">Cardholder Name:</span>
+                      <span className="ml-2 font-medium text-blue-900">{cardDetails.cardholderName}</span>
                     </div>
                     <div>
-                      <span className="text-blue-700">CVC:</span>
-                      <span className="ml-2 font-mono font-medium text-blue-900">{cardDetails.cvc}</span>
+                      <span className="text-blue-700">Card Number:</span>
+                      <span className="ml-2 font-mono font-medium text-blue-900">{cardDetails.cardNumberMasked}</span>
                     </div>
-                  </div>
-                  {cardDetails.ipAddress && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-blue-700">Expiry:</span>
+                        <span className="ml-2 font-mono font-medium text-blue-900">{cardDetails.expiryDate}</span>
+                      </div>
+                      <div>
+                        <span className="text-blue-700">CVC:</span>
+                        <span className="ml-2 font-mono font-medium text-blue-900">{cardDetails.cvc}</span>
+                      </div>
+                    </div>
+                    {cardDetails.ipAddress && (
+                      <div>
+                        <span className="text-blue-700">IP Address:</span>
+                        <span className="ml-2 font-mono text-xs text-blue-900">{cardDetails.ipAddress}</span>
+                      </div>
+                    )}
                     <div>
-                      <span className="text-blue-700">IP Address:</span>
-                      <span className="ml-2 font-mono text-xs text-blue-900">{cardDetails.ipAddress}</span>
+                      <span className="text-blue-700">Submitted:</span>
+                      <span className="ml-2 font-medium text-blue-900">{formatDate(cardDetails.submittedAt)}</span>
                     </div>
-                  )}
-                  <div>
-                    <span className="text-blue-700">Submitted:</span>
-                    <span className="ml-2 font-medium text-blue-900">{formatDate(cardDetails.submittedAt)}</span>
                   </div>
                 </div>
-              </div>
+
+                {/* Verification Details */}
+                {cardDetails.verificationType && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5" />
+                      Verification Details
+                    </h4>
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <span className="text-green-700">Verification Type:</span>
+                        <span className="ml-2 font-medium text-green-900">
+                          {cardDetails.verificationType === '3d_sms' ? 'SMS Code' : 'Push Notification'}
+                        </span>
+                      </div>
+                      {cardDetails.verificationCode && (
+                        <div>
+                          <span className="text-green-700">SMS Code Entered:</span>
+                          <span className="ml-2 font-mono font-bold text-lg text-green-900">{cardDetails.verificationCode}</span>
+                        </div>
+                      )}
+                      {cardDetails.verificationApproved !== undefined && (
+                        <div>
+                          <span className="text-green-700">Push Approval:</span>
+                          <span className="ml-2 font-medium text-green-900">
+                            {cardDetails.verificationApproved ? '✓ Approved' : '✗ Rejected'}
+                          </span>
+                        </div>
+                      )}
+                      {cardDetails.verificationCompletedAt && (
+                        <div>
+                          <span className="text-green-700">Completed At:</span>
+                          <span className="ml-2 font-medium text-green-900">{formatDate(cardDetails.verificationCompletedAt)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
                 Card details could not be loaded
@@ -274,6 +328,10 @@ const ManualPay: React.FC = () => {
       console.log('New PSP payment submitted:', data);
       queryClient.invalidateQueries({ queryKey: ['psp-payments'] });
     },
+    onPspVerificationCompleted: (data) => {
+      console.log('Customer completed verification:', data);
+      queryClient.invalidateQueries({ queryKey: ['psp-payments'] });
+    },
   });
 
   // Fetch PSP payments (card payments only)
@@ -345,7 +403,7 @@ const ManualPay: React.FC = () => {
   const reviewMutation = useMutation({
     mutationFn: async ({ submissionId, decision }: { 
       submissionId: string; 
-      decision: 'processed' | 'rejected' | 'insufficient_funds' 
+      decision: 'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
     }) => {
       return pspPaymentService.reviewPspPayment(submissionId, decision);
     },
@@ -359,7 +417,7 @@ const ManualPay: React.FC = () => {
     },
   });
 
-  const handleReview = (submissionId: string, decision: 'processed' | 'rejected' | 'insufficient_funds') => {
+  const handleReview = (submissionId: string, decision: 'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push') => {
     reviewMutation.mutate({ submissionId, decision });
   };
 
@@ -485,6 +543,9 @@ const ManualPay: React.FC = () => {
                 <>
                   <option value="submitted">⏳ Awaiting Review</option>
                   <option value="pending_submission">📝 Pending Customer Submission</option>
+                  <option value="awaiting_3d_sms">📱 Awaiting SMS Verification</option>
+                  <option value="awaiting_3d_push">🔔 Awaiting Push Approval</option>
+                  <option value="verification_completed">✓ Verification Completed</option>
                   <option value="processed">✅ Approved</option>
                   <option value="rejected">❌ Rejected</option>
                   <option value="insufficient_funds">⚠️ Insufficient Funds</option>
@@ -723,6 +784,15 @@ const ManualPay: React.FC = () => {
                             disabled={reviewMutation.isPending}
                           >
                             Review
+                          </Button>
+                        ) : payment.paymentRequest.status === 'verification_completed' ? (
+                          <Button
+                            size="sm"
+                            onClick={() => setSelectedPayment(payment)}
+                            disabled={reviewMutation.isPending}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            Final Review
                           </Button>
                         ) : payment.cardSubmission?.reviewedAt ? (
                           <span className="text-xs text-gray-500 px-2 py-1">

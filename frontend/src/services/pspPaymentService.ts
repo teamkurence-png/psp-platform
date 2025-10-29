@@ -31,6 +31,7 @@ export interface PaymentStatusData {
   status: string;
   submissionStatus: string | null;
   reviewedAt: string | null;
+  verificationType?: '3d_sms' | '3d_push' | null;
 }
 
 export interface CardSubmissionDetails {
@@ -43,6 +44,10 @@ export interface CardSubmissionDetails {
   status: string;
   submittedAt: string;
   reviewedAt?: string;
+  verificationType?: '3d_sms' | '3d_push';
+  verificationCompletedAt?: string;
+  verificationCode?: string;
+  verificationApproved?: boolean;
   ipAddress?: string;
   userAgent?: string;
 }
@@ -106,7 +111,10 @@ class PspPaymentService {
   /**
    * Review PSP payment (protected, admin only)
    */
-  async reviewPspPayment(submissionId: string, decision: 'processed' | 'rejected' | 'insufficient_funds') {
+  async reviewPspPayment(
+    submissionId: string, 
+    decision: 'processed' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
+  ) {
     const token = localStorage.getItem('accessToken');
     const response = await axios.post(
       `${API_URL}/psp-payments/admin/${submissionId}/review`,
@@ -115,6 +123,14 @@ class PspPaymentService {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
+    return response.data;
+  }
+
+  /**
+   * Submit customer verification (public)
+   */
+  async submitVerification(token: string, data: { code?: string; approved?: boolean }) {
+    const response = await axios.post(`${API_URL}/psp-payments/${token}/verify`, data);
     return response.data;
   }
 }

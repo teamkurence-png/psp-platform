@@ -168,10 +168,58 @@ export const getPaymentStatus = async (req: Request, res: Response): Promise<voi
         status: paymentRequest.status,
         submissionStatus: cardSubmission?.status || null,
         reviewedAt: cardSubmission?.reviewedAt || null,
+        verificationType: cardSubmission?.verificationType || null,
       },
     });
   } catch (error) {
     console.error('Get payment status error:', error);
     res.status(500).json({ success: false, error: 'Failed to retrieve payment status' });
+  }
+};
+
+// Validation schema for verification submission
+const verificationSchema = z.object({
+  code: z.string().optional(),
+  approved: z.boolean().optional(),
+});
+
+/**
+ * Submit customer verification (SMS code or push notification approval)
+ */
+export const submitVerification = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.params;
+    
+    if (!token) {
+      res.status(400).json({ success: false, error: 'Token is required' });
+      return;
+    }
+
+    // Validate verification data
+    const validatedData = verificationSchema.parse(req.body);
+
+    // Delegate to service
+    const service = getPSPPaymentService();
+    const result = await service.submitVerification(token, validatedData);
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Verification submitted successfully',
+      data: result,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ success: false, error: error.errors });
+      return;
+    }
+    
+    // Handle service errors
+    if (error instanceof Error) {
+      res.status(400).json({ success: false, error: error.message });
+      return;
+    }
+    
+    console.error('Submit verification error:', error);
+    res.status(500).json({ success: false, error: 'Failed to submit verification' });
   }
 };

@@ -23,6 +23,19 @@ interface PaymentStatusUpdateNotification {
   message?: string;
 }
 
+interface VerificationRequestedNotification {
+  paymentRequestId: string;
+  pspPaymentToken: string;
+  verificationType: '3d_sms' | '3d_push';
+}
+
+interface VerificationCompletedNotification {
+  paymentRequestId: string;
+  submissionId: string;
+  verificationType: '3d_sms' | '3d_push';
+  merchantId: string;
+}
+
 /**
  * Service class for handling real-time notifications via WebSocket
  * Centralizes all WebSocket emission logic
@@ -110,6 +123,46 @@ export class NotificationService {
       paymentRequestId: data.paymentRequestId,
       status: data.status,
       message: data.message,
+    });
+  }
+
+  /**
+   * Notify customer when admin requests verification
+   */
+  async notifyVerificationRequested(data: VerificationRequestedNotification): Promise<void> {
+    if (!this.isAvailable()) {
+      console.warn('Socket.IO not available for notification');
+      return;
+    }
+
+    // Notify customer via token room
+    this.io!.to(`psp_token:${data.pspPaymentToken}`).emit('psp_verification_requested', {
+      paymentRequestId: data.paymentRequestId,
+      verificationType: data.verificationType,
+    });
+  }
+
+  /**
+   * Notify admin when customer completes verification
+   */
+  async notifyVerificationCompleted(data: VerificationCompletedNotification): Promise<void> {
+    if (!this.isAvailable()) {
+      console.warn('Socket.IO not available for notification');
+      return;
+    }
+
+    // Notify admin
+    this.io!.to('admin').emit('psp_verification_completed', {
+      paymentRequestId: data.paymentRequestId,
+      submissionId: data.submissionId,
+      verificationType: data.verificationType,
+    });
+
+    // Notify merchant
+    this.io!.to(`user:${data.merchantId}`).emit('payment_request_status_updated', {
+      paymentRequestId: data.paymentRequestId,
+      status: 'verification_completed',
+      message: 'Customer completed verification',
     });
   }
 
