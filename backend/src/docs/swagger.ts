@@ -127,6 +127,104 @@ Standard HTTP status codes:
 
 ---
 
+## 🔔 Webhooks
+
+Receive real-time notifications when payment status changes by providing a \`callbackUrl\` in your payment request.
+
+### Webhook Events
+
+Your webhook endpoint will receive POST requests when payment status changes:
+
+- \`payment.sent\` - Payment request created and sent to customer
+- \`payment.pending_submission\` - Card payment initiated (waiting for customer to submit)
+- \`payment.paid\` - Payment successfully received
+- \`payment.cancelled\` - Payment request cancelled
+- \`payment.failed\` - Payment failed
+
+### Webhook Payload
+
+\`\`\`json
+{
+  "event": "payment.paid",
+  "paymentRequest": {
+    "id": "64f1a2b3c4d5e6f7g8h9i0j1",
+    "status": "paid",
+    "amount": 5000.00,
+    "currency": "USD",
+    "invoiceNumber": "INV-2024-001",
+    "description": "Invoice payment",
+    "commissionAmount": 125.00,
+    "netAmount": 4875.00,
+    "paidAt": "2024-11-01T12:00:00Z",
+    "createdAt": "2024-10-30T10:00:00Z",
+    "updatedAt": "2024-11-01T12:00:00Z"
+  },
+  "timestamp": "2024-11-01T12:00:01Z"
+}
+\`\`\`
+
+### Security - Signature Verification
+
+Every webhook includes an \`X-Webhook-Signature\` header containing an HMAC SHA256 signature.
+
+**Verify the signature to ensure the webhook is from our platform:**
+
+\`\`\`javascript
+const crypto = require('crypto');
+
+function verifyWebhookSignature(payload, signature, secret) {
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(JSON.stringify(payload))
+    .digest('hex');
+  
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
+}
+
+// In your webhook handler:
+app.post('/webhooks/payment', (req, res) => {
+  const signature = req.headers['x-webhook-signature'];
+  const secret = process.env.WEBHOOK_SECRET;
+  
+  if (!verifyWebhookSignature(req.body, signature, secret)) {
+    return res.status(401).send('Invalid signature');
+  }
+  
+  // Process webhook...
+  res.status(200).send('OK');
+});
+\`\`\`
+
+### Webhook Headers
+
+| Header | Description |
+|--------|-------------|
+| \`Content-Type\` | \`application/json\` |
+| \`X-Webhook-Signature\` | HMAC SHA256 signature for verification |
+| \`X-Webhook-Event\` | Event type (e.g., \`payment.paid\`) |
+| \`User-Agent\` | \`PSP-Platform-Webhook/1.0\` |
+
+### Retry Logic
+
+If your endpoint returns a non-2xx status code or times out, we'll retry:
+- **Attempt 1:** Immediate
+- **Attempt 2:** After 1 second
+- **Attempt 3:** After 4 seconds
+- **Attempt 4:** After 9 seconds (final attempt)
+
+### Best Practices
+
+1. ✅ **Respond quickly** - Return 200 OK immediately, process async
+2. ✅ **Verify signature** - Always verify the HMAC signature
+3. ✅ **Handle duplicates** - Use \`paymentRequest.id\` to detect duplicates
+4. ✅ **Use HTTPS** - Webhook URLs must use HTTPS in production
+5. ✅ **Log everything** - Keep logs for debugging and auditing
+
+---
+
 ## 📚 Additional Resources
 
 - **Full Documentation:** See \`backend/API.md\` for detailed code examples
@@ -134,7 +232,7 @@ Standard HTTP status codes:
 - **Support:** Contact support@pspplatform.com
 
 ---
-      `,
+          `,
       contact: {
         name: 'API Support',
         email: 'support@pspplatform.com',

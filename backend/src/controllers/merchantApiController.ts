@@ -72,6 +72,11 @@ import { merchantApiService } from '../services/merchantApiService.js';
  *                 type: string
  *                 description: Optional reference for your records
  *                 example: CLIENT-ACME-2024
+ *               callbackUrl:
+ *                 type: string
+ *                 format: uri
+ *                 description: Optional webhook URL to receive payment status updates
+ *                 example: https://your-domain.com/webhooks/payment
  *               customerInfo:
  *                 type: object
  *                 required:
@@ -111,6 +116,7 @@ import { merchantApiService } from '../services/merchantApiService.js';
  *                 invoiceNumber: INV-2024-001
  *                 dueDate: 2024-12-31
  *                 customerReference: CLIENT-ACME-2024
+ *                 callbackUrl: https://your-domain.com/webhooks/payment
  *                 customerInfo:
  *                   name: John Smith
  *                   email: john.smith@acmecorp.com
@@ -126,6 +132,7 @@ import { merchantApiService } from '../services/merchantApiService.js';
  *                 invoiceNumber: INV-2024-SUB-789
  *                 dueDate: 2024-11-15
  *                 customerReference: USER-456
+ *                 callbackUrl: https://your-domain.com/webhooks/payment
  *                 customerInfo:
  *                   name: Sarah Johnson
  *                   email: sarah.johnson@email.com
@@ -140,6 +147,7 @@ import { merchantApiService } from '../services/merchantApiService.js';
  *                 description: Invoice payment for web design services
  *                 invoiceNumber: INV-2024-WEB-101
  *                 dueDate: 2024-12-15
+ *                 callbackUrl: https://your-domain.com/webhooks/payment
  *                 customerInfo:
  *                   name: Michael Chen
  *                   email: michael.chen@company.com

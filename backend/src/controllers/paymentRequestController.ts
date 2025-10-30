@@ -9,6 +9,7 @@ import { PSPPaymentService } from '../services/pspPaymentService.js';
 import { EncryptionService } from '../services/encryptionService.js';
 import { notificationService } from '../services/notificationService.js';
 import { commissionService } from '../services/commissionService.js';
+import { webhookService } from '../services/webhookService.js';
 
 // Lazy initialization to avoid loading env vars before they're set
 let pspPaymentService: PSPPaymentService | null = null;
@@ -426,6 +427,11 @@ export const updatePaymentRequest = async (req: AuthRequest, res: Response): Pro
           updates.status as PaymentRequestStatus,
           paymentRequest.netAmount
         );
+        
+        // Trigger webhook notification on status change (async, don't wait)
+        webhookService.notifyPaymentStatusChange(paymentRequest).catch(err => {
+          console.error('Webhook notification error:', err);
+        });
       }
     } else {
       res.status(403).json({ success: false, error: 'Forbidden' });
@@ -474,6 +480,11 @@ export const cancelPaymentRequest = async (req: AuthRequest, res: Response): Pro
       PaymentRequestStatus.CANCELLED,
       paymentRequest.netAmount
     );
+    
+    // Trigger webhook notification for cancellation (async, don't wait)
+    webhookService.notifyPaymentStatusChange(paymentRequest).catch(err => {
+      console.error('Webhook notification error:', err);
+    });
 
     res.json({ success: true, message: 'Payment request cancelled', data: paymentRequest });
   } catch (error) {

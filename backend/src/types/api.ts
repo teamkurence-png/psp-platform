@@ -57,6 +57,7 @@ export interface ApiPaymentRequestInput {
     billingCountry: string;
   };
   paymentMethods: ('bank_wire' | 'card')[];
+  callbackUrl?: string;
 }
 
 export interface ApiPaymentRequestResponse {
@@ -126,6 +127,7 @@ export const apiPaymentRequestSchema = z.object({
     billingCountry: z.string().min(1, 'Customer billing country is required').max(3, 'Use ISO country code'),
   }),
   paymentMethods: z.array(z.enum(['bank_wire', 'card'])).min(1, 'At least one payment method is required'),
+  callbackUrl: z.string().url('Callback URL must be a valid URL').optional(),
 }).superRefine((data, ctx) => {
   // For bank wire transfers, require all customer info fields
   if (data.paymentMethods.includes('bank_wire' as PaymentMethod)) {

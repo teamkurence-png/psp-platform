@@ -11,7 +11,7 @@ Welcome to the PSP Platform Merchant API! This API allows you to programmaticall
 - [Endpoints](#endpoints)
 - [Code Examples](#code-examples)
 - [Error Handling](#error-handling)
-- [Webhooks](#webhooks-coming-soon)
+- [Webhooks](#webhooks)
 
 ## Getting Started
 
@@ -830,16 +830,351 @@ Payment requests can have the following statuses:
 - `expired`: Payment request expired
 - `cancelled`: Payment request cancelled
 
-## Webhooks (Coming Soon)
+## Webhooks
 
-Webhook support is planned for future releases. Webhooks will allow you to receive real-time notifications when payment statuses change.
+Receive real-time notifications when payment status changes by providing a `callbackUrl` when creating a payment request.
 
-Expected webhook events:
-- `payment_request.created`
-- `payment_request.viewed`
-- `payment_request.paid`
-- `payment_request.cancelled`
-- `payment_request.expired`
+### Webhook Events
+
+Your webhook endpoint will receive POST requests when payment status changes:
+
+- `payment.sent` - Payment request created and sent to customer
+- `payment.pending_submission` - Card payment initiated (waiting for customer to submit)
+- `payment.paid` - Payment successfully received
+- `payment.cancelled` - Payment request cancelled
+- `payment.failed` - Payment failed
+
+### Setting Up Webhooks
+
+Include a `callbackUrl` in your payment request:
+
+```javascript
+const paymentRequest = {
+  amount: 5000.00,
+  currency: "USD",
+  description: "Invoice payment for Q4 consulting services",
+  invoiceNumber: "INV-2024-001",
+  dueDate: "2024-12-31",
+  callbackUrl: "https://your-domain.com/webhooks/payment", // Your webhook endpoint
+  customerInfo: {
+    name: "John Smith",
+    email: "john.smith@acmecorp.com",
+    phone: "+1-555-123-4567",
+    billingCountry: "US"
+  },
+  paymentMethods: ["bank_wire"]
+};
+```
+
+### Webhook Payload
+
+When a payment status changes, we'll send a POST request to your `callbackUrl` with this payload:
+
+```json
+{
+  "event": "payment.paid",
+  "paymentRequest": {
+    "id": "64f1a2b3c4d5e6f7g8h9i0j1",
+    "status": "paid",
+    "amount": 5000.00,
+    "currency": "USD",
+    "invoiceNumber": "INV-2024-001",
+    "description": "Invoice payment for Q4 consulting services",
+    "customerReference": "CLIENT-ACME-2024",
+    "commissionAmount": 125.00,
+    "netAmount": 4875.00,
+    "paidAt": "2024-11-01T12:00:00.000Z",
+    "createdAt": "2024-10-30T10:00:00.000Z",
+    "updatedAt": "2024-11-01T12:00:00.000Z"
+  },
+  "timestamp": "2024-11-01T12:00:01.000Z"
+}
+```
+
+### Webhook Headers
+
+Every webhook request includes these headers:
+
+| Header | Value | Description |
+|--------|-------|-------------|
+| `Content-Type` | `application/json` | Request body format |
+| `X-Webhook-Signature` | HMAC SHA256 signature | Security signature for verification |
+| `X-Webhook-Event` | Event type | e.g., `payment.paid`, `payment.cancelled` |
+| `User-Agent` | `PSP-Platform-Webhook/1.0` | Identifies requests from our platform |
+
+### Security - Signature Verification
+
+**IMPORTANT:** Always verify the webhook signature to ensure the request is from our platform.
+
+Every webhook includes an `X-Webhook-Signature` header containing an HMAC SHA256 signature of the payload.
+
+#### Node.js Example
+
+```javascript
+const crypto = require('crypto');
+const express = require('express');
+
+const app = express();
+app.use(express.json());
+
+// Your webhook secret (contact support to get your secret)
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+
+function verifyWebhookSignature(payload, signature, secret) {
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(JSON.stringify(payload))
+    .digest('hex');
+  
+  // Use timing-safe comparison to prevent timing attacks
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
+}
+
+app.post('/webhooks/payment', (req, res) => {
+  const signature = req.headers['x-webhook-signature'];
+  const event = req.headers['x-webhook-event'];
+  
+  // Verify signature
+  if (!verifyWebhookSignature(req.body, signature, WEBHOOK_SECRET)) {
+    console.error('Invalid webhook signature');
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+  
+  // Process webhook
+  const { paymentRequest } = req.body;
+  console.log(`Webhook received: ${event} for payment ${paymentRequest.id}`);
+  
+  // Handle different events
+  switch (event) {
+    case 'payment.paid':
+      console.log(`Payment ${paymentRequest.id} has been paid!`);
+      // Update your database, send confirmation email, etc.
+      break;
+    
+    case 'payment.cancelled':
+      console.log(`Payment ${paymentRequest.id} was cancelled`);
+      // Handle cancellation
+      break;
+    
+    case 'payment.failed':
+      console.log(`Payment ${paymentRequest.id} failed`);
+      // Handle failure
+      break;
+  }
+  
+  // Respond quickly (within 10 seconds)
+  res.status(200).json({ received: true });
+});
+
+app.listen(3000, () => console.log('Webhook server running on port 3000'));
+```
+
+#### Python Example
+
+```python
+import hmac
+import hashlib
+import json
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Your webhook secret (contact support to get your secret)
+WEBHOOK_SECRET = os.environ.get('WEBHOOK_SECRET')
+
+def verify_webhook_signature(payload, signature, secret):
+    """Verify the webhook signature using HMAC SHA256"""
+    payload_string = json.dumps(payload, separators=(',', ':'))
+    expected_signature = hmac.new(
+        secret.encode('utf-8'),
+        payload_string.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+    
+    # Timing-safe comparison
+    return hmac.compare_digest(signature, expected_signature)
+
+@app.route('/webhooks/payment', methods=['POST'])
+def handle_webhook():
+    signature = request.headers.get('X-Webhook-Signature')
+    event = request.headers.get('X-Webhook-Event')
+    payload = request.json
+    
+    # Verify signature
+    if not verify_webhook_signature(payload, signature, WEBHOOK_SECRET):
+        print('Invalid webhook signature')
+        return jsonify({'error': 'Invalid signature'}), 401
+    
+    # Process webhook
+    payment_request = payload['paymentRequest']
+    print(f"Webhook received: {event} for payment {payment_request['id']}")
+    
+    # Handle different events
+    if event == 'payment.paid':
+        print(f"Payment {payment_request['id']} has been paid!")
+        # Update your database, send confirmation email, etc.
+    elif event == 'payment.cancelled':
+        print(f"Payment {payment_request['id']} was cancelled")
+        # Handle cancellation
+    elif event == 'payment.failed':
+        print(f"Payment {payment_request['id']} failed")
+        # Handle failure
+    
+    # Respond quickly (within 10 seconds)
+    return jsonify({'received': True}), 200
+
+if __name__ == '__main__':
+    app.run(port=3000)
+```
+
+#### PHP Example
+
+```php
+<?php
+
+// Your webhook secret (contact support to get your secret)
+$webhookSecret = getenv('WEBHOOK_SECRET');
+
+function verifyWebhookSignature($payload, $signature, $secret) {
+    $payloadString = json_encode($payload);
+    $expectedSignature = hash_hmac('sha256', $payloadString, $secret);
+    
+    // Timing-safe comparison
+    return hash_equals($signature, $expectedSignature);
+}
+
+// Get headers
+$signature = $_SERVER['HTTP_X_WEBHOOK_SIGNATURE'] ?? '';
+$event = $_SERVER['HTTP_X_WEBHOOK_EVENT'] ?? '';
+
+// Get payload
+$payload = json_decode(file_get_contents('php://input'), true);
+
+// Verify signature
+if (!verifyWebhookSignature($payload, $signature, $webhookSecret)) {
+    error_log('Invalid webhook signature');
+    http_response_code(401);
+    echo json_encode(['error' => 'Invalid signature']);
+    exit;
+}
+
+// Process webhook
+$paymentRequest = $payload['paymentRequest'];
+error_log("Webhook received: {$event} for payment {$paymentRequest['id']}");
+
+// Handle different events
+switch ($event) {
+    case 'payment.paid':
+        error_log("Payment {$paymentRequest['id']} has been paid!");
+        // Update your database, send confirmation email, etc.
+        break;
+    
+    case 'payment.cancelled':
+        error_log("Payment {$paymentRequest['id']} was cancelled");
+        // Handle cancellation
+        break;
+    
+    case 'payment.failed':
+        error_log("Payment {$paymentRequest['id']} failed");
+        // Handle failure
+        break;
+}
+
+// Respond quickly (within 10 seconds)
+http_response_code(200);
+echo json_encode(['received' => true]);
+?>
+```
+
+### Retry Logic
+
+If your webhook endpoint is unreachable or returns a non-2xx status code, we'll automatically retry with exponential backoff:
+
+| Attempt | Delay |
+|---------|-------|
+| 1 | Immediate |
+| 2 | 1 second |
+| 3 | 4 seconds |
+| 4 | 9 seconds (final) |
+
+After 4 failed attempts, we'll stop retrying. You can view webhook delivery logs in your merchant dashboard.
+
+### Webhook Best Practices
+
+1. ✅ **Respond Quickly**
+   - Return a `200 OK` response within 10 seconds
+   - Process the webhook asynchronously (use a queue if needed)
+   - Don't perform long-running tasks in the webhook handler
+
+2. ✅ **Verify Signature**
+   - Always verify the `X-Webhook-Signature` header
+   - Use timing-safe comparison to prevent timing attacks
+   - Keep your webhook secret secure
+
+3. ✅ **Handle Duplicates**
+   - Use `paymentRequest.id` to detect duplicate events
+   - Implement idempotent processing
+   - Store processed webhook IDs in your database
+
+4. ✅ **Use HTTPS**
+   - Webhook URLs must use HTTPS in production
+   - Use a valid SSL certificate
+   - HTTP is allowed for local development only
+
+5. ✅ **Handle All Events**
+   - Don't assume you'll only receive certain events
+   - Gracefully handle unknown event types
+   - Log all webhook events for debugging
+
+6. ✅ **Monitor and Log**
+   - Log all webhook requests and responses
+   - Set up alerts for failed webhooks
+   - Monitor webhook delivery times
+
+7. ✅ **Test Thoroughly**
+   - Test with all event types
+   - Test signature verification
+   - Test retry scenarios
+   - Use tools like [webhook.site](https://webhook.site) for testing
+
+### Testing Webhooks Locally
+
+Use a tunneling service to test webhooks on your local machine:
+
+#### Using ngrok
+
+```bash
+# Install ngrok: https://ngrok.com/download
+ngrok http 3000
+
+# Use the HTTPS URL as your callbackUrl:
+# https://abc123.ngrok.io/webhooks/payment
+```
+
+#### Using localhost.run
+
+```bash
+# No installation needed
+ssh -R 80:localhost:3000 localhost.run
+
+# Use the provided URL as your callbackUrl
+```
+
+### Webhook Endpoint Requirements
+
+Your webhook endpoint must:
+- Accept POST requests
+- Return a 2xx status code within 10 seconds
+- Use HTTPS in production
+- Verify the webhook signature
+- Be publicly accessible (not behind authentication)
+
+### Getting Your Webhook Secret
+
+Contact our support team at support@pspplatform.com to receive your webhook secret. This secret is unique to your merchant account and used to generate webhook signatures.
 
 ## Support
 

@@ -47,6 +47,7 @@ export interface IPaymentRequest extends Document {
   commissionPercent?: number;
   commissionAmount?: number;
   netAmount?: number;
+  callbackUrl?: string;
   viewedAt?: Date;
   paidAt?: Date;
   createdAt: Date;
@@ -142,6 +143,16 @@ const paymentRequestSchema = new Schema<IPaymentRequest>(
     commissionPercent: Number,
     commissionAmount: Number,
     netAmount: Number,
+    callbackUrl: {
+      type: String,
+      validate: {
+        validator: function(v: string) {
+          if (!v) return true; // Optional field
+          return /^https?:\/\/.+/.test(v); // Basic URL validation
+        },
+        message: 'callbackUrl must be a valid HTTP/HTTPS URL'
+      }
+    },
     viewedAt: Date,
     paidAt: Date,
   },

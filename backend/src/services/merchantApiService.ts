@@ -165,6 +165,7 @@ export class MerchantApiService {
       commissionPercent,
       commissionAmount,
       netAmount,
+      callbackUrl: input.callbackUrl,
     });
 
     // Add net amount to pending balance
