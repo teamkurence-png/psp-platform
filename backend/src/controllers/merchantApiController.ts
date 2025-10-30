@@ -12,7 +12,7 @@ import { merchantApiService } from '../services/merchantApiService.js';
  *       Create a new payment request for bank wire, card, or both payment methods.
  *       
  *       **Bank Wire Transfer:**
- *       - For B2B, large amounts, invoices
+ *       - For B2C, large amounts, invoices
  *       - Unlimited amount
  *       - Processing: 1-3 business days
  *       - Required: name, email, phone, billingCountry
@@ -20,7 +20,7 @@ import { merchantApiService } from '../services/merchantApiService.js';
  *       
  *       **Card Payment (PSP):**
  *       - For B2C, small amounts, subscriptions
- *       - Max $250 USD
+ *       - Max $100000 USD
  *       - Processing: Real-time
  *       - Required: billingCountry only
  *       - Optional: name, email, phone (recommended)
@@ -29,7 +29,7 @@ import { merchantApiService } from '../services/merchantApiService.js';
  *       **Both Methods:**
  *       - Customer chooses preferred method
  *       - Returns both bank details and payment link
- *       - Amount must be ≤ $250 USD
+ *       - Amount must be ≤ $10000 USD
  *     tags: [Merchant API]
  *     security:
  *       - ApiKeyAuth: []
@@ -103,7 +103,7 @@ import { merchantApiService } from '../services/merchantApiService.js';
  *                 example: [bank_wire]
  *           examples:
  *             bankWire:
- *               summary: Bank Wire Transfer (B2B)
+ *               summary: Bank Wire Transfer (B2C)
  *               value:
  *                 amount: 5000.00
  *                 currency: USD
@@ -211,7 +211,7 @@ import { merchantApiService } from '../services/merchantApiService.js';
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: Card payments are limited to a maximum of $250 USD
+ *                   example: Card payments are limited to a maximum of $100000 USD
  *       401:
  *         description: Invalid or missing API key
  *         content:

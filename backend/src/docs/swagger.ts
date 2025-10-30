@@ -20,7 +20,7 @@ Welcome to the PSP Platform Merchant API documentation. This API allows merchant
 1. **Get your API key** from the merchant dashboard at \`/api-keys\`
 2. **Choose your payment method:**
    - 🏦 **Bank Wire:** For B2B, large amounts, invoices (unlimited)
-   - 💳 **Card Payment:** For B2C, small amounts, subscriptions (max $250 USD)
+   - 💳 **Card Payment:** For B2C, small amounts, subscriptions (max $100000 USD)
 3. **Make API requests** using the examples below
 
 ---
@@ -67,7 +67,7 @@ X-API-Key: psp_live_your_api_key_here
 - ✅ 3D Secure authentication
 - ✅ Hosted payment page
 - ✅ Supports major card brands
-- ⚠️ **Maximum $250 USD per transaction**
+- ⚠️ **Maximum $100000 USD per transaction**
 
 **Required fields:**
 - Customer billing country only
@@ -86,7 +86,7 @@ X-API-Key: psp_live_your_api_key_here
 Offer both bank wire and card payment in a single request. Customer chooses their preferred method.
 
 **Requirements:**
-- Amount must be ≤ $250 USD (card limit)
+- Amount must be ≤ $100000 USD (card limit)
 - All customer information required (for bank wire)
 - Response includes both \`bankDetails\` and \`paymentLink\`
 
