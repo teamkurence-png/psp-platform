@@ -5,16 +5,13 @@ import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import ContactForm from '../components/forms/ContactForm';
 import { 
-  CreditCard, 
   Bitcoin, 
   Shield, 
   Zap,
   ArrowRight,
-  BarChart3,
   Lock,
   MessageCircle,
   CheckCircle2,
-  Users,
   Globe,
   TrendingUp
 } from 'lucide-react';
