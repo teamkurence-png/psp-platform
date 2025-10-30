@@ -8,6 +8,7 @@ import { createServer } from 'http';
 import { connectDatabase } from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notificationService } from './services/notificationService.js';
+import { setupSwagger } from './docs/swagger.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -22,6 +23,8 @@ import settingsRoutes from './routes/settings.js';
 import bankAccountRoutes from './routes/bankAccounts.js';
 import cardRoutes from './routes/cards.js';
 import contactRoutes from './routes/contacts.js';
+import apiKeyRoutes from './routes/apiKeys.js';
+import merchantApiRoutes from './routes/merchantApi.js';
 
 // Load environment variables
 dotenv.config();
@@ -62,6 +65,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Setup Swagger documentation
+setupSwagger(app);
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/merchants', merchantRoutes);
@@ -75,6 +81,10 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/bank-accounts', bankAccountRoutes);
 app.use('/api/cards', cardRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api/api-keys', apiKeyRoutes);
+
+// Merchant API routes (API key authentication)
+app.use('/api/v1/merchant', merchantApiRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

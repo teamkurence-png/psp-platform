@@ -13,6 +13,7 @@ import {
   Bitcoin,
   UserCheck,
   MessageSquare,
+  Key,
 } from 'lucide-react';
 import { UserRole } from '../../types';
 import Button from '../ui/Button';
@@ -59,6 +60,12 @@ const AppLayout: React.FC = () => {
         href: '/merchants', 
         icon: Building2,
         roles: [UserRole.OPS, UserRole.FINANCE, UserRole.ADMIN]
+      },
+      { 
+        name: 'API Keys', 
+        href: '/api-keys', 
+        icon: Key,
+        roles: [UserRole.MERCHANT]
       },
       { 
         name: 'Form Submissions', 

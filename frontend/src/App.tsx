@@ -24,6 +24,7 @@ import BankAccounts from './pages/BankAccounts';
 import FormSubmissions from './pages/FormSubmissions';
 import PSPPaymentForm from './pages/PSPPaymentForm';
 import PSPPaymentStatus from './pages/PSPPaymentStatus';
+import { ApiKeys } from './pages/ApiKeys';
 
 const queryClient = new QueryClient();
 
@@ -152,6 +153,17 @@ function App() {
             <Route path="users" element={<AdminUsers />} />
             <Route path="bank-accounts" element={<BankAccounts />} />
             <Route path="profile" element={<MerchantProfile />} />
+          </Route>
+
+          <Route
+            path="/api-keys"
+            element={
+              <ProtectedRoute allowedRoles={[UserRole.MERCHANT]}>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ApiKeys />} />
           </Route>
 
           <Route
