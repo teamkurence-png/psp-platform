@@ -57,6 +57,12 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <Link 
+                to="/docs" 
+                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                Developers
+              </Link>
               <Link to="/login">
                 <Button variant="outline">Sign in</Button>
               </Link>

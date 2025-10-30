@@ -21,10 +21,9 @@ import {
 } from '../services/apiKeyService';
 import { ApiKeyGenerator } from '../components/ApiKeyGenerator';
 
-// Helper to get the base server URL (without /api suffix)
-const getServerUrl = () => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'https://psp-platform-8nm0.onrender.com/api';
-  return apiUrl.replace(/\/api$/, '');
+// Helper to get the docs URL (frontend-hosted)
+const getDocsUrl = () => {
+  return '/docs';
 };
 
 export const ApiKeys = () => {
@@ -145,7 +144,7 @@ export const ApiKeys = () => {
         </div>
 
         <a
-          href={`${getServerUrl()}/api/docs`}
+          href={getDocsUrl()}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
@@ -319,7 +318,7 @@ export const ApiKeys = () => {
           <p className="pt-2">
             For complete examples and endpoint documentation, visit the{' '}
             <a
-              href={`${getServerUrl()}/api/docs`}
+              href={getDocsUrl()}
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium underline"

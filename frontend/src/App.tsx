@@ -25,6 +25,7 @@ import FormSubmissions from './pages/FormSubmissions';
 import PSPPaymentForm from './pages/PSPPaymentForm';
 import PSPPaymentStatus from './pages/PSPPaymentStatus';
 import { ApiKeys } from './pages/ApiKeys';
+import { ApiDocumentation } from './pages/ApiDocumentation';
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,10 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            
+            {/* Public API Documentation */}
+            <Route path="/docs" element={<ApiDocumentation />} />
+            <Route path="/api-docs" element={<ApiDocumentation />} />
             
             {/* Public PSP payment routes */}
             <Route path="/pay/:token" element={<PSPPaymentForm />} />

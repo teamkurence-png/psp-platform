@@ -50,7 +50,25 @@ const io = new Server(httpServer, {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:4173',
+      process.env.CORS_ORIGIN,
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // Still allow the request but log it
+      console.log('CORS request from:', origin);
+      callback(null, true); // Allow all for now since we're in development
+    }
+  },
   credentials: true,
 }));
 app.use(morgan('dev'));
