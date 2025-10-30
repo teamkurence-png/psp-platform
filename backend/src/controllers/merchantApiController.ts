@@ -11,24 +11,23 @@ import { merchantApiService } from '../services/merchantApiService.js';
  *     description: |
  *       Create a new payment request for bank wire, card, or both payment methods.
  *       
- *       ## Payment Methods
+ *       **Bank Wire Transfer:**
+ *       - For B2B, large amounts, invoices
+ *       - Unlimited amount
+ *       - Processing: 1-3 business days
+ *       - Required: name, email, phone, billingCountry
+ *       - Returns: Complete bank details + unique payment reference
  *       
- *       ### 🏦 Bank Wire Transfer
- *       - **Best for:** B2B, large amounts, invoices
- *       - **Amount limit:** Unlimited
- *       - **Processing:** 1-3 business days
- *       - **Required fields:** name, email, phone, billingCountry
- *       - **Returns:** Complete bank details + unique payment reference
+ *       **Card Payment (PSP):**
+ *       - For B2C, small amounts, subscriptions
+ *       - Max $250 USD
+ *       - Processing: Real-time
+ *       - Required: billingCountry only
+ *       - Optional: name, email, phone (recommended)
+ *       - Returns: Payment link for customer
  *       
- *       ### 💳 Card Payment (PSP)
- *       - **Best for:** B2C, small amounts, subscriptions
- *       - **Amount limit:** Max $250 USD
- *       - **Processing:** Real-time
- *       - **Required fields:** billingCountry (others recommended)
- *       - **Returns:** Payment link for customer
- *       
- *       ### 🔄 Both Methods
- *       - Customer can choose their preferred method
+ *       **Both Methods:**
+ *       - Customer chooses preferred method
  *       - Returns both bank details and payment link
  *       - Amount must be ≤ $250 USD
  *     tags: [Merchant API]

@@ -18,7 +18,7 @@ Welcome to the PSP Platform Merchant API! This API allows you to programmaticall
 ### Base URL
 
 ```
-Production: https://api.yourplatform.com
+Production: https://psp-platform-8nm0.onrender.com
 Development: http://localhost:5000
 ```
 
@@ -26,7 +26,7 @@ Development: http://localhost:5000
 
 Visit our interactive API documentation at:
 ```
-https://api.yourplatform.com/api/docs
+https://psp-platform-8nm0.onrender.com/api/docs
 ```
 
 ## Authentication
@@ -76,20 +76,6 @@ When rate limited, you'll receive a `429 Too Many Requests` response with a `Ret
 
 ## Payment Methods
 
-### Quick Comparison
-
-Choose the right payment method for your use case:
-
-| Feature | Bank Wire Transfer 🏦 | Card Payment 💳 |
-|---------|----------------------|-----------------|
-| **Best For** | B2B, Large amounts | B2C, Small amounts |
-| **Amount Limit** | Unlimited | Max $250 USD |
-| **Processing Time** | 1-3 business days | Real-time |
-| **Required Customer Info** | Name, Email, Phone, Country | Country (others recommended) |
-| **Response Includes** | Bank details + Payment reference | Payment link |
-| **Typical Use Cases** | Invoices, Consulting, Services | Subscriptions, Products, Donations |
-| **Commission** | Typically 2-3% | Typically 3-4% |
-
 ### Bank Wire Transfer
 
 Create payment requests for bank wire transfers with automatic bank assignment.
@@ -127,6 +113,12 @@ Create payment requests for card payments via payment service provider.
 
 **Limits:**
 - ⚠️ Maximum amount: **$250 USD** per transaction
+
+**Required Fields:**
+- Customer billing country (ISO code) *(required)*
+
+**Optional Fields:**
+- Customer name, email, phone *(recommended but not required)*
 
 **Response Includes:**
 - Payment link URL for customer to complete payment
@@ -293,7 +285,7 @@ Authorization: Bearer psp_live_your_api_key_here
 
 **Important Notes for Card Payment:**
 - ✅ Maximum amount: **$250 USD**
-- ✅ Customer name, email, and phone are recommended but only `billingCountry` is required
+- ✅ **Only `billingCountry` is required** - customer name, email, and phone are optional (but recommended for better tracking)
 - ✅ The `paymentLink` is a hosted payment page where customers enter their card details
 - ✅ Initial status is `pending_submission` until the customer submits payment
 - ✅ Real-time payment status updates via webhooks (coming soon)
@@ -454,7 +446,7 @@ Cancel a payment request that hasn't been paid yet.
 const axios = require('axios');
 
 const API_KEY = process.env.PSP_API_KEY;
-const BASE_URL = 'https://api.yourplatform.com';
+const BASE_URL = 'https://psp-platform-8nm0.onrender.com';
 
 // Create payment request
 async function createPaymentRequest() {
@@ -540,7 +532,7 @@ import os
 from datetime import datetime, timedelta
 
 API_KEY = os.environ.get('PSP_API_KEY')
-BASE_URL = 'https://api.yourplatform.com'
+BASE_URL = 'https://psp-platform-8nm0.onrender.com'
 
 # Create payment request
 def create_payment_request():
@@ -629,7 +621,7 @@ class PSPClient {
     private $apiKey;
     private $baseUrl;
     
-    public function __construct($apiKey, $baseUrl = 'https://api.yourplatform.com') {
+    public function __construct($apiKey, $baseUrl = 'https://psp-platform-8nm0.onrender.com') {
         $this->apiKey = $apiKey;
         $this->baseUrl = $baseUrl;
     }
@@ -713,7 +705,7 @@ try {
 
 ```bash
 # Create payment request
-curl -X POST https://api.yourplatform.com/api/v1/merchant/payment-requests \
+curl -X POST https://psp-platform-8nm0.onrender.com/api/v1/merchant/payment-requests \
   -H "Authorization: Bearer psp_live_your_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{
@@ -732,15 +724,15 @@ curl -X POST https://api.yourplatform.com/api/v1/merchant/payment-requests \
   }'
 
 # List payment requests
-curl -X GET "https://api.yourplatform.com/api/v1/merchant/payment-requests?page=1&limit=10" \
+curl -X GET "https://psp-platform-8nm0.onrender.com/api/v1/merchant/payment-requests?page=1&limit=10" \
   -H "Authorization: Bearer psp_live_your_api_key_here"
 
 # Get specific payment request
-curl -X GET "https://api.yourplatform.com/api/v1/merchant/payment-requests/64f1a2b3c4d5e6f7g8h9i0j1" \
+curl -X GET "https://psp-platform-8nm0.onrender.com/api/v1/merchant/payment-requests/64f1a2b3c4d5e6f7g8h9i0j1" \
   -H "Authorization: Bearer psp_live_your_api_key_here"
 
 # Cancel payment request
-curl -X POST "https://api.yourplatform.com/api/v1/merchant/payment-requests/64f1a2b3c4d5e6f7g8h9i0j1/cancel" \
+curl -X POST "https://psp-platform-8nm0.onrender.com/api/v1/merchant/payment-requests/64f1a2b3c4d5e6f7g8h9i0j1/cancel" \
   -H "Authorization: Bearer psp_live_your_api_key_here"
 ```
 

@@ -43,20 +43,6 @@ X-API-Key: psp_live_your_api_key_here
 
 ---
 
-## 📊 Payment Methods Comparison
-
-| Feature | Bank Wire 🏦 | Card Payment 💳 |
-|---------|-------------|-----------------|
-| **Best For** | B2B, Large amounts | B2C, Small amounts |
-| **Amount Limit** | Unlimited | Max $250 USD |
-| **Processing** | 1-3 business days | Real-time |
-| **Required Info** | Name, Email, Phone, Country | Country (others recommended) |
-| **Returns** | Bank details + Reference | Payment link |
-| **Use Cases** | Invoices, Consulting | Subscriptions, Products |
-| **Commission** | 2-3% | 3-4% |
-
----
-
 ## 🏦 Bank Wire Transfer
 
 **Perfect for large B2B transactions**
@@ -82,6 +68,12 @@ X-API-Key: psp_live_your_api_key_here
 - ✅ Hosted payment page
 - ✅ Supports major card brands
 - ⚠️ **Maximum $250 USD per transaction**
+
+**Required fields:**
+- Customer billing country only
+
+**Optional fields:**
+- Customer name, email, phone (recommended for better tracking)
 
 **What you get:**
 - \`paymentLink\` URL where customer enters card details
@@ -153,8 +145,12 @@ Standard HTTP status codes:
     },
     servers: [
       {
-        url: process.env.API_BASE_URL || 'http://localhost:5000',
-        description: 'API Server',
+        url: 'https://psp-platform-8nm0.onrender.com',
+        description: 'Production Server',
+      },
+      {
+        url: 'http://localhost:5000',
+        description: 'Development Server',
       },
     ],
     components: {

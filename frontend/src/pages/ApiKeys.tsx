@@ -23,7 +23,7 @@ import { ApiKeyGenerator } from '../components/ApiKeyGenerator';
 
 // Helper to get the base server URL (without /api suffix)
 const getServerUrl = () => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://psp-platform-8nm0.onrender.com/api';
   return apiUrl.replace(/\/api$/, '');
 };
 
