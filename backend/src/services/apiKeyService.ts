@@ -99,7 +99,7 @@ export class ApiKeyService {
     });
 
     return {
-      id: apiKey._id.toString(),
+      id: (apiKey._id as any).toString(),
       userId: apiKey.userId.toString(),
       prefix: apiKey.prefix,
       name: apiKey.name,
@@ -122,7 +122,7 @@ export class ApiKeyService {
     const apiKeys = await ApiKey.find({ userId }).sort({ createdAt: -1 });
 
     return apiKeys.map(key => ({
-      id: key._id.toString(),
+      id: (key._id as any).toString(),
       userId: key.userId.toString(),
       prefix: key.prefix,
       name: key.name,
@@ -149,7 +149,7 @@ export class ApiKeyService {
     }
 
     return {
-      id: apiKey._id.toString(),
+      id: (apiKey._id as any).toString(),
       userId: apiKey.userId.toString(),
       prefix: apiKey.prefix,
       name: apiKey.name,

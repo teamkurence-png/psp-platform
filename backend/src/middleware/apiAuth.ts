@@ -62,19 +62,19 @@ export const authenticateApiKey = async (
 
     // Attach API key and user info to request
     req.apiKey = {
-      id: validatedKey._id.toString(),
+      id: (validatedKey._id as any).toString(),
       userId: validatedKey.userId.toString(),
       permissions: validatedKey.permissions,
     };
 
     req.user = {
-      id: user._id.toString(),
+      id: (user._id as any).toString(),
       email: user.email,
       role: user.role,
     };
 
     // Record usage asynchronously (don't wait)
-    apiKeyService.recordUsage(validatedKey._id.toString()).catch(err => {
+    apiKeyService.recordUsage((validatedKey._id as any).toString()).catch(err => {
       console.error('Failed to record API key usage:', err);
     });
 
