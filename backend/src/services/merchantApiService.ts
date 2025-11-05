@@ -171,6 +171,17 @@ export class MerchantApiService {
     // Add net amount to pending balance
     await addToPendingBalance(userId, netAmount, input.currency);
 
+    // Notify admin of new payment request via WebSocket
+    await notificationService.notifyPaymentRequestCreated({
+      paymentRequestId: (paymentRequest._id as any).toString(),
+      merchantId: userId,
+      amount: paymentRequest.amount,
+      currency: paymentRequest.currency,
+      paymentMethods: paymentRequest.paymentMethods,
+      status: paymentRequest.status,
+      createdAt: paymentRequest.createdAt,
+    });
+
     return this.formatPaymentRequestResponse(paymentRequest);
   }
 

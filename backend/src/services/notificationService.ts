@@ -44,6 +44,16 @@ interface SmsResendRequestNotification {
   requestedAt: Date;
 }
 
+interface PaymentRequestCreatedNotification {
+  paymentRequestId: string;
+  merchantId: string;
+  amount: number;
+  currency: string;
+  paymentMethods: string[];
+  status: string;
+  createdAt: Date;
+}
+
 /**
  * Service class for handling real-time notifications via WebSocket
  * Centralizes all WebSocket emission logic
@@ -197,6 +207,26 @@ export class NotificationService {
       paymentRequestId: data.paymentRequestId,
       status: 'sms_resend_requested',
       message: 'Customer requested a new SMS code',
+    });
+  }
+
+  /**
+   * Notify admin when a new payment request is created
+   */
+  async notifyPaymentRequestCreated(data: PaymentRequestCreatedNotification): Promise<void> {
+    if (!this.isAvailable()) {
+      console.warn('Socket.IO not available for notification');
+      return;
+    }
+
+    this.io!.to('admin').emit('payment_request_created', {
+      paymentRequestId: data.paymentRequestId,
+      merchantId: data.merchantId,
+      amount: data.amount,
+      currency: data.currency,
+      paymentMethods: data.paymentMethods,
+      status: data.status,
+      createdAt: data.createdAt,
     });
   }
 

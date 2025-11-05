@@ -10,6 +10,7 @@ interface UseWebSocketOptions {
   onPspPaymentSubmitted?: (data: any) => void;
   onPspPaymentStatusUpdated?: (data: any) => void;
   onPaymentRequestStatusUpdated?: (data: any) => void;
+  onPaymentRequestCreated?: (data: any) => void;
   onPspVerificationRequested?: (data: any) => void;
   onPspVerificationCompleted?: (data: any) => void;
   onPspSmsResendRequested?: (data: any) => void;
@@ -24,6 +25,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     onPspPaymentSubmitted,
     onPspPaymentStatusUpdated,
     onPaymentRequestStatusUpdated,
+    onPaymentRequestCreated,
     onPspVerificationRequested,
     onPspVerificationCompleted,
     onPspSmsResendRequested,
@@ -76,6 +78,10 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
     if (onPaymentRequestStatusUpdated) {
       socket.on('payment_request_status_updated', onPaymentRequestStatusUpdated);
+    }
+
+    if (onPaymentRequestCreated) {
+      socket.on('payment_request_created', onPaymentRequestCreated);
     }
 
     if (onPspVerificationRequested) {

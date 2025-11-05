@@ -256,6 +256,17 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
     // Default status is SENT which is a pending state
     await addToPendingBalance(req.user.id, netAmount, validatedData.currency);
 
+    // Notify admin of new payment request via WebSocket
+    await notificationService.notifyPaymentRequestCreated({
+      paymentRequestId: (paymentRequest._id as any).toString(),
+      merchantId: req.user.id,
+      amount: paymentRequest.amount,
+      currency: paymentRequest.currency,
+      paymentMethods: paymentRequest.paymentMethods,
+      status: paymentRequest.status,
+      createdAt: paymentRequest.createdAt,
+    });
+
     res.status(201).json({ success: true, data: paymentRequest });
   } catch (error) {
     if (error instanceof z.ZodError) {

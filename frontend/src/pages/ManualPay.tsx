@@ -366,6 +366,16 @@ const ManualPay: React.FC = () => {
       console.log('New PSP payment submitted:', data);
       queryClient.invalidateQueries({ queryKey: ['psp-payments'] });
     },
+    onPaymentRequestCreated: (data) => {
+      console.log('New payment request created:', data);
+      // Refresh the appropriate list based on payment method
+      if (data.paymentMethods?.includes('card')) {
+        queryClient.invalidateQueries({ queryKey: ['psp-payments'] });
+      }
+      if (data.paymentMethods?.includes('bank_wire')) {
+        queryClient.invalidateQueries({ queryKey: ['bank-payment-requests'] });
+      }
+    },
     onPspVerificationCompleted: (data) => {
       console.log('Customer completed verification:', data);
       queryClient.invalidateQueries({ queryKey: ['psp-payments'] });
