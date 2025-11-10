@@ -628,10 +628,30 @@ const ManualPay: React.FC = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-600 mb-1">Total Value</p>
-                  <p className="text-2xl font-bold text-gray-900 truncate">
+                  <p className="text-sm text-gray-600 mb-1">Pending Value</p>
+                  <p className="text-2xl font-bold text-yellow-600 truncate">
                     {formatCurrency(
-                      payments?.reduce((sum: number, payment: any) => sum + payment.paymentRequest.amount, 0) || 0,
+                      payments?.filter((p: any) => 
+                        ['submitted', 'pending_submission', 'awaiting_3d_sms', 'awaiting_3d_push', 'verification_completed', 'processed_awaiting_exchange'].includes(p.paymentRequest.status)
+                      ).reduce((sum: number, payment: any) => sum + payment.paymentRequest.amount, 0) || 0,
+                      'USD'
+                    )}
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 ml-4">
+                  <Clock className="h-6 w-6 text-yellow-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-600 mb-1">Processed Value</p>
+                  <p className="text-2xl font-bold text-green-600 truncate">
+                    {formatCurrency(
+                      payments?.filter((p: any) => p.paymentRequest.status === 'processed').reduce((sum: number, payment: any) => sum + payment.paymentRequest.amount, 0) || 0,
                       'USD'
                     )}
                   </p>
@@ -647,27 +667,12 @@ const ManualPay: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Awaiting Review</p>
-                  <p className="text-3xl font-bold text-yellow-600">
+                  <p className="text-3xl font-bold text-orange-600">
                     {payments?.filter((p: any) => p.paymentRequest.status === 'submitted').length || 0}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <FileText className="h-6 w-6 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Processed</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {payments?.filter((p: any) => p.paymentRequest.status === 'processed').length || 0}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
+                <div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="h-6 w-6 text-orange-600" />
                 </div>
               </div>
             </CardContent>
