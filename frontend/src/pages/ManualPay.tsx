@@ -779,6 +779,9 @@ const ManualPay: React.FC = () => {
                     Submitted
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Due Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Actions
                   </th>
                 </tr>
@@ -786,7 +789,7 @@ const ManualPay: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredPayments?.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center">
+                    <td colSpan={8} className="px-6 py-12 text-center">
                       <p className="text-gray-500">No PSP payments found</p>
                     </td>
                   </tr>
@@ -833,6 +836,9 @@ const ManualPay: React.FC = () => {
                           </div>
                         )}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {payment.paymentRequest.dueDate ? formatDate(payment.paymentRequest.dueDate) : '—'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex gap-2">
@@ -934,6 +940,9 @@ const ManualPay: React.FC = () => {
                     Created
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Due Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Actions
                   </th>
                 </tr>
@@ -941,7 +950,7 @@ const ManualPay: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredBankRequests?.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center">
+                    <td colSpan={8} className="px-6 py-12 text-center">
                       <p className="text-gray-500">No bank wire payment requests found</p>
                     </td>
                   </tr>
@@ -977,6 +986,9 @@ const ManualPay: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(request.createdAt)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.dueDate ? formatDate(request.dueDate) : '—'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex gap-2">
