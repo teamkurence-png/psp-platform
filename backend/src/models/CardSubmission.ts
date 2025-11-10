@@ -10,6 +10,7 @@ export enum CardSubmissionStatus {
   PROCESSED = 'processed',
   REJECTED = 'rejected',
   INSUFFICIENT_FUNDS = 'insufficient_funds',
+  FAILED = 'failed',
 }
 
 export interface ICardSubmission extends Document {

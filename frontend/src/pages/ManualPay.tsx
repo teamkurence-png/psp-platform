@@ -22,7 +22,7 @@ import { PaymentRequestStatus } from '../types';
 interface PSPPaymentReviewModalProps {
   payment: any;
   onClose: () => void;
-  onReview: (submissionId: string, decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push') => void;
+  onReview: (submissionId: string, decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'failed' | 'awaiting_3d_sms' | 'awaiting_3d_push') => void;
   isLoading: boolean;
 }
 
@@ -32,7 +32,7 @@ const PSPPaymentReviewModal: React.FC<PSPPaymentReviewModalProps> = ({
   onReview,
   isLoading 
 }) => {
-  const [selectedDecision, setSelectedDecision] = useState<'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'>('processed_awaiting_exchange');
+  const [selectedDecision, setSelectedDecision] = useState<'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'failed' | 'awaiting_3d_sms' | 'awaiting_3d_push'>('processed_awaiting_exchange');
   const [cardDetails, setCardDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
@@ -104,6 +104,13 @@ const PSPPaymentReviewModal: React.FC<PSPPaymentReviewModalProps> = ({
       icon: AlertCircle, 
       color: 'text-orange-600',
       description: 'Card has insufficient funds'
+    },
+    { 
+      value: 'failed' as const, 
+      label: 'Mark as Failed', 
+      icon: XCircle, 
+      color: 'text-red-700',
+      description: 'Mark payment as failed (for stuck 3D verification or other issues)'
     },
   ];
 
@@ -453,7 +460,7 @@ const ManualPay: React.FC = () => {
   const error = activeTab === 'card' ? errorCard : errorBank;
 
   // Handler for reviewing PSP payments
-  const handleReview = async (submissionId: string, decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push') => {
+  const handleReview = async (submissionId: string, decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'failed' | 'awaiting_3d_sms' | 'awaiting_3d_push') => {
     try {
       await reviewPayment(submissionId, decision);
       setSelectedPayment(null);
@@ -856,9 +863,20 @@ const ManualPay: React.FC = () => {
                           </Button>
                         ) : (payment.paymentRequest.status === 'awaiting_3d_sms' || payment.paymentRequest.status === 'awaiting_3d_push') ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-orange-600 font-medium px-2 py-1 bg-orange-50 rounded border border-orange-200">
-                              Awaiting Verification
-                            </span>
+                            <Button
+                              size="sm"
+                              onClick={() => setSelectedPayment(payment)}
+                              disabled={isReviewing}
+                              className="bg-orange-600 hover:bg-orange-700"
+                            >
+                              <AlertCircle className="h-4 w-4 mr-1" />
+                              Review (3D Pending)
+                            </Button>
+                            {payment.cardSubmission?.smsResendRequestedAt && (
+                              <span className="text-xs text-orange-600 font-medium">
+                                SMS Requested
+                              </span>
+                            )}
                           </div>
                         ) : payment.paymentRequest.status === 'pending_submission' ? (
                           <Button

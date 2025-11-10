@@ -149,6 +149,7 @@ const PaymentRequestDetail: React.FC = () => {
         );
       case PaymentRequestStatus.REJECTED:
       case PaymentRequestStatus.EXPIRED:
+      case PaymentRequestStatus.FAILED:
         return (
           <div className="flex items-center gap-2 text-red-600">
             <XCircle className="h-5 w-5" />

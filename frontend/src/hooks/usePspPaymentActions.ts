@@ -18,7 +18,7 @@ export const usePspPaymentActions = () => {
       decision 
     }: { 
       submissionId: string; 
-      decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push' 
+      decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'failed' | 'awaiting_3d_sms' | 'awaiting_3d_push' 
     }) => {
       return pspPaymentService.reviewPspPayment(submissionId, decision);
     },
@@ -33,7 +33,7 @@ export const usePspPaymentActions = () => {
 
   const reviewPayment = (
     submissionId: string, 
-    decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
+    decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'failed' | 'awaiting_3d_sms' | 'awaiting_3d_push'
   ) => {
     return reviewMutation.mutateAsync({ submissionId, decision });
   };

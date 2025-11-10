@@ -276,6 +276,29 @@ const PSPPaymentStatus: React.FC = () => {
           </div>
         );
 
+      case 'failed':
+        return (
+          <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <div className="h-20 w-20 bg-red-100 rounded-full flex items-center justify-center">
+                <XCircle className="h-10 w-10 text-red-600" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-red-600 mb-3">Payment Failed</h2>
+            <p className="text-gray-600 mb-6">
+              This payment could not be completed
+            </p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-left">
+              <p className="text-sm text-red-800">
+                <strong>The payment transaction has failed.</strong>
+              </p>
+              <p className="text-sm text-red-700 mt-2">
+                This may have occurred due to verification timeout, technical issues, or the payment being cancelled. Please contact the merchant for assistance or to arrange an alternative payment method.
+              </p>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="text-center">

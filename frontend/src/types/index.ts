@@ -35,6 +35,7 @@ export const PaymentRequestStatus = {
   PROCESSED: 'processed',
   REJECTED: 'rejected',
   INSUFFICIENT_FUNDS: 'insufficient_funds',
+  FAILED: 'failed',
   PAID: 'paid',
   EXPIRED: 'expired',
   CANCELLED: 'cancelled',

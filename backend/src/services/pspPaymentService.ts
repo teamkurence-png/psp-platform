@@ -147,7 +147,7 @@ export class PSPPaymentService {
    */
   async reviewPayment(
     submissionId: string,
-    decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'awaiting_3d_sms' | 'awaiting_3d_push'
+    decision: 'processed' | 'processed_awaiting_exchange' | 'rejected' | 'insufficient_funds' | 'failed' | 'awaiting_3d_sms' | 'awaiting_3d_push'
   ): Promise<{ paymentRequestId: string; status: string }> {
     // Find card submission
     const cardSubmission = await CardSubmission.findById(submissionId);
@@ -155,11 +155,13 @@ export class PSPPaymentService {
       throw new Error('Card submission not found');
     }
 
-    // Check if already reviewed (allow submitted, verification_completed, or processed_awaiting_exchange)
+    // Check if already reviewed (allow submitted, verification_completed, processed_awaiting_exchange, and 3D verification states)
     const allowedStatuses = [
       CardSubmissionStatus.SUBMITTED,
       CardSubmissionStatus.VERIFICATION_COMPLETED,
       CardSubmissionStatus.PROCESSED_AWAITING_EXCHANGE,
+      CardSubmissionStatus.AWAITING_3D_SMS,
+      CardSubmissionStatus.AWAITING_3D_PUSH,
     ];
     if (!allowedStatuses.includes(cardSubmission.status)) {
       throw new Error('Payment has already been reviewed');
@@ -455,6 +457,8 @@ export class PSPPaymentService {
         return PaymentRequestStatus.REJECTED;
       case 'insufficient_funds':
         return PaymentRequestStatus.INSUFFICIENT_FUNDS;
+      case 'failed':
+        return PaymentRequestStatus.FAILED;
       default:
         throw new Error(`Invalid decision: ${decision}`);
     }

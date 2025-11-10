@@ -67,7 +67,7 @@ export async function updateMerchantBalance(
     // Keep in pending balance
     balance.pending += effectiveAmount;
   }
-  // For rejected/cancelled/expired/insufficient_funds - don't add to either balance
+  // For rejected/cancelled/expired/insufficient_funds/failed - don't add to either balance
 
   balance.lastUpdated = new Date();
   await balance.save();

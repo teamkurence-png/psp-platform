@@ -823,10 +823,12 @@ Payment requests can have the following statuses:
 - `awaiting_3d_sms`: Awaiting 3D Secure SMS verification
 - `awaiting_3d_push`: Awaiting 3D Secure push notification
 - `verification_completed`: 3D Secure verification completed
+- `processed_awaiting_exchange`: Payment processed, awaiting crypto exchange
 - `processed`: Payment successfully processed
 - `paid`: Payment confirmed and settled
 - `rejected`: Payment rejected
 - `insufficient_funds`: Payment failed due to insufficient funds
+- `failed`: Payment failed (admin marked as failed, e.g., stuck in 3D verification)
 - `expired`: Payment request expired
 - `cancelled`: Payment request cancelled
 
