@@ -169,6 +169,31 @@ const PSPPaymentReviewModal: React.FC<PSPPaymentReviewModalProps> = ({
               </div>
             </div>
 
+            {/* Commission Breakdown */}
+            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <h4 className="font-semibold text-purple-900 mb-3">Commission Breakdown</h4>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-purple-700">Transaction Amount:</span>
+                  <span className="font-bold text-lg text-purple-900">
+                    {formatCurrency(payment.paymentRequest.amount, payment.paymentRequest.currency)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm border-t border-purple-200 pt-2">
+                  <span className="text-purple-700">Platform Commission (30%):</span>
+                  <span className="font-semibold text-purple-900">
+                    - {formatCurrency(payment.paymentRequest.amount * 0.30, payment.paymentRequest.currency)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm border-t border-purple-300 pt-3 bg-purple-100 -mx-4 px-4 py-3 rounded">
+                  <span className="font-semibold text-purple-800">Merchant Will Receive:</span>
+                  <span className="font-bold text-xl text-green-700">
+                    {formatCurrency(payment.paymentRequest.amount * 0.70, payment.paymentRequest.currency)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {/* Card Details */}
             {loadingDetails ? (
               <div className="p-6 text-center">
