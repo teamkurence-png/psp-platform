@@ -48,8 +48,8 @@ const validateCryptoAddress = (asset: CryptoAsset, address: string): boolean => 
 };
 
 const calculateWithdrawalFee = (asset: CryptoAsset, amount: number): number => {
-  // Fixed 10% commission for all crypto withdrawals
-  return 0.10 * amount;
+  // Fixed $15 fee for all crypto withdrawals
+  return 15;
 };
 
 export const createWithdrawal = async (req: AuthRequest, res: Response): Promise<void> => {

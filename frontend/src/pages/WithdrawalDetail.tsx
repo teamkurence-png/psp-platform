@@ -153,7 +153,7 @@ const WithdrawalDetail: React.FC = () => {
                   </div>
                   {withdrawal.fee > 0 && (
                     <div className="flex justify-between text-sm text-red-600">
-                      <span>Exchange Fee ({((withdrawal.fee / withdrawal.amount) * 100).toFixed(0)}%):</span>
+                      <span>Exchange Fee ($15):</span>
                       <span className="font-semibold">-{formatCurrency(withdrawal.fee, withdrawal.currency)}</span>
                     </div>
                   )}

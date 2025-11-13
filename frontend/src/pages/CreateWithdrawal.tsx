@@ -67,9 +67,8 @@ const CreateWithdrawal: React.FC = () => {
       };
       setFormData(prev => ({ ...prev, network: networkMapping[formData.asset] }));
 
-      // Calculate estimated fee for crypto - Fixed 10% commission
-      const amount = parseFloat(formData.amount || '0');
-      setEstimatedFee(0.10 * amount);
+      // Calculate estimated fee for crypto - Fixed $15 fee
+      setEstimatedFee(15);
     } else {
       // No fee for bank transfers
       setEstimatedFee(0);
@@ -409,7 +408,7 @@ const CreateWithdrawal: React.FC = () => {
                     <span className="font-semibold">${parseFloat(formData.amount || '0').toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-red-600">
-                    <span>Exchange Fee (10%):</span>
+                    <span>Exchange Fee ($15):</span>
                     <span className="font-semibold">-${estimatedFee.toFixed(2)}</span>
                   </div>
                   <div className="border-t pt-2 flex justify-between font-semibold text-green-600">
