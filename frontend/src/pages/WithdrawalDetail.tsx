@@ -129,23 +129,6 @@ const WithdrawalDetail: React.FC = () => {
             </div>
 
             <div>
-              <Label>Amount</Label>
-              <p className="text-sm font-medium">{formatCurrency(withdrawal.amount, withdrawal.currency)}</p>
-            </div>
-
-            {withdrawal.fee > 0 && (
-              <div>
-                <Label>Fee</Label>
-                <p className="text-sm font-medium text-red-600">{formatCurrency(withdrawal.fee, withdrawal.currency)}</p>
-              </div>
-            )}
-
-            <div>
-              <Label>Net Amount</Label>
-              <p className="text-sm font-medium">{formatCurrency(withdrawal.netAmount, withdrawal.currency)}</p>
-            </div>
-
-            <div>
               <Label>Created At</Label>
               <p className="text-sm font-medium">{formatDateTime(withdrawal.createdAt)}</p>
             </div>
@@ -156,6 +139,31 @@ const WithdrawalDetail: React.FC = () => {
                 <p className="text-sm font-medium text-green-600">{formatDateTime(withdrawal.completedAt)}</p>
               </div>
             )}
+          </div>
+
+          {/* Amount Breakdown */}
+          <div className="mt-6 pt-6 border-t">
+            <h3 className="font-semibold text-lg mb-4">Amount Breakdown</h3>
+            <Card className="bg-muted">
+              <CardContent className="pt-6">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Requested Withdrawal:</span>
+                    <span className="font-semibold">{formatCurrency(withdrawal.amount, withdrawal.currency)}</span>
+                  </div>
+                  {withdrawal.fee > 0 && (
+                    <div className="flex justify-between text-sm text-red-600">
+                      <span>Exchange Fee ({((withdrawal.fee / withdrawal.amount) * 100).toFixed(0)}%):</span>
+                      <span className="font-semibold">-{formatCurrency(withdrawal.fee, withdrawal.currency)}</span>
+                    </div>
+                  )}
+                  <div className="border-t pt-2 flex justify-between font-semibold text-green-600">
+                    <span>Amount Sent to {withdrawal.method === 'crypto' ? 'Wallet' : 'Bank'}:</span>
+                    <span>{formatCurrency(withdrawal.netAmount, withdrawal.currency)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Crypto-specific details */}

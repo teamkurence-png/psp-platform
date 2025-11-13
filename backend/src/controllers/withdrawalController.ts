@@ -97,12 +97,14 @@ export const createWithdrawal = async (req: AuthRequest, res: Response): Promise
     }
     // Bank transfers have no fee in this implementation
 
-    // Check balance
+    // Calculate net amount (what user actually receives after fee)
+    const netAmount = validatedData.amount - fee;
+
+    // Check balance - only need the requested amount
     const userObjectId = new mongoose.Types.ObjectId(req.user.id);
     const balance = await Balance.findOne({ userId: userObjectId });
-    const totalRequired = validatedData.amount + fee;
 
-    if (!balance || balance.available < totalRequired) {
+    if (!balance || balance.available < validatedData.amount) {
       res.status(400).json({ 
         success: false, 
         error: 'Insufficient available balance' 
@@ -117,7 +119,7 @@ export const createWithdrawal = async (req: AuthRequest, res: Response): Promise
       amount: validatedData.amount,
       currency: validatedData.currency || 'USD',
       fee,
-      netAmount: validatedData.amount,
+      netAmount,
       status: WithdrawalStatus.INITIATED,
       
       // Crypto fields
@@ -141,8 +143,8 @@ export const createWithdrawal = async (req: AuthRequest, res: Response): Promise
       transactionIds: validatedData.transactionIds || [],
     });
 
-    // Update balance
-    balance.available -= totalRequired;
+    // Update balance - deduct the full withdrawal amount
+    balance.available -= validatedData.amount;
     await balance.save();
 
     res.status(201).json({ 

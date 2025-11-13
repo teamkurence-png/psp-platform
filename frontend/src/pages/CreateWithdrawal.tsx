@@ -97,9 +97,8 @@ const CreateWithdrawal: React.FC = () => {
       return;
     }
 
-    const totalRequired = amount + estimatedFee;
-    if (!balance || totalRequired > balance.available) {
-      alert('Insufficient available balance (including fees)');
+    if (!balance || amount > balance.available) {
+      alert('Insufficient available balance');
       return;
     }
 
@@ -406,16 +405,16 @@ const CreateWithdrawal: React.FC = () => {
               <CardContent className="pt-6">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Withdrawal Amount:</span>
+                    <span>Requested Withdrawal:</span>
                     <span className="font-semibold">${parseFloat(formData.amount || '0').toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-red-600">
-                    <span>Network Fee:</span>
+                    <span>Exchange Fee (10%):</span>
                     <span className="font-semibold">-${estimatedFee.toFixed(2)}</span>
                   </div>
-                  <div className="border-t pt-2 flex justify-between font-semibold">
-                    <span>Total Deducted:</span>
-                    <span>${(parseFloat(formData.amount || '0') + estimatedFee).toFixed(2)}</span>
+                  <div className="border-t pt-2 flex justify-between font-semibold text-green-600">
+                    <span>You Will Receive:</span>
+                    <span>${(parseFloat(formData.amount || '0') - estimatedFee).toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
