@@ -504,3 +504,44 @@ export const cancelPaymentRequest = async (req: AuthRequest, res: Response): Pro
   }
 };
 
+/**
+ * Get webhook logs for a payment request
+ */
+export const getWebhookLogs = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user || req.user.role !== UserRole.MERCHANT) {
+      res.status(403).json({ success: false, error: 'Forbidden' });
+      return;
+    }
+
+    const { id } = req.params;
+
+    const paymentRequest = await PaymentRequest.findById(id);
+    if (!paymentRequest) {
+      res.status(404).json({ success: false, error: 'Payment request not found' });
+      return;
+    }
+
+    // Check ownership
+    if (paymentRequest.userId.toString() !== req.user.id) {
+      res.status(403).json({ success: false, error: 'Forbidden' });
+      return;
+    }
+
+    // Get webhook logs
+    const logs = await webhookService.getWebhookLogs(id);
+    const stats = await webhookService.getWebhookStats(id);
+
+    res.json({ 
+      success: true, 
+      data: {
+        logs,
+        stats
+      }
+    });
+  } catch (error) {
+    console.error('Get webhook logs error:', error);
+    res.status(500).json({ success: false, error: 'Failed to get webhook logs' });
+  }
+};
+

@@ -5,6 +5,7 @@ import {
   getPaymentRequest,
   updatePaymentRequest,
   cancelPaymentRequest,
+  getWebhookLogs,
 } from '../controllers/paymentRequestController.js';
 import { authenticate } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
@@ -19,6 +20,7 @@ router.use(authenticate);
 
 router.post('/', asyncHandler(createPaymentRequest));
 router.get('/', asyncHandler(listPaymentRequests));
+router.get('/:id/webhook-logs', asyncHandler(getWebhookLogs));
 router.get('/:id', asyncHandler(getPaymentRequest));
 router.put('/:id', asyncHandler(updatePaymentRequest));
 router.post('/:id/cancel', asyncHandler(cancelPaymentRequest));

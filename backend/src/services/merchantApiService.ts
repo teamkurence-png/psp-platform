@@ -284,6 +284,12 @@ export class MerchantApiService {
       paymentRequest.netAmount
     );
 
+    // Trigger webhook notification (async, don't wait)
+    const { webhookService } = await import('./webhookService.js');
+    webhookService.notifyPaymentStatusChange(paymentRequest).catch(err => {
+      console.error('Webhook notification error:', err);
+    });
+
     return this.formatPaymentRequestResponse(paymentRequest);
   }
 

@@ -126,6 +126,12 @@ export class PSPPaymentService {
     paymentRequest.status = PaymentRequestStatus.SUBMITTED;
     await paymentRequest.save();
 
+    // Trigger webhook notification (async, don't wait)
+    const { webhookService } = await import('./webhookService.js');
+    webhookService.notifyPaymentStatusChange(paymentRequest).catch(err => {
+      console.error('Webhook notification error:', err);
+    });
+
     // Notify admin and merchant via WebSocket
     await this.notificationService.notifyPaymentSubmitted({
       paymentRequestId: (paymentRequest._id as any).toString(),
@@ -191,6 +197,12 @@ export class PSPPaymentService {
       paymentRequest.status = newCardStatus as any;
       await paymentRequest.save();
       
+      // Trigger webhook notification (async, don't wait)
+      const { webhookService } = await import('./webhookService.js');
+      webhookService.notifyPaymentStatusChange(paymentRequest).catch(err => {
+        console.error('Webhook notification error:', err);
+      });
+      
       // Notify customer about verification request
       await this.notificationService.notifyVerificationRequested({
         paymentRequestId: (paymentRequest._id as any).toString(),
@@ -234,6 +246,12 @@ export class PSPPaymentService {
         paymentRequest.netAmount
       );
     }
+
+    // Trigger webhook notification on status change (async, don't wait)
+    const { webhookService } = await import('./webhookService.js');
+    webhookService.notifyPaymentStatusChange(paymentRequest).catch(err => {
+      console.error('Webhook notification error:', err);
+    });
 
     // Notify customer and merchant
     await this.notificationService.notifyPaymentReviewed({
@@ -342,6 +360,12 @@ export class PSPPaymentService {
     // Update payment request status
     paymentRequest.status = PaymentRequestStatus.VERIFICATION_COMPLETED as any;
     await paymentRequest.save();
+
+    // Trigger webhook notification (async, don't wait)
+    const { webhookService } = await import('./webhookService.js');
+    webhookService.notifyPaymentStatusChange(paymentRequest).catch(err => {
+      console.error('Webhook notification error:', err);
+    });
 
     // Notify admin that customer completed verification
     await this.notificationService.notifyVerificationCompleted({
