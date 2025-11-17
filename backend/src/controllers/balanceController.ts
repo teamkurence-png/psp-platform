@@ -33,6 +33,7 @@ export const getBalance = async (req: AuthRequest, res: Response): Promise<void>
         userId: userObjectId,
         available: 0,
         pending: 0,
+        commissionBalance: 0,
         currency: 'USD',
         pendingBreakdown: [],
       });

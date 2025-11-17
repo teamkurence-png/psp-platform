@@ -59,6 +59,17 @@ export enum BankRail {
   LOCAL = 'local',
 }
 
+export enum WithdrawalSource {
+  BALANCE = 'balance',
+  COMMISSION = 'commission',
+}
+
+export enum CommissionStatus {
+  PENDING = 'pending',
+  CREDITED = 'credited',
+  WITHDRAWN = 'withdrawn',
+}
+
 export interface AuthRequest extends Request {
   user?: {
     id: string;

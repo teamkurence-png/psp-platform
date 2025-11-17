@@ -8,7 +8,6 @@ import { updateMerchantBalance, addToPendingBalance } from '../services/balanceS
 import { PSPPaymentService } from '../services/pspPaymentService.js';
 import { EncryptionService } from '../services/encryptionService.js';
 import { notificationService } from '../services/notificationService.js';
-import { commissionService } from '../services/commissionService.js';
 import { webhookService } from '../services/webhookService.js';
 
 // Lazy initialization to avoid loading env vars before they're set
@@ -198,15 +197,20 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
     let pspPaymentToken;
     let pspPaymentLink;
     let initialStatus = PaymentRequestStatus.SENT;
-    let commissionResult;
+    let commissionAmount;
+    let netAmount;
     
     if (validatedData.paymentMethods.includes(PaymentMethod.CARD)) {
-      // Use commission service for card payment calculation
-      commissionResult = commissionService.calculate(validatedData.amount, PaymentMethod.CARD);
-      commissionPercent = commissionResult.commissionPercent;
-      
-      // Use PSP service to generate payment link
+      // Use PSP service for card payment
       const service = getPSPPaymentService();
+      
+      // Calculate commission (30% for cards)
+      const commissionResult = service.calculateCommission(validatedData.amount);
+      commissionAmount = commissionResult.commissionAmount;
+      netAmount = commissionResult.netAmount;
+      commissionPercent = service.getCardCommissionPercent();
+      
+      // Generate payment link
       const pspLinkData = service.generatePaymentLink();
       pspPaymentToken = pspLinkData.token;
       pspPaymentLink = pspLinkData.link;
@@ -217,17 +221,10 @@ export const createPaymentRequest = async (req: AuthRequest, res: Response): Pro
       // Optional: Try to find a card reference for backward compatibility
       cardId = await service.findCardReference();
     } else {
-      // For bank wire, calculate commission based on selected bank
-      commissionResult = commissionService.calculate(
-        validatedData.amount, 
-        PaymentMethod.BANK_WIRE, 
-        commissionPercent
-      );
+      // For bank wire, calculate commission based on selected bank's commission percent
+      commissionAmount = Math.round((validatedData.amount * commissionPercent) / 100 * 100) / 100;
+      netAmount = Math.round((validatedData.amount - commissionAmount) * 100) / 100;
     }
-
-    // Use calculated commission values
-    const commissionAmount = commissionResult.commissionAmount;
-    const netAmount = commissionResult.netAmount;
 
     // Create payment request
     const paymentRequest = await PaymentRequest.create({
@@ -436,7 +433,8 @@ export const updatePaymentRequest = async (req: AuthRequest, res: Response): Pro
           paymentRequest.amount,
           oldStatus,
           updates.status as PaymentRequestStatus,
-          paymentRequest.netAmount
+          paymentRequest.netAmount,
+          String(paymentRequest._id)
         );
         
         // Trigger webhook notification on status change (async, don't wait)
@@ -489,7 +487,8 @@ export const cancelPaymentRequest = async (req: AuthRequest, res: Response): Pro
       paymentRequest.amount,
       oldStatus,
       PaymentRequestStatus.CANCELLED,
-      paymentRequest.netAmount
+      paymentRequest.netAmount,
+      String(paymentRequest._id)
     );
     
     // Trigger webhook notification for cancellation (async, don't wait)

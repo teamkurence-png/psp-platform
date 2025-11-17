@@ -8,6 +8,7 @@ import {
   Wallet,
   Settings,
   LogOut,
+  TrendingUp,
   Menu,
   X,
   Bitcoin,
@@ -24,6 +25,7 @@ interface NavigationItem {
   href: string;
   icon: React.ElementType;
   roles?: UserRole[];
+  condition?: () => boolean;
 }
 
 const AppLayout: React.FC = () => {
@@ -46,6 +48,13 @@ const AppLayout: React.FC = () => {
         href: '/payment-requests', 
         icon: FileText,
         roles: [UserRole.MERCHANT]
+      },
+      {
+        name: 'Leader Dashboard',
+        href: '/merchant-leader-dashboard',
+        icon: TrendingUp,
+        roles: [UserRole.MERCHANT],
+        condition: () => (user as any)?.isMerchantLeader === true,
       },
       { 
         name: 'Manual Pay', 
@@ -76,12 +85,19 @@ const AppLayout: React.FC = () => {
       { name: 'Settings', href: '/settings', icon: Settings },
     ];
 
-    // Filter navigation items based on user role
+    // Filter navigation items based on user role and conditions
     return allNavItems.filter(item => {
-      if (!item.roles) return true;
-      return user?.role && item.roles.includes(user.role as UserRole);
+      // Check role-based access
+      if (item.roles && (!user?.role || !item.roles.includes(user.role as UserRole))) {
+        return false;
+      }
+      // Check custom condition if provided
+      if (item.condition && !item.condition()) {
+        return false;
+      }
+      return true;
     });
-  }, [user?.role]);
+  }, [user]);
 
   const isActive = (path: string) => location.pathname === path;
 

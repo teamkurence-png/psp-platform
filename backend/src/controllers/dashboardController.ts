@@ -77,6 +77,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
           userId: userObjectId,
           available: 0,
           pending: 0,
+          commissionBalance: 0,
           currency: 'USD',
           pendingBreakdown: [],
         });

@@ -13,6 +13,7 @@ import { setupSwagger } from './docs/swagger.js';
 // Import routes
 import authRoutes from './routes/auth.js';
 import merchantRoutes from './routes/merchants.js';
+import merchantLeaderRoutes from './routes/merchantLeader.js';
 import paymentRequestRoutes from './routes/paymentRequests.js';
 import pspPaymentRoutes from './routes/pspPayments.js';
 import dashboardRoutes from './routes/dashboard.js';
@@ -89,6 +90,7 @@ setupSwagger(app);
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/merchants', merchantRoutes);
+app.use('/api/merchant-leader', merchantLeaderRoutes);
 app.use('/api/payment-requests', paymentRequestRoutes);
 app.use('/api/psp-payments', pspPaymentRoutes);
 app.use('/api/dashboard', dashboardRoutes);

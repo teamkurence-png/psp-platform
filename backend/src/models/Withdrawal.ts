@@ -1,9 +1,10 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import { CryptoAsset, WithdrawalStatus } from '../types/index.js';
+import { CryptoAsset, WithdrawalStatus, WithdrawalSource } from '../types/index.js';
 
 export interface IWithdrawal extends Document {
   userId: mongoose.Types.ObjectId;
   method: 'crypto' | 'bank_transfer';
+  source: WithdrawalSource;
   amount: number;
   currency: string;
   fee: number;
@@ -46,6 +47,11 @@ const withdrawalSchema = new Schema<IWithdrawal>(
       type: String,
       enum: ['crypto', 'bank_transfer'],
       required: true,
+    },
+    source: {
+      type: String,
+      enum: Object.values(WithdrawalSource),
+      default: WithdrawalSource.BALANCE,
     },
     amount: {
       type: Number,

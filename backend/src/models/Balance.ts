@@ -10,6 +10,7 @@ export interface IBalance extends Document {
   userId: mongoose.Types.ObjectId;
   available: number;
   pending: number;
+  commissionBalance: number;
   currency: string;
   pendingBreakdown: IPendingBalance[];
   lastUpdated: Date;
@@ -36,6 +37,10 @@ const balanceSchema = new Schema<IBalance>(
       default: 0,
     },
     pending: {
+      type: Number,
+      default: 0,
+    },
+    commissionBalance: {
       type: Number,
       default: 0,
     },

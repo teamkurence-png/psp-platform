@@ -6,7 +6,7 @@ import Input from '../components/ui/Input';
 import Label from '../components/ui/Label';
 import EmptyState from '../components/ui/EmptyState';
 import type { Balance } from '../types/index';
-import { CryptoAsset } from '../types/index';
+import { CryptoAsset, WithdrawalSource } from '../types/index';
 import api from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { formatCurrency } from '../lib/utils';
@@ -14,6 +14,7 @@ import { ArrowLeft, AlertTriangle } from 'lucide-react';
 
 interface WithdrawalFormData {
   method: 'crypto' | 'bank_transfer';
+  source: WithdrawalSource;
   amount: string;
   asset: CryptoAsset;
   network: string;
@@ -34,6 +35,7 @@ const CreateWithdrawal: React.FC = () => {
   const [balance, setBalance] = useState<Balance | null>(null);
   const [formData, setFormData] = useState<WithdrawalFormData>({
     method: 'crypto',
+    source: WithdrawalSource.BALANCE,
     amount: '',
     
     // Crypto fields
@@ -96,8 +98,19 @@ const CreateWithdrawal: React.FC = () => {
       return;
     }
 
-    if (!balance || amount > balance.available) {
-      alert('Insufficient available balance');
+    // Check balance exists first
+    if (!balance) {
+      alert('Balance information not available');
+      return;
+    }
+
+    // Check the appropriate balance based on source
+    const availableBalance = formData.source === WithdrawalSource.COMMISSION 
+      ? balance.commissionBalance 
+      : balance.available;
+
+    if (amount > availableBalance) {
+      alert(`Insufficient ${formData.source === WithdrawalSource.COMMISSION ? 'commission' : 'available'} balance`);
       return;
     }
 
@@ -137,6 +150,7 @@ const CreateWithdrawal: React.FC = () => {
       
       const payload: any = {
         method: formData.method,
+        source: formData.source,
         amount,
         currency: 'USD',
       };
@@ -224,18 +238,33 @@ const CreateWithdrawal: React.FC = () => {
 
       {/* Balance Info */}
       {balance && (
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-900 font-medium">Available Balance</p>
-                <p className="text-3xl font-bold text-blue-900 mt-1">
-                  {formatCurrency(balance.available, balance.currency)}
-                </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-blue-900 font-medium">Available Balance</p>
+                  <p className="text-3xl font-bold text-blue-900 mt-1">
+                    {formatCurrency(balance.available, balance.currency)}
+                  </p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-purple-50 border-purple-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-purple-900 font-medium">Commission Balance</p>
+                  <p className="text-3xl font-bold text-purple-900 mt-1">
+                    {formatCurrency(balance.commissionBalance || 0, balance.currency)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Withdrawal Form */}
@@ -246,6 +275,25 @@ const CreateWithdrawal: React.FC = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Withdrawal Source */}
+            <div>
+              <Label htmlFor="source">Withdrawal Source *</Label>
+              <select
+                id="source"
+                value={formData.source}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value as WithdrawalSource })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mt-2"
+                required
+              >
+                <option value={WithdrawalSource.BALANCE}>
+                  Regular Balance ({formatCurrency(balance?.available || 0, balance?.currency || 'USD')})
+                </option>
+                <option value={WithdrawalSource.COMMISSION}>
+                  Commission Balance ({formatCurrency(balance?.commissionBalance || 0, balance?.currency || 'USD')})
+                </option>
+              </select>
+            </div>
+
             <div>
               <Label htmlFor="method">Withdrawal Method *</Label>
               <select
@@ -394,7 +442,12 @@ const CreateWithdrawal: React.FC = () => {
               />
               {balance && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  Maximum: {formatCurrency(balance.available, balance.currency)}
+                  Maximum: {formatCurrency(
+                    formData.source === WithdrawalSource.COMMISSION 
+                      ? balance.commissionBalance 
+                      : balance.available, 
+                    balance.currency
+                  )}
                 </p>
               )}
             </div>

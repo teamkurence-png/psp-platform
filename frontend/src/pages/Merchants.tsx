@@ -22,8 +22,12 @@ const Merchants: React.FC = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedMerchantId, setSelectedMerchantId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [showLeaderModal, setShowLeaderModal] = useState(false);
+  const [selectedLeaderId, setSelectedLeaderId] = useState<string | null>(null);
+  const [processingLeader, setProcessingLeader] = useState(false);
 
   const isAdminOrOps = user?.role === UserRole.ADMIN || user?.role === UserRole.OPS;
+  const isAdmin = user?.role === UserRole.ADMIN;
 
   useEffect(() => {
     fetchMerchants();
@@ -84,6 +88,45 @@ const Merchants: React.FC = () => {
       setReviewingMerchant(null);
     }
   };
+
+  const handleToggleLeader = async (merchantId: string, currentStatus: boolean) => {
+    try {
+      setProcessingLeader(true);
+      await merchantService.toggleMerchantLeader(merchantId, !currentStatus);
+      await fetchMerchants();
+    } catch (error: any) {
+      console.error('Failed to toggle merchant leader:', error);
+      setError(error.response?.data?.error || 'Failed to toggle merchant leader status');
+    } finally {
+      setProcessingLeader(false);
+    }
+  };
+
+  const handleAssignLeaderClick = (merchantId: string, currentLeaderId?: string) => {
+    setSelectedMerchantId(merchantId);
+    setSelectedLeaderId(currentLeaderId || null);
+    setShowLeaderModal(true);
+  };
+
+  const handleAssignLeaderSubmit = async () => {
+    if (!selectedMerchantId) return;
+
+    try {
+      setProcessingLeader(true);
+      await merchantService.assignMerchantToLeader(selectedMerchantId, selectedLeaderId);
+      setShowLeaderModal(false);
+      setSelectedMerchantId(null);
+      setSelectedLeaderId(null);
+      await fetchMerchants();
+    } catch (error: any) {
+      console.error('Failed to assign merchant to leader:', error);
+      setError(error.response?.data?.error || 'Failed to assign merchant to leader');
+    } finally {
+      setProcessingLeader(false);
+    }
+  };
+
+  const merchantLeaders = merchants.filter(m => m.isMerchantLeader);
 
   const { searchTerm, setSearchTerm, filteredItems: filteredMerchants } = useSearch(
     merchants,
@@ -212,12 +255,17 @@ const Merchants: React.FC = () => {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <h3 className="font-semibold text-lg">{merchant.legalName}</h3>
                         <StatusBadge 
                           status={getStatusColor(merchant.onboardingStatus)}
                           label={getStatusLabel(merchant.onboardingStatus)}
                         />
+                        {merchant.isMerchantLeader && (
+                          <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
+                            LEADER
+                          </span>
+                        )}
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground mb-2">
@@ -261,6 +309,12 @@ const Merchants: React.FC = () => {
                         )}
                       </div>
 
+                      {merchant.merchantLeaderId && typeof merchant.merchantLeaderId === 'object' && (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+                          <span className="font-medium">Leader:</span> {merchant.merchantLeaderId.legalName}
+                        </div>
+                      )}
+
                       {merchant.rejectionReason && (
                         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
                           <span className="font-medium">Rejection Reason:</span> {merchant.rejectionReason}
@@ -268,30 +322,62 @@ const Merchants: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Action Buttons for Admin/Ops */}
-                    {isAdminOrOps && merchant.onboardingStatus === OnboardingStatus.IN_REVIEW && (
-                      <div className="flex gap-2 ml-4">
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={() => handleApprove(merchant._id)}
-                          disabled={reviewingMerchant === merchant._id}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleRejectClick(merchant._id)}
-                          disabled={reviewingMerchant === merchant._id}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                      </div>
-                    )}
+                    {/* Action Buttons */}
+                    <div className="flex flex-col gap-2 ml-4">
+                      {/* Admin/Ops Review Buttons */}
+                      {isAdminOrOps && merchant.onboardingStatus === OnboardingStatus.IN_REVIEW && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => handleApprove(merchant._id)}
+                            disabled={reviewingMerchant === merchant._id}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleRejectClick(merchant._id)}
+                            disabled={reviewingMerchant === merchant._id}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Admin Leader Management Buttons */}
+                      {isAdmin && merchant.onboardingStatus === OnboardingStatus.APPROVED && (
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggleLeader(merchant._id, merchant.isMerchantLeader || false)}
+                            disabled={processingLeader}
+                          >
+                            {merchant.isMerchantLeader ? 'Demote from Leader' : 'Promote to Leader'}
+                          </Button>
+                          {!merchant.isMerchantLeader && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAssignLeaderClick(
+                                merchant._id,
+                                typeof merchant.merchantLeaderId === 'object' 
+                                  ? merchant.merchantLeaderId._id 
+                                  : merchant.merchantLeaderId
+                              )}
+                              disabled={processingLeader}
+                            >
+                              {merchant.merchantLeaderId ? 'Change Leader' : 'Assign Leader'}
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -338,6 +424,56 @@ const Merchants: React.FC = () => {
                   setRejectionReason('');
                 }}
                 disabled={!!reviewingMerchant}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Leader Assignment Modal */}
+      {showLeaderModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowLeaderModal(false)}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-semibold mb-4">Assign Merchant Leader</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Select a merchant leader for this merchant, or select "None" to unassign:
+            </p>
+            <select
+              value={selectedLeaderId || ''}
+              onChange={(e) => setSelectedLeaderId(e.target.value || null)}
+              className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background mb-4"
+            >
+              <option value="">None (Unassign)</option>
+              {merchantLeaders.map((leader) => (
+                <option key={leader._id} value={leader._id}>
+                  {leader.legalName}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleAssignLeaderSubmit}
+                disabled={processingLeader}
+                className="flex-1"
+              >
+                Assign Leader
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowLeaderModal(false);
+                  setSelectedMerchantId(null);
+                  setSelectedLeaderId(null);
+                }}
+                disabled={processingLeader}
               >
                 Cancel
               </Button>

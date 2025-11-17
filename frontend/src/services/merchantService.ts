@@ -78,5 +78,21 @@ export const merchantService = {
     });
     return response.data.data;
   },
+
+  // Assign merchant to leader (admin only)
+  async assignMerchantToLeader(merchantId: string, leaderId: string | null) {
+    const response = await api.post(`/merchants/${merchantId}/assign-leader`, {
+      leaderId,
+    });
+    return response.data.data;
+  },
+
+  // Toggle merchant leader status (admin only)
+  async toggleMerchantLeader(merchantId: string, isMerchantLeader: boolean) {
+    const response = await api.post(`/merchants/${merchantId}/toggle-leader`, {
+      isMerchantLeader,
+    });
+    return response.data.data;
+  },
 };
 

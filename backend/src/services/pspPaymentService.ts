@@ -243,7 +243,8 @@ export class PSPPaymentService {
         paymentRequest.amount,
         oldStatus,
         newStatus,
-        paymentRequest.netAmount
+        paymentRequest.netAmount,
+        String(paymentRequest._id)
       );
     }
 

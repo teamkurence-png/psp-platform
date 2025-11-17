@@ -3,11 +3,12 @@ import mongoose from 'mongoose';
 import { z } from 'zod';
 import { Withdrawal } from '../models/Withdrawal.js';
 import { Balance } from '../models/Balance.js';
-import { AuthRequest, UserRole, CryptoAsset, WithdrawalStatus } from '../types/index.js';
+import { AuthRequest, UserRole, CryptoAsset, WithdrawalStatus, WithdrawalSource } from '../types/index.js';
 
 // Validation schema
 const createWithdrawalSchema = z.object({
   method: z.enum(['crypto', 'bank_transfer']),
+  source: z.enum([WithdrawalSource.BALANCE, WithdrawalSource.COMMISSION]).default(WithdrawalSource.BALANCE),
   amount: z.number().positive(),
   currency: z.string().default('USD'),
   
@@ -100,22 +101,43 @@ export const createWithdrawal = async (req: AuthRequest, res: Response): Promise
     // Calculate net amount (what user actually receives after fee)
     const netAmount = validatedData.amount - fee;
 
-    // Check balance - only need the requested amount
+    // Check balance based on source - only need the requested amount
     const userObjectId = new mongoose.Types.ObjectId(req.user.id);
     const balance = await Balance.findOne({ userId: userObjectId });
 
-    if (!balance || balance.available < validatedData.amount) {
+    if (!balance) {
       res.status(400).json({ 
         success: false, 
-        error: 'Insufficient available balance' 
+        error: 'Balance not found' 
       });
       return;
+    }
+
+    // Check the appropriate balance based on source
+    const withdrawalSource = validatedData.source || WithdrawalSource.BALANCE;
+    if (withdrawalSource === WithdrawalSource.COMMISSION) {
+      if (balance.commissionBalance < validatedData.amount) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'Insufficient commission balance' 
+        });
+        return;
+      }
+    } else {
+      if (balance.available < validatedData.amount) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'Insufficient available balance' 
+        });
+        return;
+      }
     }
 
     // Create withdrawal
     const withdrawal = await Withdrawal.create({
       userId: req.user.id,
       method: validatedData.method,
+      source: withdrawalSource,
       amount: validatedData.amount,
       currency: validatedData.currency || 'USD',
       fee,
@@ -143,8 +165,12 @@ export const createWithdrawal = async (req: AuthRequest, res: Response): Promise
       transactionIds: validatedData.transactionIds || [],
     });
 
-    // Update balance - deduct the full withdrawal amount
-    balance.available -= validatedData.amount;
+    // Update balance - deduct from the appropriate balance based on source
+    if (withdrawalSource === WithdrawalSource.COMMISSION) {
+      balance.commissionBalance -= validatedData.amount;
+    } else {
+      balance.available -= validatedData.amount;
+    }
     await balance.save();
 
     res.status(201).json({ 
@@ -274,11 +300,15 @@ export const updateWithdrawalStatus = async (req: AuthRequest, res: Response): P
     if (status === WithdrawalStatus.FAILED || status === WithdrawalStatus.REVERSED) {
       withdrawal.failureReason = failureReason;
       
-      // Return funds to balance
+      // Return funds to the appropriate balance based on withdrawal source
       const withdrawalUserObjectId = new mongoose.Types.ObjectId(withdrawal.userId.toString());
       const balance = await Balance.findOne({ userId: withdrawalUserObjectId });
       if (balance) {
-        balance.available += (withdrawal.amount + withdrawal.fee);
+        if (withdrawal.source === WithdrawalSource.COMMISSION) {
+          balance.commissionBalance += (withdrawal.amount + withdrawal.fee);
+        } else {
+          balance.available += (withdrawal.amount + withdrawal.fee);
+        }
         await balance.save();
       }
     }

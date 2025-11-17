@@ -31,6 +31,9 @@ export interface IUser extends Document {
   onboardingStatus?: OnboardingStatus;
   rejectionReason?: string;
   approvedAt?: Date;
+  // Merchant leader fields
+  isMerchantLeader?: boolean;
+  merchantLeaderId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -95,6 +98,15 @@ const userSchema = new Schema<IUser>(
     },
     rejectionReason: String,
     approvedAt: Date,
+    // Merchant leader fields
+    isMerchantLeader: {
+      type: Boolean,
+      default: false,
+    },
+    merchantLeaderId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
   {
     timestamps: true,
@@ -105,6 +117,8 @@ const userSchema = new Schema<IUser>(
 // Note: email index is already created via unique: true in schema
 userSchema.index({ onboardingStatus: 1 });
 userSchema.index({ role: 1, isActive: 1 });
+userSchema.index({ isMerchantLeader: 1 });
+userSchema.index({ merchantLeaderId: 1 });
 
 export const User = mongoose.model<IUser>('User', userSchema);
 

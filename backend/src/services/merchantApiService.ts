@@ -11,7 +11,6 @@ import { addToPendingBalance, updateMerchantBalance } from './balanceService.js'
 import { PSPPaymentService } from './pspPaymentService.js';
 import { EncryptionService } from './encryptionService.js';
 import { notificationService } from './notificationService.js';
-import { commissionService } from './commissionService.js';
 
 export class MerchantApiService {
   private pspPaymentService: PSPPaymentService;
@@ -121,11 +120,15 @@ export class MerchantApiService {
     let pspPaymentToken;
     let pspPaymentLink;
     let initialStatus = PaymentRequestStatus.SENT;
-    let commissionResult;
+    let commissionAmount;
+    let netAmount;
 
     if (input.paymentMethods.includes(PaymentMethod.CARD)) {
-      commissionResult = commissionService.calculate(input.amount, PaymentMethod.CARD);
-      commissionPercent = commissionResult.commissionPercent;
+      // Calculate commission (30% for cards)
+      const commissionResult = this.pspPaymentService.calculateCommission(input.amount);
+      commissionAmount = commissionResult.commissionAmount;
+      netAmount = commissionResult.netAmount;
+      commissionPercent = this.pspPaymentService.getCardCommissionPercent();
 
       const pspLinkData = this.pspPaymentService.generatePaymentLink();
       pspPaymentToken = pspLinkData.token;
@@ -134,15 +137,10 @@ export class MerchantApiService {
       initialStatus = PaymentRequestStatus.PENDING_SUBMISSION;
       cardId = await this.pspPaymentService.findCardReference();
     } else {
-      commissionResult = commissionService.calculate(
-        input.amount,
-        PaymentMethod.BANK_WIRE,
-        commissionPercent
-      );
+      // For bank wire, calculate commission based on selected bank's commission percent
+      commissionAmount = Math.round((input.amount * commissionPercent) / 100 * 100) / 100;
+      netAmount = Math.round((input.amount - commissionAmount) * 100) / 100;
     }
-
-    const commissionAmount = commissionResult.commissionAmount;
-    const netAmount = commissionResult.netAmount;
 
     // Create payment request
     const paymentRequest = await PaymentRequest.create({
@@ -281,7 +279,8 @@ export class MerchantApiService {
       paymentRequest.amount,
       oldStatus,
       PaymentRequestStatus.CANCELLED,
-      paymentRequest.netAmount
+      paymentRequest.netAmount,
+      String(paymentRequest._id)
     );
 
     // Trigger webhook notification (async, don't wait)

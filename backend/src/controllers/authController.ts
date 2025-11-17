@@ -59,6 +59,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
         userId: user._id,
         available: 0,
         pending: 0,
+        commissionBalance: 0,
         currency: 'USD',
       });
 
@@ -187,6 +188,8 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
         email: user.email,
         role: user.role,
         twoFactorEnabled: user.twoFactorEnabled,
+        isMerchantLeader: user.isMerchantLeader,
+        merchantLeaderId: user.merchantLeaderId ? String(user.merchantLeaderId) : undefined,
       },
       accessToken,
       refreshToken,
@@ -430,6 +433,8 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
         email: user.email,
         role: user.role,
         twoFactorEnabled: user.twoFactorEnabled,
+        isMerchantLeader: user.isMerchantLeader,
+        merchantLeaderId: user.merchantLeaderId ? String(user.merchantLeaderId) : undefined,
         lastLogin: user.lastLogin,
       },
     };
@@ -451,6 +456,8 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
         onboardingStatus: user.onboardingStatus,
         rejectionReason: user.rejectionReason,
         approvedAt: user.approvedAt,
+        isMerchantLeader: user.isMerchantLeader,
+        merchantLeaderId: user.merchantLeaderId,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       };

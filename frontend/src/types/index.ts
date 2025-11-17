@@ -70,11 +70,28 @@ export const BankRail = {
 
 export type BankRail = typeof BankRail[keyof typeof BankRail];
 
+export const WithdrawalSource = {
+  BALANCE: 'balance',
+  COMMISSION: 'commission',
+} as const;
+
+export type WithdrawalSource = typeof WithdrawalSource[keyof typeof WithdrawalSource];
+
+export const CommissionStatus = {
+  PENDING: 'pending',
+  CREDITED: 'credited',
+  WITHDRAWN: 'withdrawn',
+} as const;
+
+export type CommissionStatus = typeof CommissionStatus[keyof typeof CommissionStatus];
+
 export interface User {
   id: string;
   email: string;
   role: UserRole;
   twoFactorEnabled: boolean;
+  isMerchantLeader?: boolean;
+  merchantLeaderId?: string;
   lastLogin?: string;
 }
 
@@ -99,6 +116,8 @@ export interface Merchant {
   onboardingStatus: OnboardingStatus;
   rejectionReason?: string;
   approvedAt?: string;
+  isMerchantLeader?: boolean;
+  merchantLeaderId?: string | { _id: string; legalName: string; email: string };
   createdAt: string;
   updatedAt: string;
 }
@@ -106,6 +125,7 @@ export interface Merchant {
 export interface PaymentRequest {
   _id: string;
   merchantId: string;
+  userId?: string | { _id: string; legalName: string; email: string }; // Can be populated
   amount: number;
   currency: string;
   description: string;
@@ -155,6 +175,7 @@ export interface Balance {
   merchantId: string;
   available: number;
   pending: number;
+  commissionBalance: number;
   currency: string;
   pendingBreakdown: Array<{
     amount: number;
@@ -216,6 +237,7 @@ export interface Withdrawal {
   _id: string;
   merchantId: string;
   method: 'crypto' | 'bank_transfer';
+  source: WithdrawalSource;
   amount: number;
   currency: string;
   fee: number;
@@ -245,5 +267,41 @@ export interface Withdrawal {
   completedAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Commission {
+  _id: string;
+  userId: string;
+  merchantId: string | { _id: string; legalName: string; email: string };
+  paymentRequestId: string | { _id: string; invoiceNumber: string; amount: number; status: PaymentRequestStatus };
+  amount: number;
+  paymentAmount: number;
+  currency: string;
+  status: CommissionStatus;
+  creditedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MerchantLeaderDashboard {
+  groupMerchantsCount: number;
+  totalPaymentRequests: number;
+  paymentRequestStats: Array<{
+    _id: PaymentRequestStatus;
+    count: number;
+    totalAmount: number;
+  }>;
+  recentPaymentRequests: PaymentRequest[];
+  commissionStats: {
+    totalCommission: number;
+    totalPayments: number;
+    commissionByMonth: Array<{
+      _id: { year: number; month: number };
+      totalCommission: number;
+      count: number;
+    }>;
+  };
+  commissionBalance: number;
+  currency: string;
 }
 

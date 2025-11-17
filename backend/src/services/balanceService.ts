@@ -1,6 +1,8 @@
 import { Balance } from '../models/Balance.js';
+import { User } from '../models/User.js';
 import { PaymentRequestStatus } from '../types/index.js';
 import mongoose from 'mongoose';
+import { creditCommission } from './commissionService.js';
 
 /**
  * Updates merchant balance based on payment request status change
@@ -9,13 +11,15 @@ import mongoose from 'mongoose';
  * @param oldStatus - The previous payment request status
  * @param newStatus - The new payment request status
  * @param netAmount - The net amount after commission (used when marking as paid)
+ * @param paymentRequestId - The payment request ID (for commission tracking)
  */
 export async function updateMerchantBalance(
   userId: string,
   amount: number,
   oldStatus: PaymentRequestStatus,
   newStatus: PaymentRequestStatus,
-  netAmount?: number
+  netAmount?: number,
+  paymentRequestId?: string
 ): Promise<void> {
   const userObjectId = new mongoose.Types.ObjectId(userId);
   
@@ -26,6 +30,7 @@ export async function updateMerchantBalance(
       userId: userObjectId,
       available: 0,
       pending: 0,
+      commissionBalance: 0,
       currency: 'USD',
       pendingBreakdown: [],
     });
@@ -63,6 +68,12 @@ export async function updateMerchantBalance(
   if (isCompletedStatus(newStatus)) {
     // Move to available balance (payment is confirmed/processed)
     balance.available += effectiveAmount;
+    
+    // Credit commission to merchant leader if applicable
+    if (paymentRequestId && !isCompletedStatus(oldStatus)) {
+      // Only credit commission on transition to completed status, not on re-processing
+      await creditCommissionToLeader(userId, paymentRequestId, amount);
+    }
   } else if (isPendingStatus(newStatus)) {
     // Keep in pending balance
     balance.pending += effectiveAmount;
@@ -71,6 +82,36 @@ export async function updateMerchantBalance(
 
   balance.lastUpdated = new Date();
   await balance.save();
+}
+
+/**
+ * Credit commission to merchant leader if the merchant has one
+ * @param merchantId - The merchant's user ID
+ * @param paymentRequestId - The payment request ID
+ * @param paymentAmount - The payment amount
+ */
+async function creditCommissionToLeader(
+  merchantId: string,
+  paymentRequestId: string,
+  paymentAmount: number
+): Promise<void> {
+  try {
+    // Check if merchant has a leader
+    const merchant = await User.findById(merchantId).select('merchantLeaderId');
+    
+    if (merchant && merchant.merchantLeaderId) {
+      // Credit commission to the leader
+      await creditCommission(
+        merchant.merchantLeaderId,
+        merchantId,
+        paymentRequestId,
+        paymentAmount
+      );
+    }
+  } catch (error) {
+    console.error('Error crediting commission to leader:', error);
+    // Don't throw error - commission crediting should not block payment processing
+  }
 }
 
 /**
@@ -92,6 +133,7 @@ export async function addToPendingBalance(
       userId: userObjectId,
       available: 0,
       pending: amount,
+      commissionBalance: 0,
       currency,
       pendingBreakdown: [],
     });
@@ -119,10 +161,30 @@ export async function getOrCreateBalance(
       userId: userObjectId,
       available: 0,
       pending: 0,
+      commissionBalance: 0,
       currency,
       pendingBreakdown: [],
     });
   }
   return balance;
+}
+
+/**
+ * Update commission balance for a user
+ * @param userId - The user's ID
+ * @param amount - The amount to add or subtract (can be negative)
+ */
+export async function updateCommissionBalance(
+  userId: string,
+  amount: number
+): Promise<void> {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  const balance = await Balance.findOne({ userId: userObjectId });
+  
+  if (balance) {
+    balance.commissionBalance += amount;
+    balance.lastUpdated = new Date();
+    await balance.save();
+  }
 }
 

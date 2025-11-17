@@ -1,13 +1,24 @@
 import api from '../lib/api';
-import { CryptoAsset, type Withdrawal } from '../types';
+import { CryptoAsset, WithdrawalSource, type Withdrawal } from '../types';
 
 export type { Withdrawal };
 
 export interface CreateWithdrawalDto {
-  asset: CryptoAsset;
-  network: string;
-  address: string;
+  method: 'crypto' | 'bank_transfer';
+  source?: WithdrawalSource;
+  asset?: CryptoAsset;
+  network?: string;
+  address?: string;
   amount: number;
+  currency?: string;
+  // Bank transfer fields
+  bankAccount?: string;
+  iban?: string;
+  swiftCode?: string;
+  accountNumber?: string;
+  routingNumber?: string;
+  bankName?: string;
+  beneficiaryName?: string;
 }
 
 export interface UpdateWithdrawalStatusDto {

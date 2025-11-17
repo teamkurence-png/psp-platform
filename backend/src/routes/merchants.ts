@@ -5,6 +5,8 @@ import {
   submitForReview,
   reviewOnboarding,
   listMerchants,
+  assignMerchantToLeader,
+  toggleMerchantLeader,
 } from '../controllers/merchantController.js';
 import { authenticate } from '../middleware/auth.js';
 import { authorize } from '../middleware/rbac.js';
@@ -25,6 +27,10 @@ router.post('/submit-review', asyncHandler(submitForReview));
 router.get('/list', authorize(UserRole.OPS, UserRole.FINANCE, UserRole.ADMIN), asyncHandler(listMerchants));
 router.get('/:merchantId', authorize(UserRole.OPS, UserRole.FINANCE, UserRole.ADMIN), asyncHandler(getProfile));
 router.post('/:merchantId/review', authorize(UserRole.OPS, UserRole.ADMIN), asyncHandler(reviewOnboarding));
+
+// Admin-only routes for merchant leader management
+router.post('/:merchantId/assign-leader', authorize(UserRole.ADMIN), asyncHandler(assignMerchantToLeader));
+router.post('/:merchantId/toggle-leader', authorize(UserRole.ADMIN), asyncHandler(toggleMerchantLeader));
 
 export default router;
 

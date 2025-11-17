@@ -8,6 +8,9 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import MerchantLeaderDashboard from './pages/MerchantLeaderDashboard';
+import GroupMerchants from './pages/GroupMerchants';
+import GroupPaymentRequests from './pages/GroupPaymentRequests';
 import PaymentRequests from './pages/PaymentRequests';
 import CreatePaymentRequest from './pages/CreatePaymentRequest';
 import MerchantProfile from './pages/MerchantProfile';
@@ -85,6 +88,29 @@ function App() {
             }
           >
             <Route index element={<Dashboard />} />
+          </Route>
+
+          <Route
+            path="/merchant-leader-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={[UserRole.MERCHANT]}>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<MerchantLeaderDashboard />} />
+          </Route>
+
+          <Route
+            path="/merchant-leader"
+            element={
+              <ProtectedRoute allowedRoles={[UserRole.MERCHANT]}>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="group-merchants" element={<GroupMerchants />} />
+            <Route path="group-payment-requests" element={<GroupPaymentRequests />} />
           </Route>
 
           <Route
