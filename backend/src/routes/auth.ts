@@ -10,6 +10,7 @@ import {
   getMe,
   getUsers,
   updateUserRole,
+  updateUserPassword,
   deactivateUser,
   activateUser,
 } from '../controllers/authController.js';
@@ -37,6 +38,7 @@ router.post('/2fa/disable', authenticate, asyncHandler(disable2FA));
 // Admin routes - User management
 router.get('/users', authenticate, authorize(UserRole.ADMIN), asyncHandler(getUsers));
 router.put('/users/:userId/role', authenticate, authorize(UserRole.ADMIN), asyncHandler(updateUserRole));
+router.put('/users/:userId/password', authenticate, authorize(UserRole.ADMIN), asyncHandler(updateUserPassword));
 router.put('/users/:userId/deactivate', authenticate, authorize(UserRole.ADMIN), asyncHandler(deactivateUser));
 router.put('/users/:userId/activate', authenticate, authorize(UserRole.ADMIN), asyncHandler(activateUser));
 

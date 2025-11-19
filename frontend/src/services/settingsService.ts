@@ -66,5 +66,10 @@ export const settingsService = {
   async activateUser(userId: string): Promise<void> {
     await api.put(`/auth/users/${userId}/activate`);
   },
+
+  // Admin: Update user password
+  async updateUserPassword(userId: string, password: string): Promise<void> {
+    await api.put(`/auth/users/${userId}/password`, { password });
+  },
 };
 

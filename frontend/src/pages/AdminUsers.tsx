@@ -3,10 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { settingsService, type User } from '../services';
 import { Card } from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorAlert from '../components/ui/ErrorAlert';
 import StatusBadge from '../components/ui/StatusBadge';
-import { Users, Shield, UserX, UserCheck, Search } from 'lucide-react';
+import { Users, Shield, UserX, UserCheck, Search, Key } from 'lucide-react';
 import { formatDate } from '../lib/utils';
 
 interface RoleModalProps {
@@ -84,10 +85,101 @@ const RoleModal: React.FC<RoleModalProps> = ({ user, onClose, onUpdate }) => {
   );
 };
 
+interface PasswordChangeModalProps {
+  user: User;
+  onClose: () => void;
+  onUpdate: (userId: string, password: string) => void;
+}
+
+const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({ user, onClose, onUpdate }) => {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    // Validate password
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    onUpdate(user._id, password);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <Card className="max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Change User Password</h3>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">User Email:</p>
+              <p className="font-medium text-gray-900">{user.email}</p>
+            </div>
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                New Password
+              </label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter new password"
+                className="w-full"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Confirm Password
+              </label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                className="w-full"
+                required
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <Button type="submit" className="flex-1">
+                Update Password
+              </Button>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Card>
+    </div>
+  );
+};
+
 const AdminUsers: React.FC = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [passwordChangeUser, setPasswordChangeUser] = useState<User | null>(null);
 
   // Fetch users
   const { data: users, isLoading, error } = useQuery({
@@ -121,8 +213,22 @@ const AdminUsers: React.FC = () => {
     },
   });
 
+  // Update password mutation
+  const updatePasswordMutation = useMutation({
+    mutationFn: ({ userId, password }: { userId: string; password: string }) =>
+      settingsService.updateUserPassword(userId, password),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setPasswordChangeUser(null);
+    },
+  });
+
   const handleUpdateRole = (userId: string, role: string) => {
     updateRoleMutation.mutate({ userId, role });
+  };
+
+  const handleUpdatePassword = (userId: string, password: string) => {
+    updatePasswordMutation.mutate({ userId, password });
   };
 
   const handleToggleActive = (user: User) => {
@@ -308,6 +414,14 @@ const AdminUsers: React.FC = () => {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => setPasswordChangeUser(user)}
+                        >
+                          <Key className="h-4 w-4 mr-1" />
+                          Password
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => handleToggleActive(user)}
                           disabled={deactivateMutation.isPending || activateMutation.isPending}
                         >
@@ -339,6 +453,15 @@ const AdminUsers: React.FC = () => {
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
           onUpdate={handleUpdateRole}
+        />
+      )}
+
+      {/* Password Change Modal */}
+      {passwordChangeUser && (
+        <PasswordChangeModal
+          user={passwordChangeUser}
+          onClose={() => setPasswordChangeUser(null)}
+          onUpdate={handleUpdatePassword}
         />
       )}
     </div>

@@ -519,6 +519,41 @@ export const updateUserRole = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
+// Admin: Update user password
+const updatePasswordSchema = z.object({
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+export const updateUserPassword = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const validatedData = updatePasswordSchema.parse(req.body);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    // Hash the new password
+    const hashedPassword = await hashPassword(validatedData.password);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully',
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ success: false, error: error.errors });
+      return;
+    }
+    console.error('Update user password error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update user password' });
+  }
+};
+
 // Admin: Deactivate user
 export const deactivateUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
