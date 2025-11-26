@@ -110,6 +110,33 @@ const WithdrawalDetail: React.FC = () => {
           <CardDescription>ID: {withdrawal._id}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Merchant Information - visible for admins */}
+          {withdrawal.userId && typeof withdrawal.userId === 'object' && (
+            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20 mb-4">
+              <h3 className="font-semibold text-lg mb-3 text-primary">Merchant Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Legal Name</Label>
+                  <p className="text-sm font-medium">{withdrawal.userId.legalName}</p>
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <p className="text-sm font-medium">{withdrawal.userId.email}</p>
+                </div>
+                {withdrawal.userId.supportEmail && (
+                  <div>
+                    <Label>Support Email</Label>
+                    <p className="text-sm font-medium">{withdrawal.userId.supportEmail}</p>
+                  </div>
+                )}
+                <div>
+                  <Label>Merchant ID</Label>
+                  <p className="text-sm font-mono">{typeof withdrawal.userId === 'object' ? withdrawal.userId._id : withdrawal.userId}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Method</Label>

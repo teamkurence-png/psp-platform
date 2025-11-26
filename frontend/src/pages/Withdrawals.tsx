@@ -218,6 +218,12 @@ const Withdrawals: React.FC = () => {
                       </h3>
                       <StatusBadge status={withdrawal.status} />
                     </div>
+                    {/* Merchant Info - visible for admins */}
+                    {withdrawal.userId && typeof withdrawal.userId === 'object' && (
+                      <p className="text-sm font-medium text-primary mb-2">
+                        Merchant: {withdrawal.userId.legalName}
+                      </p>
+                    )}
                     <div className="space-y-1">
                       {withdrawal.method === 'crypto' ? (
                         <>

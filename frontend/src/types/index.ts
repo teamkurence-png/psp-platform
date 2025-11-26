@@ -236,6 +236,12 @@ export interface Card {
 export interface Withdrawal {
   _id: string;
   merchantId: string;
+  userId?: string | {
+    _id: string;
+    legalName: string;
+    email: string;
+    supportEmail?: string;
+  };
   method: 'crypto' | 'bank_transfer';
   source: WithdrawalSource;
   amount: number;
